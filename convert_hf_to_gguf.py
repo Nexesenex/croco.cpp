@@ -590,6 +590,14 @@ class Model:
         if chkhsh == "855059429035d75a914d1eda9f10a876752e281a054a7a3d421ef0533e5b6249":
             # ref: https://huggingface.co/HuggingFaceTB/SmolLM-135M
             res = "smollm"
+
+        if chkhsh == "3c30d3ad1d6b64202cd222813e7736c2db6e1bd6d67197090fc1211fbc612ae7":
+            # ref: https://huggingface.co/bigscience/bloom
+            res = "bloom"
+        if chkhsh == "bc01ce58980e1db43859146dc51b1758b3b88729b217a74792e9f8d43e479d21":
+            # ref: https://huggingface.co/TurkuNLP/gpt3-finnish-small
+            res = "gpt3-finnish"
+
         if chkhsh == "877081d19cf6996e2c4ff0e1236341e9b7bde288f5311a56a937f0afbbb3aeb5":
             # ref: https://huggingface.co/deepseek-ai/DeepSeek-V3
             res = "deepseek-v3"
@@ -896,7 +904,7 @@ class GPTNeoXModel(Model):
         return tensors
 
 
-@Model.register("BloomForCausalLM")
+@Model.register("BloomForCausalLM", "BloomModel")
 class BloomModel(Model):
     model_arch = gguf.MODEL_ARCH.BLOOM
 
