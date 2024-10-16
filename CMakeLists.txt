@@ -90,9 +90,6 @@ set(GGML_V3_CUDA_SOURCES otherarch/ggml_v3-cuda.cu otherarch/ggml_v3-cuda.h)
 set(GGML_V2_CUDA_SOURCES otherarch/ggml_v2-cuda.cu otherarch/ggml_v2-cuda.h)
 set(GGML_V2_LEGACY_CUDA_SOURCES otherarch/ggml_v2-cuda-legacy.cu otherarch/ggml_v2-cuda-legacy.h)
 
-if (GGML_CUDA_USE_GRAPHS)
-    add_compile_definitions(GGML_CUDA_USE_GRAPHS)
-endif()
 
 if (LLAMA_CUBLAS)
     cmake_minimum_required(VERSION 3.17)
@@ -209,6 +206,7 @@ if (LLAMA_CUBLAS)
         else()
             message("CUDA Toolkit Version: ${CUDAToolkit_VERSION}")
             if(CUDAToolkit_VERSION VERSION_GREATER 12)
+                 add_compile_definitions(GGML_CUDA_USE_GRAPHS) #try enable cuda graphs on cu12 build
                  set(CMAKE_CUDA_ARCHITECTURES "52;61;70;75") # lowest CUDA 12 standard + lowest for integer intrinsics
             else()
                  set(CMAKE_CUDA_ARCHITECTURES "35;37;50;52") # CUDA 11, for Kepler and Maxwell Arch <52

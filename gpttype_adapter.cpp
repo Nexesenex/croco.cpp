@@ -1365,7 +1365,7 @@ const std::vector<samplers> & sampler_order, llama_grammar * grammar, float dyna
     //dry always first as logits cannot be resorted
     sample_dry(n_ctx, dry_penalty_last_n, dry_multiplier, dry_base, dry_allowed_length, dry_sequence_breakers, &candidates_p);
 
-    //prefilter to top 5k tokens for improved speed
+    //prefilter to top 3k tokens for improved speed
     sample_top_k(&candidates_p, 256);
 
     if (mirostat == 1 || mirostat == 2)
