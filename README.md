@@ -233,7 +233,7 @@ KoboldCpp is an easy-to-use AI text-generation software for GGML and GGUF models
 - You can also run it using the command line. For info, please check `koboldcpp.exe --help`
 
 ## Linux Usage (Precompiled Binary, Recommended)
-On modern Linux systems, you should download the `koboldcpp-linux-x64-cuda1150` prebuilt PyInstaller binary on the **[releases page](https://github.com/LostRuins/koboldcpp/releases/latest)**. Simply download and run the binary.
+On modern Linux systems, you should download the `koboldcpp-linux-x64-cuda1150` prebuilt PyInstaller binary on the **[releases page](https://github.com/LostRuins/koboldcpp/releases/latest)**. Simply download and run the binary (You may have to `chmod +x` it first).
 
 Alternatively, you can also install koboldcpp to the current directory by running the following terminal command:
 ```
@@ -391,4 +391,3 @@ when you can't use the precompiled binary directly, we provide an automated buil
   - [Stable Diffusion 1.5 and SDXL safetensor models](https://github.com/LostRuins/koboldcpp/wiki#can-i-generate-images-with-koboldcpp)
   - [LLaVA based Vision models and multimodal projectors (mmproj)](https://github.com/LostRuins/koboldcpp/wiki#what-is-llava-and-mmproj)
   - [Whisper models for Speech-To-Text](https://huggingface.co/koboldcpp/whisper/tree/main)
-
