@@ -54,6 +54,9 @@ static const std::vector<quant_option> QUANT_OPTIONS = {
     { "Q5_K_M",   LLAMA_FTYPE_MOSTLY_Q5_K_M,   " 5.33G, +0.0569 ppl @ Llama-3-8B",  },
     { "Q6_K",     LLAMA_FTYPE_MOSTLY_Q6_K,     " 6.14G, +0.0217 ppl @ Llama-3-8B",  },
     { "Q8_0",     LLAMA_FTYPE_MOSTLY_Q8_0,     " 7.96G, +0.0026 ppl @ Llama-3-8B",  },
+//     { "Q4_0_4_4", LLAMA_FTYPE_MOSTLY_Q4_0_4_4, " 4.34G, +0.4685 ppl @ Llama-3-8B",  },
+//     { "Q4_0_4_8", LLAMA_FTYPE_MOSTLY_Q4_0_4_8, " 4.34G, +0.4685 ppl @ Llama-3-8B",  },
+//     { "Q4_0_8_8", LLAMA_FTYPE_MOSTLY_Q4_0_8_8, " 4.34G, +0.4685 ppl @ Llama-3-8B",  },
     { "F16",      LLAMA_FTYPE_MOSTLY_F16,      "14.00G, +0.0020 ppl @ Mistral-7B",  },
     { "BF16",     LLAMA_FTYPE_MOSTLY_BF16,     "14.00G, -0.0050 ppl @ Mistral-7B",  },
     { "F32",      LLAMA_FTYPE_ALL_F32,         "26.00G              @ 7B",          },
@@ -169,6 +172,7 @@ static bool try_parse_ftype(const std::string & ftype_str_in, llama_ftype & ftyp
 static void usage(const char * executable) {
     printf("usage: %s [--help] [--allow-requantize] [--leave-output-tensor] [--pure] [--imatrix] [--include-weights]\n", executable);
     printf("       [--exclude-weights] [--output-tensor-type] [--token-embedding-type] [--tensor-type] [--prune-layers] [--keep-split] [--override-kv]\n");
+    printf("       [--attn-q-type] [--attn-k-type] [--attn-v-type] [--attn-qkv-type] [--attn-output-type] [--ffn-gate-type] [--ffn-down-type] [--ffn-up-type]\n\n");
     printf("       model-f32.gguf [model-quant.gguf] type [nthreads]\n\n");
     printf("  --allow-requantize: Allows requantizing tensors that have already been quantized. Warning: This can severely reduce quality compared to quantizing from 16bit or 32bit\n");
     printf("  --leave-output-tensor: Will leave output.weight un(re)quantized. Increases model size but may also increase quality, especially when requantizing\n");
@@ -182,10 +186,25 @@ static void usage(const char * executable) {
     printf("      Advanced option to selectively quantize tensors. May be specified multiple times.\n");
     printf("  --prune-layers L0,L1,L2...comma-separated list of layer numbers to prune from the model\n");
     printf("      Advanced option to remove all tensors from the given layers\n");
+    printf("    Additional specific tensor quantization types used in the custom quant scheme 'CQS (default is Q2_K):\n");
+    printf("      --attn-q-type ggml_type: use this ggml_type for the attn_q.weight tensor.\n");
+    printf("      --attn-k-type ggml_type: use this ggml_type for the attn_k.weight tensor.\n");
+    printf("      --attn-v-type ggml_type: use this ggml_type for the attn_v.weight tensor.\n");
+    printf("      --attn-qkv-type ggml_type: use this ggml_type for the attn_qkv.weight tensor.\n");
+    printf("      --attn-output-type ggml_type: use this ggml_type for the attn_output.weight tensor.\n");
+    printf("      --ffn-gate-type ggml_type: use this ggml_type for the ffn_gate tensor.\n");
+    printf("      --ffn-down-type ggml_type: use this ggml_type for the ffn_down tensor.\n");
+    printf("      --ffn-up-type ggml_type: use this ggml_type for the ffn_up tensor.\n\n");
     printf("  --keep-split: will generate quantized model in the same shards as input\n");
     printf("  --override-kv KEY=TYPE:VALUE\n");
-    printf("      Advanced option to override model metadata by key in the quantized model. May be specified multiple times.\n");
+    printf("      Advanced option to override model metadata by key in the quantized model. May be specified multiple times.\n\n");
     printf("Note: --include-weights and --exclude-weights cannot be used together\n");
+    printf("Note: The token embeddings tensor is loaded in system RAM, even in case of full GPU/VRAM offload.\n");
+    printf("Note: The recommanded type for the output tensor is q6_K for the ffn types > iq3_xxs and < q8_0.\n\n");
+    printf("Note for the Custom Quant Scheme FTYPE:\n");
+    printf("    Write the specific tensor legacy quants as qN_N, the K-Quants as qN_K, the IQ-Quants as iqN_xx.\n");
+    printf("    Usually, attn-q-type can be one type below the chosen ffn type, and attn-v-type should be one type above.\n");
+    printf("    attn-qkv-type replaces the types attn-q, attn-k and attn-v on some models.\n");
     printf("\nAllowed quantization types:\n");
     for (const auto & it : QUANT_OPTIONS) {
         if (it.name != "COPY") {
@@ -520,6 +539,78 @@ int main(int argc, char ** argv) {
             if (arg_idx < argc-1) {
                 params.token_embedding_type = parse_ggml_type(argv[++arg_idx]);
                 if (params.token_embedding_type == GGML_TYPE_COUNT) {
+                    usage(argv[0]);
+                }
+            } else {
+                usage(argv[0]);
+            }
+        } else if (strcmp(argv[arg_idx], "--attn-q-type") == 0) {
+            if (arg_idx < argc-1) {
+                params.attn_q_type = parse_ggml_type(argv[++arg_idx]);
+                if (params.attn_q_type == GGML_TYPE_COUNT) {
+                    usage(argv[0]);
+                }
+            } else {
+                usage(argv[0]);
+            }
+        } else if (strcmp(argv[arg_idx], "--attn-k-type") == 0) {
+            if (arg_idx < argc-1) {
+                params.attn_k_type = parse_ggml_type(argv[++arg_idx]);
+                if (params.attn_k_type == GGML_TYPE_COUNT) {
+                    usage(argv[0]);
+                }
+            } else {
+                usage(argv[0]);
+            }
+        } else if (strcmp(argv[arg_idx], "--attn-v-type") == 0) {
+            if (arg_idx < argc-1) {
+                params.attn_v_type = parse_ggml_type(argv[++arg_idx]);
+                if (params.attn_v_type == GGML_TYPE_COUNT) {
+                    usage(argv[0]);
+                }
+            } else {
+                usage(argv[0]);
+            }
+        } else if (strcmp(argv[arg_idx], "--attn-qkv-type") == 0) {
+            if (arg_idx < argc-1) {
+                params.attn_qkv_type = parse_ggml_type(argv[++arg_idx]);
+                if (params.attn_qkv_type == GGML_TYPE_COUNT) {
+                    usage(argv[0]);
+                }
+            } else {
+                usage(argv[0]);
+            }
+        } else if (strcmp(argv[arg_idx], "--attn-output-type") == 0) {
+            if (arg_idx < argc-1) {
+                params.attn_output_type = parse_ggml_type(argv[++arg_idx]);
+                if (params.attn_output_type == GGML_TYPE_COUNT) {
+                    usage(argv[0]);
+                }
+            } else {
+                usage(argv[0]);
+            }
+        } else if (strcmp(argv[arg_idx], "--ffn-gate-type") == 0) {
+            if (arg_idx < argc-1) {
+                params.ffn_gate_type = parse_ggml_type(argv[++arg_idx]);
+                if (params.ffn_gate_type == GGML_TYPE_COUNT) {
+                    usage(argv[0]);
+                }
+            } else {
+                usage(argv[0]);
+            }
+        } else if (strcmp(argv[arg_idx], "--ffn-down-type") == 0) {
+            if (arg_idx < argc-1) {
+                params.ffn_down_type = parse_ggml_type(argv[++arg_idx]);
+                if (params.ffn_down_type == GGML_TYPE_COUNT) {
+                    usage(argv[0]);
+                }
+            } else {
+                usage(argv[0]);
+            }
+        } else if (strcmp(argv[arg_idx], "--ffn-up-type") == 0) {
+            if (arg_idx < argc-1) {
+                params.ffn_up_type = parse_ggml_type(argv[++arg_idx]);
+                if (params.ffn_up_type == GGML_TYPE_COUNT) {
                     usage(argv[0]);
                 }
             } else {
