@@ -2022,6 +2022,7 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
 
         llama_ctx_params.flash_attn = kcpp_data->flash_attn;
         llama_ctx_params.type_k =
+		(inputs.quant_v==27?GGML_TYPE_Q5_1:
 		(inputs.quant_k==26?GGML_TYPE_Q4_0:
 		(inputs.quant_k==25?GGML_TYPE_Q4_1:
 		(inputs.quant_k==24?GGML_TYPE_Q5_0:
@@ -2029,27 +2030,28 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
 		(inputs.quant_k==22?GGML_TYPE_Q8_0:
 		(inputs.quant_k==21?GGML_TYPE_F16:
 		(inputs.quant_k==20?GGML_TYPE_Q4_1:
-		(inputs.quant_k==19?GGML_TYPE_Q4_1:
+		// (inputs.quant_k==19?GGML_TYPE_Q4_1:
 		(inputs.quant_k==18?GGML_TYPE_Q5_0:
-		(inputs.quant_k==17?GGML_TYPE_Q5_0:
-		(inputs.quant_k==16?GGML_TYPE_Q5_0:
+		// (inputs.quant_k==17?GGML_TYPE_Q5_0:
+		// (inputs.quant_k==16?GGML_TYPE_Q5_0:
 		(inputs.quant_k==15?GGML_TYPE_Q5_1:
-		(inputs.quant_k==14?GGML_TYPE_Q5_1:
+		// (inputs.quant_k==14?GGML_TYPE_Q5_1:
 		(inputs.quant_k==13?GGML_TYPE_Q5_1:
 		(inputs.quant_k==12?GGML_TYPE_Q5_1:
 		(inputs.quant_k==11?GGML_TYPE_Q8_0:
-		(inputs.quant_k==10?GGML_TYPE_Q8_0:
+		// (inputs.quant_k==10?GGML_TYPE_Q8_0:
 		(inputs.quant_k==9?GGML_TYPE_Q8_0:
 		(inputs.quant_k==8?GGML_TYPE_Q8_0:
-		(inputs.quant_k==7?GGML_TYPE_F16:
-		(inputs.quant_k==6?GGML_TYPE_F16:
-		(inputs.quant_k==5?GGML_TYPE_F16:
-		(inputs.quant_k==4?GGML_TYPE_F16:
+		// (inputs.quant_k==7?GGML_TYPE_F16:
+		// (inputs.quant_k==6?GGML_TYPE_F16:
+		// (inputs.quant_k==5?GGML_TYPE_F16:
+		// (inputs.quant_k==4?GGML_TYPE_F16:
 		(inputs.quant_k==3?GGML_TYPE_F16:
 		(inputs.quant_k==2?GGML_TYPE_Q4_0:
 		(inputs.quant_k==1?GGML_TYPE_Q8_0:
-		GGML_TYPE_F16))))))))))))))))))))))))));
+		GGML_TYPE_F16))))))))))))))))));
         llama_ctx_params.type_v =
+		(inputs.quant_v==27?GGML_TYPE_IQ4_NL:
 		(inputs.quant_v==26?GGML_TYPE_F16:
 		(inputs.quant_v==25?GGML_TYPE_F16:
 		(inputs.quant_v==24?GGML_TYPE_F16:
@@ -2057,26 +2059,26 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
 		(inputs.quant_v==22?GGML_TYPE_F16:
 		(inputs.quant_v==21?GGML_TYPE_F16:
 		(inputs.quant_v==20?GGML_TYPE_Q4_0:
-		(inputs.quant_v==19?GGML_TYPE_Q4_1:
+		// (inputs.quant_v==19?GGML_TYPE_Q4_1:
 		(inputs.quant_v==18?GGML_TYPE_Q4_0:
-		(inputs.quant_v==17?GGML_TYPE_Q4_1:
-		(inputs.quant_v==16?GGML_TYPE_Q5_0:
+		// (inputs.quant_v==17?GGML_TYPE_Q4_1:
+		// (inputs.quant_v==16?GGML_TYPE_Q5_0:
 		(inputs.quant_v==15?GGML_TYPE_Q4_0:
-		(inputs.quant_v==14?GGML_TYPE_Q4_1:
+		// (inputs.quant_v==14?GGML_TYPE_Q4_1:
 		(inputs.quant_v==13?GGML_TYPE_Q5_0:
 		(inputs.quant_v==12?GGML_TYPE_Q5_1:
 		(inputs.quant_v==11?GGML_TYPE_Q4_0:
-		(inputs.quant_v==10?GGML_TYPE_Q4_1:
+		// (inputs.quant_v==10?GGML_TYPE_Q4_1:
 		(inputs.quant_v==9?GGML_TYPE_Q5_0:
 		(inputs.quant_v==8?GGML_TYPE_Q5_1:
-		(inputs.quant_v==7?GGML_TYPE_Q4_0:
-		(inputs.quant_v==6?GGML_TYPE_Q4_1:
-		(inputs.quant_v==5?GGML_TYPE_Q5_0:
-		(inputs.quant_v==4?GGML_TYPE_Q5_1:
+		// (inputs.quant_v==7?GGML_TYPE_Q4_0:
+		// (inputs.quant_v==6?GGML_TYPE_Q4_1:
+		// (inputs.quant_v==5?GGML_TYPE_Q5_0:
+		// (inputs.quant_v==4?GGML_TYPE_Q5_1:
 		(inputs.quant_v==3?GGML_TYPE_Q8_0:
 		(inputs.quant_v==2?GGML_TYPE_Q4_0:
 		(inputs.quant_v==1?GGML_TYPE_Q8_0:
-		GGML_TYPE_F16))))))))))))))))))))))))));
+		GGML_TYPE_F16))))))))))))))))));
 //        llama_ctx_params.override_kv = kcpp_params->override_kv;
 //        llama_ctx_params.cache_type_k = kcpp_params->cache_type_k;
 //        llama_ctx_params.cache_type_v = kcpp_params->cache_type_v;
