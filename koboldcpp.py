@@ -1130,20 +1130,26 @@ def load_model(model_filename):
     inputs.mmproj_filename = args.mmproj.encode("UTF-8") if args.mmproj else "".encode("UTF-8")
     inputs.use_smartcontext = args.smartcontext
     inputs.use_contextshift = (0 if args.noshift else 1)
+
     inputs.flash_attention = args.flashattention
     if args.quantkv>0 and args.quantkv<21:
         inputs.quant_k = inputs.quant_v = args.quantkv
         inputs.flash_attention = True
         inputs.noshift = 1
-    elif args.quantkv==15:
+    elif args.quantkv==22:
         inputs.quant_k = inputs.quant_v = args.quantkv
         inputs.noshift = 1
-    elif args.quantkv>15:
+    elif args.quantkv>22 and args.quantkv<27:
         inputs.quant_k = inputs.quant_v = args.quantkv
         inputs.flash_attention = False
         inputs.noshift = 1
+    elif args.quantkv==27:
+        inputs.quant_k = inputs.quant_v = args.quantkv
+        inputs.flash_attention = True
+        inputs.noshift = 1
     else:
         inputs.quant_k = inputs.quant_v = 0
+
     inputs.blasbatchsize = args.blasbatchsize
     if args.blasubatchsize < 2:
         if args.blasubatchsize ==1:
