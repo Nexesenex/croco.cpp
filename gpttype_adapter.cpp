@@ -2669,10 +2669,10 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
     banned_token_ids.clear();
     if(banned_tokens.size()>0)
     {
-        if(debugmode==1)
-        {
-            printf("\nBanning %zu single character sequences...",banned_tokens.size());
-        }
+        // if(debugmode==1)
+        // {
+        printf("\nBanning %zu single character sequences...",banned_tokens.size());
+        // }
         for(int v=0;v<n_vocab;++v)
         {
             std::string word = FileFormatTokenizeID(v,file_format, true);
@@ -2686,13 +2686,14 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
                 }
             }
         }
-        if(debugmode==1)
-        {
-            printf("\nBanned a total of %zu individual tokens.\n",banned_token_ids.size());
-        }
+        // if(debugmode==1)
+        // {
+        printf("\nBanned a total of %zu individual tokens.\n",banned_token_ids.size());
+        // }
     }
 
-    if(debugmode==1 && banned_phrases.size()>0)
+    // if(debugmode==1 && banned_phrases.size()>0)
+    if(banned_phrases.size()>0)
     {
         printf("\nBanned a total of %zu phrases, with max token count of %d.\n",banned_phrases.size(),delayed_generated_tokens_limit);
     }
@@ -2793,10 +2794,10 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
             const int MAX_CHAR_LEN = 40;
             const int MAX_SEQ_LEN = 20;
 
-            if (debugmode == 1)
-            {
-                printf("\nProcessing %zu dry break strings...", kcpp_data->dry_sequence_breakers.size());
-            }
+            // if (debugmode == 1)
+
+            printf("\nProcessing %zu dry break strings...", kcpp_data->dry_sequence_breakers.size());
+
             for (auto sequence_break : kcpp_data->dry_sequence_breakers)
             {
                 if (sequence_break.size() > MAX_CHAR_LEN)
@@ -3350,7 +3351,7 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
             //handle temp bans from antislop
             if (antislop_banned_token_ids.find(n_past) != antislop_banned_token_ids.end()) {
                 std::vector<int>& bans = antislop_banned_token_ids[n_past];
-                //print_tok_vec_str(bans);
+                print_tok_vec_str(bans);
                 for(int t=0;t<bans.size();++t)
                 {
                     logitsPtr[bans[t]]=lowestLogit;
@@ -3466,7 +3467,8 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
                             std::vector<int>& current_ids = antislop_banned_token_ids[banindex];
                             current_ids.push_back(last_tok);
 
-                            if (allow_regular_prints && debugmode == 1)
+                            // if (allow_regular_prints && debugmode == 1)
+                            if (allow_regular_prints)
                             {
                                 auto match_clean = matched;
                                 replace_all(match_clean, "\n", "\\n");
