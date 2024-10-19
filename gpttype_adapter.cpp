@@ -43,7 +43,7 @@
 #include "experimental/emphasis.h"
 
 //const
-const int extra_context_handle_fragmentation = 0;
+const int extra_context_handle_fragmentation = 256;
 const int LLAVA_TOKEN_IDENTIFIER_A = -998; //alternate between both, changing when image changes
 const int LLAVA_TOKEN_IDENTIFIER_B = -999;
 
@@ -1687,8 +1687,6 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
     kcpp_data->use_contextshift = inputs.use_contextshift;
     debugmode = inputs.debugmode;
 //    kcpp_params->override_kv = inputs.override_kv;
-//    kcpp_params->cache_type_k = inputs.cache_type_k;
-//    kcpp_params->cache_type_v = inputs.cache_type_v;
 
     auto clamped_max_context_length = inputs.max_context_length;
 
@@ -1910,9 +1908,9 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
         llama_model_params model_params = llama_model_default_params();
         llama_context_params llama_ctx_params = llama_context_default_params();
         llama_ctx_params.n_ctx = clamped_max_context_length;
-        if(kcpp_data->use_contextshift)
+        if((kcpp_data->use_contextshift) || (kcpp_data->use_smartcontext))
         {
-           llama_ctx_params.n_ctx += extra_context_handle_fragmentation;
+           llama_ctx_params.n_ctx -= extra_context_handle_fragmentation;
         }
 
         llama_ctx_params.offload_kqv = !inputs.low_vram;
@@ -2015,7 +2013,7 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
                 printf("Automatic RoPE Scaling: Using (scale:%.3f, base:%.1f).\n", rope_freq_scale, rope_freq_base);
             }
         }
-		
+
         if(file_format_meta.model_architecture==GGUFArch::ARCH_RWKV)
         {
             printf("\nRWKV6 Overriding EOS and BOS IDs to 0\n");
@@ -3344,19 +3342,19 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
                     logitsPtr[banned_token_ids[t]]=lowestLogit;
                 }
             }
+            
+            if (llama_ctx_v4) {
+                empcats_step_pre(llama_ctx_v4, logitsPtr);
+            }
 
             //handle temp bans from antislop
             if (antislop_banned_token_ids.find(n_past) != antislop_banned_token_ids.end()) {
                 std::vector<int>& bans = antislop_banned_token_ids[n_past];
-                print_tok_vec_str(bans);
+                //print_tok_vec_str(bans);
                 for(int t=0;t<bans.size();++t)
                 {
                     logitsPtr[bans[t]]=lowestLogit;
                 }
-            }
-			
-            if (llama_ctx_v4) {
-                empcats_step_pre(llama_ctx_v4, logitsPtr);
             }
 
             id = SampleLogits(logitsPtr, nctx, n_vocab, last_n_size, repeat_penalty, kcpp_data->rep_pen_slope, presence_penalty,
