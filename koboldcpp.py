@@ -116,11 +116,9 @@ class load_model_inputs(ctypes.Structure):
                 ("lora_filename", ctypes.c_char_p),
                 ("lora_base", ctypes.c_char_p),
                 ("mmproj_filename", ctypes.c_char_p),
-#                ("override_kv", ctypes.c_char_p),
-#                ("cache_type_k", ctypes.c_char_p),
-#                ("cache_type_v", ctypes.c_char_p),
                 ("use_mmap", ctypes.c_bool),
                 ("use_mlock", ctypes.c_bool),
+#                ("override_kv", ctypes.c_char_p),
 #                ("use_direct_io", ctypes.c_bool),
 #                ("use_token_healing", ctypes.c_bool),
                 ("use_smartcontext", ctypes.c_bool),
@@ -480,33 +478,33 @@ def set_backend_props(inputs):
 
     if not args.tensor_split:
         if (args.usecublas and "0" in args.usecublas):
-            # os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+            os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
             os.environ["CUDA_VISIBLE_DEVICES"] = "0"
             os.environ["HIP_VISIBLE_DEVICES"] = "0"
         elif (args.usecublas and "1" in args.usecublas):
-            # os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+            os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
             os.environ["CUDA_VISIBLE_DEVICES"] = "1"
             os.environ["HIP_VISIBLE_DEVICES"] = "1"
         elif (args.usecublas and "2" in args.usecublas):
-            # os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+            os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
             os.environ["CUDA_VISIBLE_DEVICES"] = "2"
             os.environ["HIP_VISIBLE_DEVICES"] = "2"
         elif (args.usecublas and "3" in args.usecublas):
-            # os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+            os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
             os.environ["CUDA_VISIBLE_DEVICES"] = "3"
             os.environ["HIP_VISIBLE_DEVICES"] = "3"
     else:
         if (args.usecublas and "0" in args.usecublas):
-            # os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+            os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
             inputs.cublas_info = 0
         elif (args.usecublas and "1" in args.usecublas):
-            # os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+            os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
             inputs.cublas_info = 1
         elif (args.usecublas and "2" in args.usecublas):
-            # os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+            os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
             inputs.cublas_info = 2
         elif (args.usecublas and "3" in args.usecublas):
-            # os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+            os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
             inputs.cublas_info = 3
 
     if args.usevulkan: #is an empty array if using vulkan without defined gpu
@@ -1010,8 +1008,8 @@ def fetch_gpu_properties(testCL,testCU,testVK):
                         FetchedCUdeviceMem = [line.split(",")[1].strip() for line in getamdvram.splitlines()[1:] if line.strip()]
             except Exception as e:
                 pass
-        # lowestcumem= 0
-        # lowestfreecumem= 0
+        # lowestcumem = 0
+        # lowestfreecumem = 0
         for idx in range(0,4):
             if(len(FetchedCUdevices)>idx):
                 CUDevicesNames[idx] = FetchedCUdevices[idx]
@@ -1022,12 +1020,12 @@ def fetch_gpu_properties(testCL,testCU,testVK):
                     else:
                         MaxMemory[idx] = max(int(FetchedCUdeviceMem[idx])*1024*1024,MaxMemory[idx])
 
-                    MaxMemory.sort(reverse=True)
+                    # MaxMemory.sort(reverse=True)
 
                 if len(FetchedCUfreeMem)>idx:
                     MaxFreeMemory[idx] = max(int(FetchedCUfreeMem[idx])*1024*1024,MaxFreeMemory[idx])
 
-                    MaxFreeMemory.sort(reverse=True)
+                    # MaxFreeMemory.sort(reverse=True)
 
                     # dmem = int(FetchedCUdeviceMem[idx]) if AMDgpu else (int(FetchedCUdeviceMem[idx])*1024*1024)
                     # lowestcumem[idx] = dmem[idx] if lowestcumem[idx]==0 else (dmem[idx] if dmem[idx]<lowestcumem[idx] else lowestcumem[idx])
@@ -1056,10 +1054,39 @@ def fetch_gpu_properties(testCL,testCU,testVK):
                         idx += 1
         except Exception as e:
             pass
+    if testCL:
+        try: # Get OpenCL GPU names on windows using a special binary. overwrite at known index if found.
+            basepath = os.path.abspath(os.path.dirname(__file__))
+            output = ""
+            data = None
+            try:
+                output = subprocess.run(["clinfo","--json"], capture_output=True, text=True, check=True, encoding='utf-8').stdout
+                data = json.loads(output)
+            except Exception as e1:
+                output = subprocess.run([((os.path.join(basepath, "winclinfo.exe")) if os.name == 'nt' else "clinfo"),"--json"], capture_output=True, text=True, check=True, creationflags=subprocess.CREATE_NO_WINDOW | subprocess.DETACHED_PROCESS, encoding='utf-8').stdout
+                data = json.loads(output)
+            plat = 0
+            dev = 0
+            lowestclmem = 0
+            for platform in data["devices"]:
+                dev = 0
+                for device in platform["online"]:
+                    dname = device["CL_DEVICE_NAME"]
+                    dmem = int(device["CL_DEVICE_GLOBAL_MEM_SIZE"])
+                    idx = plat+dev*2
+                    if idx<len(CLDevices):
+                        CLDevicesNames[idx] = dname
+                        lowestclmem = dmem if lowestclmem==0 else (dmem if dmem<lowestclmem else lowestclmem)
+                    dev += 1
+                plat += 1
+            MaxMemory[0] = max(lowestclmem,MaxMemory[0])
+        except Exception as e:
+            pass
     return
 
 def auto_set_backend_cli():
     fetch_gpu_properties(False,True,True)
+    found_new_backend = False
     if exitcounter < 100 and MaxMemory[0]>3500000000 and (("Use CuBLAS" in runopts and CUDevicesNames[0]!="") or "Use hipBLAS (ROCm)" in runopts) and any(CUDevicesNames):
         if "Use CuBLAS" in runopts or "Use hipBLAS (ROCm)" in runopts:
             args.usecublas = ["normal","mmq"]
@@ -1069,7 +1096,10 @@ def auto_set_backend_cli():
             if VKIsDGPU[i]==1:
                 args.usevulkan = []
                 print("Auto Selected Vulkan Backend...\n")
+                found_new_backend = True
                 break
+    if not found_new_backend:
+        print("No GPU Backend found...\n")
 
 def load_model(model_filename):
     global args
@@ -1087,8 +1117,6 @@ def load_model(model_filename):
 #    inputs.use_token_healing = args.token_healing
 #   inputs.use_direct_io = args.usedirect_io
 #    inputs.override_kv = "".encode("UTF-8")
-#    inputs.cache_type_k = "".encode("UTF-8")
-#    inputs.cache_type_v = "".encode("UTF-8")
     inputs.lora_filename = "".encode("UTF-8")
     inputs.lora_base = "".encode("UTF-8")
     if args.lora:
@@ -3671,8 +3699,6 @@ def show_gui():
 
         mmproj_var.set(dict["mmproj"] if ("mmproj" in dict and dict["mmproj"]) else "")
         
-#        cache_type_k_var.set(dict["cache_type_k"] if ("cache_type_k" in dict and dict["cache_type_k"]) else "")
-#        cache_type_v_var.set(dict["cache_type_v"] if ("cache_type_v" in dict and dict["cache_type_v"]) else "")
 #        override_kv_var.set(dict["override_kv"] if ("override_kv" in dict and dict["override_kv"]) else "")
 
         ssl_cert_var.set("")
@@ -4555,7 +4581,7 @@ def main(launch_args,start_server=True):
             if args.gpulayers==-1:
                 if MaxMemory[0] > 0 and (not args.usecpu) and ((args.usecublas is not None) or (args.usevulkan is not None) or (args.useclblast is not None) or sys.platform=="darwin"):
                     extract_modelfile_params(args.model_param,args.sdmodel,args.whispermodel,args.mmproj)
-                    layeramt = autoset_gpu_layers(args.contextsize, args.sdquant, args.blasbatchsize, args.flashattention, args.quantkv, "mmq" in args.usecublas, "lowvram" in args.usecublas, args.poslayeroffset, args.neglayeroffset)
+                    layeramt = autoset_gpu_layers(args.contextsize,args.sdquant,args.blasbatchsize, args.flashattention, args.quantkv, "mmq" in args.usecublas, "lowvram" in args.usecublas, args.poslayeroffset, args.neglayeroffset)
                     print(f"Auto Recommended GPU Layers: {layeramt}")
                     args.gpulayers = layeramt
                 else:
