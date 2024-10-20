@@ -69,6 +69,12 @@ ifndef GGML_NO_LLAMAFILE
 	CXXFLAGS += -DGGML_USE_LLAMAFILE
 endif
 
+# keep standard at C11 and C++17
+MK_CPPFLAGS  = -Iggml/include -Iggml/src -Iinclude -Isrc -Icommon
+MK_CFLAGS    = -std=c11   -fPIC
+MK_CXXFLAGS  = -std=c++17 -fPIC
+MK_NVCCFLAGS = -std=c++17
+
 #lets try enabling everything
 CFLAGS   += -pthread -Wno-deprecated -Wno-deprecated-declarations -Wno-unused-variable
 CXXFLAGS += -pthread -Wno-multichar -Wno-write-strings -Wno-deprecated -Wno-deprecated-declarations -Wno-unused-variable
