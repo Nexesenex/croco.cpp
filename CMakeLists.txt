@@ -54,8 +54,8 @@ set(LLAMA_CUDA_PEER_MAX_BATCH_SIZE "128" CACHE STRING
                                              "llama: max. batch size for using peer access")
 option(LLAMA_CUDA_NO_PEER_COPY               "llama: do not use peer to peer copies"            OFF)
 option(LLAMA_CUDA_FA_ALL_QUANTS              "llama: compile 18 quants for FlashAttention"      ON)
-option(LLAMA_CUDA_ENABLE_UNIFIED_MEMORY      "llama: enable to avoid OOM in Full Offload"       OFF)
-option(GGML_CUDA_USE_GRAPHS                                                                     OFF)
+option(LLAMA_CUDA_ENABLE_UNIFIED_MEMORY      "llama: enable to avoid OOM in Full Offload"       ON)
+option(GGML_CUDA_USE_GRAPHS                                                                     ON)
 
 option(LLAMA_HIPBLAS                         "llama: use hipBLAS"                               OFF)
 
