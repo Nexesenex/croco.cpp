@@ -12,7 +12,7 @@ Current version indicated by LITEVER below.
 -->
 
 <script>
-	const LITEVER = 180;
+	const LITEVER = 181;
 	const urlParams = new URLSearchParams(window.location.search);
 	var localflag = true;
 	const STORAGE_PREFIX = (localflag?"e_":"")+"kaihordewebui_";
@@ -3268,12 +3268,20 @@ Current version indicated by LITEVER below.
 			console.log('.png file ended prematurely: no IEND header was found');
 		}
 
-		//find the chunk with the chara name, just check first and last letter
+		//find the chunk with the 'chara' name, just check first and last letter
 		let found = chunks.filter(x => (
 			x.name == "tEXt"
 			&& x.data.length > 6
 			&& String.fromCharCode(x.data[0]) == 'c')
 			&& String.fromCharCode(x.data[4]) == 'a');
+
+		//remove ext asset
+		found = found.filter(x => (
+			x.data.length > 12
+			&& !(String.fromCharCode(x.data[6]) == 'e'
+			&& String.fromCharCode(x.data[7]) == 'x'
+			&& String.fromCharCode(x.data[8]) == 't'
+			&& String.fromCharCode(x.data[9]) == '-')));
 
 		if (found.length==0)
 		{
@@ -4436,7 +4444,7 @@ Current version indicated by LITEVER below.
 		darkmode: true,
 
 		max_context_length: (localflag?4096:1800),
-		max_length: 200,
+		max_length: (localflag?220:200),
 		auto_ctxlen: true,
 		auto_genamt: true,
 		rep_pen: 1.07,
@@ -6857,6 +6865,7 @@ Current version indicated by LITEVER below.
 							"desc":data.description?data.description:"",
 							"opmode":2,
 							"adventure_context_mod":false,
+							"adventure_is_action":true,
 							"prefmodel1":adventuremodels1,
 							"prefmodel2":adventuremodels2,
 							"prompt":data.promptContent?data.promptContent:"",
@@ -8370,7 +8379,7 @@ Current version indicated by LITEVER below.
 	function togglepalmmodel()
 	{
 		let mdlname = document.getElementById("custom_palm_model").value;
-		if(mdlname=="gemini-1.5-pro-latest" || mdlname=="gemini-1.5-flash-latest" || mdlname=="gemini-1.5-pro-exp-0801" || mdlname=="gemini-1.5-pro-exp-0827")
+		if(mdlname=="gemini-1.5-pro-latest" || mdlname=="gemini-1.5-pro-001" || mdlname=="gemini-1.5-pro-002" || mdlname=="gemini-1.5-flash-latest" || mdlname=="gemini-1.5-pro-exp-0801" || mdlname=="gemini-1.5-pro-exp-0827")
 		{
 			document.getElementById("gemini_system_instruction").classList.remove("hidden");
 			if(localsettings.saved_palm_jailbreak=="")
@@ -13039,7 +13048,7 @@ Current version indicated by LITEVER below.
 					};
 
 					let sysinst = document.getElementById("gemini_system_instruction").value;
-					if(sysinst!="" && (mdlname=="gemini-1.5-pro-latest" || mdlname=="gemini-1.5-flash-latest" || mdlname=="gemini-1.5-pro-exp-0801"))
+					if(sysinst!="" && (mdlname=="gemini-1.5-pro-latest" || mdlname=="gemini-1.5-pro-001" || mdlname=="gemini-1.5-pro-002" || mdlname=="gemini-1.5-flash-latest" || mdlname=="gemini-1.5-pro-exp-0801"))
 					{
 						payload["systemInstruction"] = {
 							"role": "system",
@@ -17762,7 +17771,7 @@ Current version indicated by LITEVER below.
 
 								<li class="nav-item hidden" id="topbtn_save_load">
 									<a id="tempfile" href="#" style="display:none;"></a>
-									<input type="file" id="loadfileinput" accept="text/json,application/json,image/png,image/webp,.kaistory,.webp,.png,.json,.txt,*.*,*" onchange="load_file(event)" style="display:none;">
+									<input type="file" id="loadfileinput" accept="text/json,application/json,image/png,image/webp,text/plain,*/*" onchange="load_file(event)" style="display:none;">
 									<a class="nav-link mainnav" href="#" onclick="closeTopNav();display_saveloadcontainer()">Save / Load</a>
 								</li>
 								<li class="nav-item hidden" id="topbtn_settings">
@@ -18228,6 +18237,8 @@ Current version indicated by LITEVER below.
 				Note that KoboldAI Lite takes no responsibility for your usage or consequences of this feature. Your API key is used directly with the Gemini API and is not transmitted to us.<br><br>
 				<select style="padding:4px;" class="form-control" id="custom_palm_model" onchange="togglepalmmodel()">
 					<option value="gemini-pro" selected="selected">gemini-pro</option>
+					<option value="gemini-1.5-pro-001">gemini-1.5-pro-001</option>
+					<option value="gemini-1.5-pro-002">gemini-1.5-pro-002</option>
 					<option value="gemini-1.5-pro-latest">gemini-1.5-pro-latest</option>
 					<option value="gemini-1.5-flash-latest">gemini-1.5-flash-latest</option>
 					<option value="gemini-1.5-pro-exp-0801">gemini-1.5-pro-exp-0801</option>
