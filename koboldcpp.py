@@ -1225,8 +1225,8 @@ def generate(genparams, is_quiet=False, stream_flag=False):
     smoothing_factor = genparams.get('smoothing_factor', 0.0)
     logit_biases = genparams.get('logit_bias', {})
     render_special = genparams.get('render_special', False)
-    stopping_strings = genparams.get('stopping_strings', []) # SillyTavern uses that name
-    banned_tokens = genparams.get('banned_tokens', stopping_strings)
+    banned_strings = genparams.get('banned_strings', []) # SillyTavern uses that name
+    banned_tokens = genparams.get('banned_tokens', banned_strings)
     bypass_eos_token = genparams.get('bypass_eos', False)
     custom_token_bans = genparams.get('custom_token_bans', '')
 
