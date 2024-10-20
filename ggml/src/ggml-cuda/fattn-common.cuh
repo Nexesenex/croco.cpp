@@ -169,6 +169,49 @@ static __device__ __forceinline__ float vec_dot_fattn_vec_KQ_q4_1(
     return sum;
 }
 
+static __device__ __forceinline__ int get_one_int_from_table_16(const int & q4) {
+    const uint8_t * q0_8 = (const uint8_t *) &q4;
+    const char4 val0_8 = make_char4(kvalues_iq4nl[q0_8[0]], kvalues_iq4nl[q0_8[1]], kvalues_iq4nl[q0_8[2]], kvalues_iq4nl[q0_8[3]]);
+    return *((const int *) &val0_8);
+}
+
+template<typename T, int D, int warp_size>
+static __device__ __forceinline__ T vec_dot_fattn_vec_KQ_iq4_nl(
+    const char * __restrict__ K_c, const void * __restrict__ Q_v, const int * __restrict__ Q_q8, const void * __restrict__ Q_ds_v) {
+
+    const block_iq4_nl * K_iq4_nl = (const block_iq4_nl *) K_c;
+    GGML_UNUSED(Q_v);
+
+    T sum = 0.0f;
+
+#pragma unroll
+    for (int k_KQ_0 = 0; k_KQ_0 < D/sizeof(int); k_KQ_0 += warp_size) {
+        const int k_KQ = k_KQ_0 + threadIdx.x;
+
+        const int ib    = k_KQ /  QI8_1;
+        const int iqs4  = k_KQ %  QI4_NL;
+        const int shift = k_KQ & (QI8_1/2);
+
+        const int v = get_one_int_from_table_16((get_int_b2(K_iq4_nl[ib].qs, iqs4) >> shift) & 0x0F0F0F0F);
+        const int u = Q_q8[k_KQ_0/warp_size];
+
+        const int sumi = ggml_cuda_dp4a(v, u, 0);
+
+#ifdef FP16_AVAILABLE
+        if (std::is_same<T, half>::value) {
+            const half2  * Q_ds = (const half2  *) Q_ds_v;
+            sum += (T) (((half)sumi) * K_iq4_nl[ib].d * Q_ds[k_KQ_0/warp_size].x);
+        } else
+#endif // FP16_AVAILABLE
+        {
+            const float2 * Q_ds = (const float2 *) Q_ds_v;
+            sum += (T) ((float)sumi * __half2float(K_iq4_nl[ib].d) * Q_ds[k_KQ_0/warp_size].x);
+        }
+    }
+
+    return sum;
+}
+
 template<int D, int nthreads>
 static __device__ __forceinline__ float vec_dot_fattn_vec_KQ_q5_0(
     const char * __restrict__ K_c, const void * __restrict__ Q_v, const int * __restrict__ Q_q8, const void * __restrict__ Q_ds_v) {
@@ -444,6 +487,25 @@ static __device__ __forceinline__ void dequantize_V_q4_1(const void * __restrict
     }
 }
 
+template <typename T>
+static __device__ __forceinline__ T dequantize_1_iq4_nl(const void * __restrict__ vx, const int64_t i) {
+    const block_iq4_nl * x = (const block_iq4_nl *) vx;
+
+    const int64_t ib    =  i           /  QK4_NL;
+    const int     iqs   =  i           % (QK4_NL/2);
+    const int     shift = (i % QK4_NL) / (QK4_NL/2);
+
+#ifdef FP16_AVAILABLE
+    if constexpr (std::is_same<T, half>::value) {
+        return x[ib].d * ((half) kvalues_iq4nl[(x[ib].qs[iqs] >> 4*(shift)) & 0xf]);
+    } else {
+        return (float)x[ib].d * ((float) kvalues_iq4nl[(x[ib].qs[iqs] >> 4*(shift)) & 0xf]);
+    }
+#endif
+    T result = (float)x[ib].d * ((float) kvalues_iq4nl[(x[ib].qs[iqs] >> 4*(shift)) & 0xf]);
+    return result;
+}
+
 template <typename T, int ne>
 static __device__ __forceinline__ void dequantize_V_q5_0(const void * __restrict__ vx, void * __restrict__ dst, const int64_t i0) {
     const block_q5_0 * x = (const block_q5_0 *) vx;
@@ -585,6 +647,8 @@ constexpr __device__ vec_dot_KQ_t get_vec_dot_KQ() {
         return vec_dot_fattn_vec_KQ_q4_0<D, nthreads>;
     } else if constexpr (type_K == GGML_TYPE_Q4_1) {
         return vec_dot_fattn_vec_KQ_q4_1<D, nthreads>;
+    } else if constexpr (type_K == GGML_TYPE_IQ4_NL) {
+        return vec_dot_fattn_vec_KQ_iq4_nl<D, nthreads>;
     } else if constexpr (type_K == GGML_TYPE_Q5_0) {
         return vec_dot_fattn_vec_KQ_q5_0<D, nthreads>;
     } else if constexpr (type_K == GGML_TYPE_Q5_1) {
@@ -607,6 +671,8 @@ constexpr __device__ dequantize_V_t get_dequantize_V() {
         return dequantize_V_q4_0<T, ne>;
     } else if constexpr (type_V == GGML_TYPE_Q4_1) {
         return dequantize_V_q4_1<T, ne>;
+    } else if constexpr (type_V == GGML_TYPE_IQ4_NL) {
+        return dequantize_V_iq4_nl<T, ne>;
     } else if constexpr (type_V == GGML_TYPE_Q5_0) {
         return dequantize_V_q5_0<T, ne>;
     } else if constexpr (type_V == GGML_TYPE_Q5_1) {
@@ -912,6 +978,29 @@ static __global__ void flash_attn_combine_results(
 
     dst[tid] = VKQ_numerator / VKQ_denominator;
 }
+
+/* [[noreturn]]
+static void on_no_fattn_vec_case(const int D) {
+    if (D == 64) {
+        fprintf(stderr, "Unsupported KV type combination for head_size 64.\n");
+        fprintf(stderr, "By default only f16 KV cache is supported.\n");
+        fprintf(stderr, "Compile with GGML_CUDA_FA_ALL_QUANTS for V cache quantization support.\n");
+        GGML_ABORT("fatal error");
+    } else if (D == 128) {
+        fprintf(stderr, "Unsupported KV type combination for head_size 128.\n");
+        fprintf(stderr, "Supported combinations:\n");
+        fprintf(stderr, "  - K == q4_0,   V == q4_0,   4.50 BPV\n");
+        fprintf(stderr, "  - K == iq4_nl, V == iq4_nl, 4.50 BPV\n");
+        fprintf(stderr, "  - K == q8_0,   V == q8_0,   8.50 BPV\n");
+        fprintf(stderr, "  - K == f16,    V == f16,   16.00 BPV\n");
+        fprintf(stderr, "Compile with GGML_CUDA_FA_ALL_QUANTS for all combinations of q4_0, q4_1, iq4_nl, q5_0, q5_1, q8_0, and f16.\n");
+        GGML_ABORT("fatal error");
+    } else {
+        fprintf(stderr, "Unsupported KV type combination for head_size %d.\n", D);
+        fprintf(stderr, "Only f16 is supported.\n");
+        GGML_ABORT("fatal error");
+    }
+} */
 
 template <int DV, int ncols1, int ncols2>
 void launch_fattn(
