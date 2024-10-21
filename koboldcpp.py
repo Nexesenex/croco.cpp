@@ -803,7 +803,7 @@ def autoset_gpu_layers(ctxsize,sdquanted,blasbatchsize,flashattention,quantkv,mm
             if kvq == 7:
                 kvbpw = 17
             if kvq == 8:
-                kvbpw = 14.5
+                kvbpw = 14
             if kvq == 9:
                 kvbpw = 14
             if kvq == 10:
@@ -811,7 +811,7 @@ def autoset_gpu_layers(ctxsize,sdquanted,blasbatchsize,flashattention,quantkv,mm
             if kvq == 11:
                 kvbpw = 13
             if kvq == 12:
-                kvbpw = 12
+                kvbpw = 11.5
             if kvq == 13:
                 kvbpw = 11.5
             if kvq == 14:
@@ -2675,11 +2675,11 @@ def show_gui():
     "1 - q8_0 - (8.5BPW) - FA",
     "1 - q8_0 - (8.5BPW) - FA",
     "1 - q8_0 - (8.5BPW) - FA",
-    "8 - K q8_0 - V q5_1 (7.25BPW) - FA",
+    "9 - K q8_0 - V q5_0 (7BPW) - FA",
     "9 - K q8_0 - V q5_0 (7BPW) - FA",
     "10 - K q8_0 - V iq4_nl (6.5BPW) - FA",
     "10 - K q8_0 - V iq4_nl (6.5BPW) - FA",
-    "12 - q5.1 (6BPW) - FA",
+    "13 - K q5_1 - V q5_0 (5.75BPW) - FA",
     "13 - K q5_1 - V q5_0 (5.75BPW) - FA",
     "14 - K q5_1 - V iq4_nl (5.25BPW) - FA",
     "14 - K q5_1 - V iq4_nl (5.25BPW) - FA",
@@ -5059,7 +5059,7 @@ if __name__ == '__main__':
     advparser.add_argument("--ignoremissing", help="Ignores all missing non-essential files, just skipping them instead.", action='store_true')
     advparser.add_argument("--chatcompletionsadapter", help="Select an optional ChatCompletions Adapter JSON file to force custom instruct tags.", default="")
     advparser.add_argument("--flashattention", help="Enables flash attention, which shrinks the size of the BLAS/compute cache by 50-75% (a few hundreds MB recovered in VRAM), and allows the use of the quantized KV cache.", action='store_true')
-    advparser.add_argument("--quantkv", help="Sets the KV cache data quantization (KVQ) type to save VRAM in NVidia Video Cards, 0 - F16 (16BPW) - FA, 1 - q8_0 - (8.5BPW) - FA, 2 - q4_0 - (4.5BPW) - FA, 3 - K F16 - V q8_0 (12.25BPW) - FA, 8 - K q8_0 - V q5_1 (7.25BPW) - FA, 9 - K q8_0 - V q5_0 (7BPW) - FA, 10 - K q8_0 - V iq4_nl (6.5BPW) - FA, 12 - q5.1 (6BPW) - FA, 13 - K q5_1 - V q5_0 (5.75BPW) - FA, 14 - K 18 - K q5_0 - V iq4_NL (5BPW) - FA, 17 - K q5_0 - V iq4_NL (5BPW) - FA, 20 - K iq4_nl - V iq4_nl (4.5BPW) - FA, 21 - F16 (16BPW) - 1616, 22 - K q8_0 - V F16 (12.25BPW) - 8016, 23 - K q5_1 - V F16 (11BPW) - 5116, 24 - K q5_0 - V F16 (11.75BPW) - 5016, 25 - K q4_1 - V F16 (10.5BPW) - 4116, 26 - K q4-0 - V F16, 27 - K iq4_nl - V F16 (20.5BPW) - 4NL16. Modes 1-20 Requires Flash Attention, AND disables context shifting. Modes 0, 21, 22 can work with or without FA. Modes 23-26 work only without FA. 27 is test", metavar=('[quantization level 0/1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18/19/20/21/22/23/24/25/26/27]'), type=check_range(int,0,27), default=0)
+    advparser.add_argument("--quantkv", help="Sets the KV cache data quantization (KVQ) type to save VRAM in NVidia Video Cards, 0 - F16 (16BPW) - FA, 1 - q8_0 - (8.5BPW) - FA, 2 - q4_0 - (4.5BPW) - FA, 3 - K F16 - V q8_0 (12.25BPW) - FA, 9 - K q8_0 - V q5_0 (7BPW) - FA - FA, 9 - K q8_0 - V q5_0 (7BPW) - FA, 10 - K q8_0 - V iq4_nl (6.5BPW) - FA, 13 - K q5_1 - V q5_0 (5.75BPW) - FA, 13 - K q5_1 - V q5_0 (5.75BPW) - FA, 14 - K 18 - K q5_0 - V iq4_NL (5BPW) - FA, 17 - K q5_0 - V iq4_NL (5BPW) - FA, 20 - K iq4_nl - V iq4_nl (4.5BPW) - FA, 21 - F16 (16BPW) - 1616, 22 - K q8_0 - V F16 (12.25BPW) - 8016, 23 - K q5_1 - V F16 (11BPW) - 5116, 24 - K q5_0 - V F16 (11.75BPW) - 5016, 25 - K q4_1 - V F16 (10.5BPW) - 4116, 26 - K q4-0 - V F16, 27 - K iq4_nl - V F16 (20.5BPW) - 4NL16. Modes 1-20 Requires Flash Attention, AND disables context shifting. Modes 0, 21, 22 can work with or without FA. Modes 23-26 work only without FA. 27 is test", metavar=('[quantization level 0/1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18/19/20/21/22/23/24/25/26/27]'), type=check_range(int,0,27), default=0)
     advparser.add_argument("--forceversion", help="If the model file format detection fails (e.g. rogue modified model) you can set this to override the detected format (enter desired version, e.g. 401 for GPTNeoX-Type2).",metavar=('[version]'), type=int, default=0)
     advparser.add_argument("--smartcontext", help="Reserving a portion of context to try processing less frequently. Outdated compared to ContextShift, but works with KV Cache quantized unlike ContextShift which doesn't. Not recommended except for the use of KV Cache quantized (KVQ) with FlashAttention (modes 1 to 20).", action='store_true')
     advparser.add_argument("--unpack", help="Extracts the file contents of the Croco.Cpp/KoboldCpp binary into a target directory.", metavar=('destination'), type=str, default="")
