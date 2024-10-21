@@ -907,13 +907,9 @@ static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
         .from_float               = quantize_row_q6_0,
         .from_float_ref           = (ggml_from_float_t) quantize_row_q6_0_ref,
         .vec_dot                  = ggml_vec_dot_q6_0_q8_0,
-#if GGML_USE_IQK_MULMAT && defined __AVX2__
-        .vec_dot_type             = GGML_TYPE_Q8_1,
-#else
         .vec_dot_type             = GGML_TYPE_Q8_0,
-#endif
         .nrows                    = 1,
-        .row_meta_size            = 0,
+        // .row_meta_size            = 0,
     },
     [GGML_TYPE_Q8_0] = {
         .type_name                = "q8_0",

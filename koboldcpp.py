@@ -793,55 +793,45 @@ def autoset_gpu_layers(ctxsize,sdquanted,blasbatchsize,flashattention,quantkv,mm
             if kvq == 2:
                 kvbpw = 9
             if kvq == 3:
-                kvbpw = 25
-            if kvq == 4:
-                kvbpw = 17
-            if kvq == 5:
-                kvbpw = 17
-            if kvq == 6:
-                kvbpw = 17
-            if kvq == 7:
-                kvbpw = 17
-            if kvq == 8:
-                kvbpw = 14
-            if kvq == 9:
-                kvbpw = 14
-            if kvq == 10:
-                kvbpw = 13
-            if kvq == 11:
-                kvbpw = 13
-            if kvq == 12:
-                kvbpw = 11.5
-            if kvq == 13:
-                kvbpw = 11.5
-            if kvq == 14:
-                kvbpw = 10.5
-            if kvq == 15:
-                kvbpw = 10.5
-            if kvq == 16:
-                kvbpw = 10.5
-            if kvq == 17:
-                kvbpw = 10.5
-            if kvq == 18:
-                kvbpw = 10
-            if kvq == 19:
-                kvbpw = 10
-            if kvq == 20:
-                kvbpw = 9.5
-            if kvq == 21:
-                kvbpw = 32
-            if kvq == 22:
                 kvbpw = 24.5
-            if kvq == 23:
-                kvbpw = 22
-            if kvq == 24:
-                kvbpw = 21.5
-            if kvq == 25:
-                kvbpw = 21
-            if kvq == 26:
-                kvbpw = 20.5
-            if kvq == 27:
+            if kvq == 4:
+                kvbpw = 22.5
+            if kvq == 5:
+                kvbpw = 15
+            if kvq == 6:
+                kvbpw = 14
+            if kvq == 7:
                 kvbpw = 13
+            if kvq == 8:
+                kvbpw = 13
+            if kvq == 9:
+                kvbpw = 12
+            if kvq == 10:
+                kvbpw = 11
+            if kvq == 11:
+                kvbpw = 11
+            if kvq == 12:
+                kvbpw = 10
+            if kvq == 13:
+                kvbpw = 10
+            if kvq == 14:
+                kvbpw = 9
+            if kvq == 15:
+                kvbpw = 32
+            if kvq == 16:
+                kvbpw = 24.5
+            if kvq == 17:
+                kvbpw = 22.5
+            if kvq == 18:
+                kvbpw = 22
+            if kvq == 19:
+                kvbpw = 21.5
+            if kvq == 20:
+                kvbpw = 21
+            if kvq == 21:
+                kvbpw = 20.5
+            if kvq == 22:
+                kvbpw = 20.5
 
             if cs:
                 csmul = ((cs+4096)/6144) if cs >= 2048 else 1.0 #Nexes 2
@@ -2666,35 +2656,30 @@ def show_gui():
     blasubatchsize_text = ["0 - Physical Blas Batch same as Logical","1","2","4","8","16","32","40","48","64","80","96","128","160","192","256","320","384","512","640","768","1024","1280","1536","2048","2560","3072","4096"]
     contextsize_text = ["128", "256", "384", "512", "640", "768", "896", "1024", "1152", "1280", "1408", "1536", "1664", "1792", "1920", "2048", "2176", "2304", "2432", "2560", "2688", "2816", "2944", "3072", "3200", "3328", "3456", "3584", "3712", "3840", "3968", "4096", "4224", "4352", "4480", "4608", "4736", "4864", "4992", "5120", "5248", "5376", "5504", "5632", "5760", "5888", "6016", "6144", "6272", "6400", "6528", "6656", "6784", "6912", "7040", "7168", "7296", "7424", "7552", "7680", "7808", "7936", "8064", "8192", "8320", "8448", "8576", "8704", "8832", "8960", "9088", "9216", "9344", "9472", "9600", "9728", "9856", "9984", "10112", "10240", "10368", "10496", "10624", "10752", "10880", "11008", "11136", "11264", "11392", "11520", "11648", "11776", "11904", "12032", "12160", "12288", "12416", "12544", "12672", "12800", "12928", "13056", "13184", "13312", "13440", "13568", "13696", "13824", "13952", "14080", "14208", "14336", "14464", "14592", "14720", "14848", "14976", "15104", "15232", "15360", "15488", "15616", "15744", "15872", "16000", "16128", "16256", "16384", "16512", "16640", "16768", "16896", "17024", "17152", "17280", "17408", "17536", "17664", "17792", "17920", "18048", "18176", "18304", "18432", "18560", "18688", "18816", "18944", "19072", "19200", "19328", "19456", "19584", "19712", "19840", "19968", "20096", "20224", "20352", "20480", "20608", "20736", "20864", "20992", "21120", "21248", "21376", "21504", "21632", "21760", "21888", "22016", "22144", "22272", "22400", "22528", "22656", "22784", "22912", "23040", "23168", "23296", "23424", "23552", "23680", "23808", "23936", "24064", "24192", "24320", "24448", "24576", "24704", "24832", "24960", "25088", "25216", "25344", "25472", "25600", "25728", "25856", "25984", "26112", "26240", "26368", "26496", "26624", "26752", "26880", "27008", "27136", "27264", "27392", "27520", "27648", "27776", "27904", "28032", "28160", "28288", "28416", "28544", "28672", "28800", "28928", "29056", "29184", "29312", "29440", "29568", "29696", "29824", "29952", "30080", "30208", "30336", "30464", "30592", "30720", "30848", "30976", "31104", "31232", "31360", "31488", "31616", "31744", "31872", "32000", "32128", "32256", "32384", "32512", "32640", "32768", "32896", "33024", "33152", "33280", "33408", "33536", "33664", "33792", "33920", "34048", "34176", "34304", "34432", "34560", "34688", "34816", "34944", "35072", "35200", "35328", "35456", "35584", "35712", "35840", "35968", "36096", "36224", "36352", "36480", "36608", "36736", "36864", "36992", "37120", "37248", "37376", "37504", "37632", "37760", "37888", "38016", "38144", "38272", "38400", "38528", "38656", "38784", "38912", "39040", "39168", "39296", "39424", "39552", "39680", "39808", "39936", "40064", "40192", "40320", "40448", "40576", "40704", "40832", "40960", "41088", "41216", "41344", "41472", "41600", "41728", "41856", "41984", "42112", "42240", "42368", "42496", "42624", "42752", "42880", "43008", "43136", "43264", "43392", "43520", "43648", "43776", "43904", "44032", "44160", "44288", "44416", "44544", "44672", "44800", "44928", "45056", "45184", "45312", "45440", "45568", "45696", "45824", "45952", "46080", "46208", "46336", "46464", "46592", "46720", "46848", "46976", "47104", "47232", "47360", "47488", "47616", "47744", "47872", "48000", "48128", "48256", "48384", "48512", "48640", "48768", "48896", "49024", "49152", "49408", "49664", "49920", "50176", "50432", "50688", "50944", "51200", "51456", "51712", "51968", "52224", "52480", "52736", "52992", "53248", "53504", "53760", "54016", "54272", "54528", "54784", "55040", "55296", "55552", "55808", "56064", "56320", "56576", "56832", "57088", "57344", "57600", "57856", "58112", "58368", "58624", "58880", "59136", "59392", "59648", "59904", "60160", "60416", "60672", "60928", "61184", "61440", "61696", "61952", "62208", "62464", "62720", "62976", "63232", "63488", "63744", "64000", "64256", "64512", "64768", "65024", "65280", "65536", "66048", "66560", "67072", "67584", "68096", "68608", "69120", "69632", "70144", "70656", "71168", "71680", "72192", "72704", "73216", "73728", "74240", "74752", "75264", "75776", "76288", "76800", "77312", "77824", "78336", "78848", "79360", "79872", "80384", "80896", "81408", "81920", "82432", "82944", "83456", "83968", "84480", "84992", "85504", "86016", "86528", "87040", "87552", "88064", "88576", "89088", "89600", "90112", "90624", "91136", "91648", "92160", "92672", "93184", "93696", "94208", "94720", "95232", "95744", "96256", "96768", "97280", "97792", "98304", "99328", "100352", "101476", "102400", "103424", "104448", "105472", "106496", "107520", "108544", "109568", "110592", "111616", "112640", "113664", "114688", "115712", "116736", "117760", "118784", "119808", "120832", "121856", "122880", "123904", "124928", "125952", "126976", "128000", "129024", "130048", "131072", "132096", "133120", "134144", "135168", "136192", "137216", "138240", "139264", "140288", "141312", "142336", "143360", "144384", "145408", "146432", "147456", "148480", "149504", "150528", "151552", "152576", "153600", "154624", "155648", "156672", "157696", "158720", "159744", "160768", "161792", "162816", "163840", "164864", "165888", "166912", "167936", "168960", "169984", "171008", "172032", "173056", "174088", "175112", "176128", "177152", "178176", "179200", "180224", "181248", "182272", "183296", "184320", "185344", "186368", "187392", "188416", "189440", "190464", "191488", "192512", "193536", "194560", "195584", "196608", "198656", "200704", "202752", "204800", "206848", "208896", "210944", "212992", "215040", "217088", "219136", "221184", "223232", "225280", "227328", "229376", "231424", "233472", "235520", "237568", "239616", "241664", "243712", "245760", "247808", "249856", "251904", "253952", "256000", "258048", "260096", "262144", "266140", "270336", "274432", "278528", "282524", "286720", "290816", "294912", "299008", "303104", "307200", "311296", "315392", "319488", "323584", "327680", "331776", "335872", "339968", "344064", "348160", "352256", "356352", "360448", "364544", "368640", "372736", "376832", "380928", "385024", "389120", "393216", "401408", "409600", "417792", "425984", "434176", "442368", "450560", "458752", "466944", "475136", "483328", "491520", "499712", "507904", "516096", "524288", "540672", "557056", "573440", "589824", "606208", "622592", "638976", "655360", "671744", "688128", "704512", "720896", "737280", "753664", "770048", "786432", "802816", "819200", "835584", "851968", "868352", "884736", "901120", "917504", "933888", "950272", "966656", "983040", "999424", "1015808", "1032192", "1048576"]
     antirunopts = [opt.replace("Use ", "") for lib, opt in lib_option_pairs if not (opt in runopts)]
-    quantkv_values = ["0", "1", "2", "3", "1", "1", "1", "1", "8", "9", "10", "10", "12", "13", "14", "14", "14", "17", "17", "17", "20", "21", "22", "23", "24", "25", "26", "27"]
-    quantkv_text = ["0 - F16 (16BPW) - FA",
+    quantkv_values = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22"]
+    quantkv_text = ["0 - F16 (16BPW) - FA or not",
     "1 - q8_0 - (8.5BPW) - FA",
     "2 - q4_0 - (4.5BPW) - FA",
     "3 - K F16 - V q8_0 (12.25BPW) - FA",
-    "1 - q8_0 - (8.5BPW) - FA",
-    "1 - q8_0 - (8.5BPW) - FA",
-    "1 - q8_0 - (8.5BPW) - FA",
-    "1 - q8_0 - (8.5BPW) - FA",
-    "9 - K q8_0 - V q5_0 (7BPW) - FA",
-    "9 - K q8_0 - V q5_0 (7BPW) - FA",
-    "10 - K q8_0 - V iq4_nl (6.5BPW) - FA",
-    "10 - K q8_0 - V iq4_nl (6.5BPW) - FA",
-    "13 - K q5_1 - V q5_0 (5.75BPW) - FA",
-    "13 - K q5_1 - V q5_0 (5.75BPW) - FA",
-    "14 - K q5_1 - V iq4_nl (5.25BPW) - FA",
-    "14 - K q5_1 - V iq4_nl (5.25BPW) - FA",
-    "14 - K q5_1 - V iq4_nl (5.25BPW) - FA",
-    "17 - K q5_0 - V iq4_NL (5BPW) - FA",
-    "17 - K q5_0 - V iq4_NL (5BPW) - FA",
-    "17 - K q5_0 - V iq4_NL (5BPW) - FA",
-    "20 - K iq4_nl - V iq4_nl (4.5BPW) - FA",
-    "21 - F16 (16BPW) - 1616",
-    "22 - K q8_0 - V F16 (12.25BPW) - 8016",
-    "23 - K q5_1 - V F16 (11BPW) - 5116",
-    "24 - K q5_0 - V F16 (11.75BPW) - 5016",
-    "25 - K q4_1 - V F16 (10.5BPW) - 4116",
-    "26 - K q4-0 - V F16 (10.25BPW) - 4016",
-    "27 - K iq4_nl - V F16 (20.5BPW) - 4NL16"]
+    "4 - K F16 - V q6_0 (11.25BPW) - FA",   
+    "5 - K q8_0 - V q6_0 (7.5BPW) - FA",
+    "6 - K q8_0 - V q5_0 (7BPW) - FA",
+    "7 - K q8_0 - V iq4_nl (6.5BPW) - FA",
+    "8 - K q6_0 - V q6_0 (6.5BPW) - FA",
+    "9 - K q6_0 - V q5_0 (6BPW) - FA",
+    "10 - K q6_0 - V iq4_nl (5.5BPW) - FA",
+    "11 - K q5_1 - V q5_0 (5.5BPW) - FA",
+    "12 - K q5_1 - V iq4_nl (5BPW) - FA",
+    "13 - K q5_0 - V iq4_nl (5BPW) - FA",
+    "14 - K iq4_nl - V iq4_nl (4.5BPW) - FA",
+    "15 - F16 (16BPW) - FA or not",
+    "16 - K q8_0 - V F16 (12.25BPW) - FA or not, then slower",
+    "17 - K q6_0 - V F16 (11.25BPW) - NO FA, slower, to be tested",
+    "18 - K q5_1 - V F16 (11BPW) - NO FA, slower",
+    "19 - K q5_0 - V F16 (11.75BPW) - NO FA, slower",
+    "20 - K q4_1 - V F16 (10.5BPW) - NO FA, slower",
+    "21 - K q4-0 - V F16 (10.25BPW) - NO FA, slower",
+    "22 - K iq4_nl - V F16 (10.25BPW) - NO FA, slower, to be tested"]
     # displaygpu_values = ["0", "1", "2", "3", "4"]
     # displaygpu_text = ["GPU 0 used for desktop display", "GPU 1 used for desktop display", "GPU 2 used for desktop display", "GPU 3 used for desktop display", "No GPU used for desktop display"]
     poslayeroffset_values = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
@@ -3241,7 +3226,7 @@ def show_gui():
     makecheckbox(tokens_tab, "Use FlashAttention", flashattention, 28, tooltiptxt="Enable flash attention for GGUF models.")
     noqkvlabel = makelabel(tokens_tab,"Requirments Not Met",31,0,"Requires FlashAttention ENABLED and ContextShift DISABLED.")
     noqkvlabel.configure(text_color="#ff5555")
-    qkvslider,qkvlabel,qkvtitle = makeslider(tokens_tab, "Quantize KV Cache:", quantkv_text, quantkv_var, 0, 27, 30, set=0,tooltip="Enable quantization of KV cache (KVQ). Mode 0 (F16) is default. Modes 1-20 requires FlashAttention and disables ContextShift.\nModes 23-26 work without FA, for incompatible models. 0,21,22 can work with or without.")
+    qkvslider,qkvlabel,qkvtitle = makeslider(tokens_tab, "Quantize KV Cache:", quantkv_text, quantkv_var, 0, 22, 30, set=0,tooltip="Enable quantization of KV cache (KVQ). Mode 0 (F16) is default. Modes 1-12 requires FlashAttention and disables ContextShift.\nModes 15-20 work without FA, for incompatible models. 0,13,14 can work with or without.")
 
     makefileentry(tokens_tab, "Model:", "Select GGML Model File", model_var, 40, 576, onchoosefile=on_picked_model_file,tooltiptxt="Select a GGUF or GGML model file on disk to be loaded.")
 
@@ -4365,18 +4350,18 @@ def main(launch_args,start_server=True):
     if args.model_param and args.model_param!="" and (args.model_param.lower().endswith('.kcpps') or args.model_param.lower().endswith('.kcppt')):
         load_config_cli(args.model_param)
 
-    #prevent quantkv 1-20 from being used without flash attn, and 23-26 to be used without. 27 is test.
+    #prevent quantkv 1-12 from being used without flash attn, and 15-20 to be used without.
     if args.quantkv and args.quantkv ==0:
         print("KV f16 cache can work in both FA and no-FA mode")
 
-    if args.quantkv and args.quantkv >0 and args.quantkv <21 and not args.flashattention:
+    if args.quantkv and args.quantkv >0 and args.quantkv <15 and not args.flashattention:
         print("Error: Using --quantkv 1 to 20 requires --flashattention")
         sys.exit(1)
 
-    if args.quantkv and args.quantkv >20 and args.quantkv <23:
+    if args.quantkv and args.quantkv >14 and args.quantkv <17:
         print("KV f16 and Kq8_0-Vf16 cache can work in both FA and no-FA mode")
 
-    if args.quantkv and args.quantkv >22 and args.flashattention:
+    if args.quantkv and args.quantkv >16 and args.flashattention:
         print("Error: Using --quantkv legacy (quantum K<q8_0 cache - V16) is not using flash attention")
         print("Error: the equivalent quants with FA has not been compiled because they are inferior to K16_Vx")
         sys.exit(1)
@@ -5059,7 +5044,7 @@ if __name__ == '__main__':
     advparser.add_argument("--ignoremissing", help="Ignores all missing non-essential files, just skipping them instead.", action='store_true')
     advparser.add_argument("--chatcompletionsadapter", help="Select an optional ChatCompletions Adapter JSON file to force custom instruct tags.", default="")
     advparser.add_argument("--flashattention", help="Enables flash attention, which shrinks the size of the BLAS/compute cache by 50-75% (a few hundreds MB recovered in VRAM), and allows the use of the quantized KV cache.", action='store_true')
-    advparser.add_argument("--quantkv", help="Sets the KV cache data quantization (KVQ) type to save VRAM in NVidia Video Cards, 0 - F16 (16BPW) - FA, 1 - q8_0 - (8.5BPW) - FA, 2 - q4_0 - (4.5BPW) - FA, 3 - K F16 - V q8_0 (12.25BPW) - FA, 9 - K q8_0 - V q5_0 (7BPW) - FA - FA, 9 - K q8_0 - V q5_0 (7BPW) - FA, 10 - K q8_0 - V iq4_nl (6.5BPW) - FA, 13 - K q5_1 - V q5_0 (5.75BPW) - FA, 13 - K q5_1 - V q5_0 (5.75BPW) - FA, 14 - K 18 - K q5_0 - V iq4_NL (5BPW) - FA, 17 - K q5_0 - V iq4_NL (5BPW) - FA, 20 - K iq4_nl - V iq4_nl (4.5BPW) - FA, 21 - F16 (16BPW) - 1616, 22 - K q8_0 - V F16 (12.25BPW) - 8016, 23 - K q5_1 - V F16 (11BPW) - 5116, 24 - K q5_0 - V F16 (11.75BPW) - 5016, 25 - K q4_1 - V F16 (10.5BPW) - 4116, 26 - K q4-0 - V F16, 27 - K iq4_nl - V F16 (20.5BPW) - 4NL16. Modes 1-20 Requires Flash Attention, AND disables context shifting. Modes 0, 21, 22 can work with or without FA. Modes 23-26 work only without FA. 27 is test", metavar=('[quantization level 0/1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18/19/20/21/22/23/24/25/26/27]'), type=check_range(int,0,27), default=0)
+    advparser.add_argument("--quantkv", help="Sets the KV cache data quantization (KVQ) type to save VRAM in NVidia Video Cards, 0 - F16 (16BPW) - FA or not, 1 - q8_0 - (8.5BPW) - FA, 2 - q4_0 - (4.5BPW) - FA, 3 - K F16 - V q8_0 (12.25BPW) - FA, 4 - K F16 - V q6_0 (11.25BPW) - FA, 5 - K q8_0 - V q6_0 (7.5BPW) - FA, 6 - K q8_0 - V q5_0 (7BPW) - FA, 7 - K q8_0 - V iq4_nl (6.5BPW) - FA, 8 - K q6_0 - V q6_0 (6.5BPW) - FA, 9 - K q6_0 - V q5_0 (6BPW) - FA, 10 - K q6_0 - V iq4_nl (5.5BPW) - FA, 11 - K q5_1 - V q5_0 (5.5BPW) - FA, 12 - K q5_1 - V iq4_nl (5BPW) - FA, 13 - K q5_0 - V iq4_nl (5BPW) - FA, 14 - K iq4_nl - V iq4_nl (4.5BPW) - FA, 15 - F16 (16BPW) - FA or not, 16 - K q8_0 - V F16 (12.25BPW) - FA or not, then slower, 17 - K q6_0 - V F16 (11.5BPW) - NO FA, slower, to be tested, 18 - K q5_1 - V F16 (11BPW) - NO FA, slower, 19 - K q5_0 - V F16 (11.75BPW) - NO FA, slower, 20 - K q4_1 - V F16 (10.5BPW) - NO FA, slower, 21 - K q4-0 - V F16 (10.25BPW) - NO FA, slower, 22 - K iq4_nl - V F16 (10.25BPW) - NO FA, slower, to be tested", metavar=('[quantization level 0/1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18/19/20/21/22]'), type=check_range(int,0,27), default=0)
     advparser.add_argument("--forceversion", help="If the model file format detection fails (e.g. rogue modified model) you can set this to override the detected format (enter desired version, e.g. 401 for GPTNeoX-Type2).",metavar=('[version]'), type=int, default=0)
     advparser.add_argument("--smartcontext", help="Reserving a portion of context to try processing less frequently. Outdated compared to ContextShift, but works with KV Cache quantized unlike ContextShift which doesn't. Not recommended except for the use of KV Cache quantized (KVQ) with FlashAttention (modes 1 to 20).", action='store_true')
     advparser.add_argument("--unpack", help="Extracts the file contents of the Croco.Cpp/KoboldCpp binary into a target directory.", metavar=('destination'), type=str, default="")
