@@ -148,3 +148,4 @@ conda/
 kobold_benchmarks.csv
 .~lock.kobold_benchmarks.csv\#
 *.dll
+CppProperties.json
