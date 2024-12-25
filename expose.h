@@ -69,6 +69,7 @@ struct load_model_inputs
     const bool load_guidance = false;
     const char * override_kv[overridekv_max] = {};
     const char * override_tensors = nullptr;
+    const float norm_rms_eps = -1.0f;
     const bool flash_attention = false;
     const float tensor_split[tensor_split_max] = {};
     const int quant_k = 0;
