@@ -2574,6 +2574,20 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
             kvo.val_i64 = inputs.moe_experts;
             kvos.push_back(kvo);
         }
+
+        if(inputs.norm_rms_eps>0)
+        {
+            printf("\nOverriding norm rms epsilon to %f\n",inputs.norm_rms_eps);
+            llama_model_kv_override kvo;
+            const char * rmskey = "llama.attention.layer_norm_rms_epsilon";
+            std::strncpy(kvo.key, rmskey, sizeof(kvo.key) - 1);
+            kvo.key[sizeof(kvo.key) - 1] = '\0'; // Ensure null termination
+            kvo.tag = LLAMA_KV_OVERRIDE_TYPE_FLOAT;
+            kvo.val_f64 = inputs.norm_rms_eps;
+            kvos.push_back(kvo);
+            // model_params.kv_overrides = kvos.data();
+        }
+
         for(int x=0;x<overridekv_max;++x)
         {
             std::string override_kv = inputs.override_kv[x];
@@ -2592,6 +2606,7 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
             kvos.back().key[0] = 0;
             model_params.kv_overrides = kvos.data();
         }
+
         //handle override tensor
         std::string tensoroverrides = inputs.override_tensors;
 
