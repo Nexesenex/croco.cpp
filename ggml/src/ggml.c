@@ -1458,6 +1458,12 @@ bool ggml_is_empty(const struct ggml_tensor * tensor) {
     return false;
 }
 
+bool ggml_is_noop(const struct ggml_tensor * tensor) {
+    return tensor->op == GGML_OP_NONE || tensor->op == GGML_OP_RESHAPE ||
+           tensor->op == GGML_OP_VIEW || tensor->op == GGML_OP_PERMUTE || tensor->op == GGML_OP_TRANSPOSE ||
+           ggml_is_empty(tensor) ? true : false;
+}
+
 bool ggml_are_same_shape(const struct ggml_tensor * t0, const struct ggml_tensor * t1) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
