@@ -260,6 +260,12 @@ if (LLAMA_CUBLAS)
 
         set(LLAMA_EXTRA_LIBS ${LLAMA_EXTRA_LIBS} CUDA::cuda_driver)
 
+        if (NOT GGML_MUSA)
+            set(CMAKE_CUDA_USE_RESPONSE_FILE_FOR_INCLUDES 0)
+            set(CMAKE_CUDA_USE_RESPONSE_FILE_FOR_LIBRARIES 0)
+            set(CMAKE_CUDA_USE_RESPONSE_FILE_FOR_OBJECTS 0)
+        endif()
+
     if (NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
         # 35 == Lowest CUDA 11 standard for Kepler
         # 37 == Highest CUDA 11 standard for Kepler
