@@ -58,7 +58,9 @@ option(LLAMA_HIPBLAS                         "llama: use hipBLAS"               
 # Other
 option(LLAMA_OPENMP                          "llama: use OpenMP"                                OFF)
 
-option(LLAMA_IQK_MULMAT                      "llama: use optimized iqk matrix multiplications"  ON)
+# IK_Llama.cpp Specifics
+option(LLAMA_IQK_MULMAT                      "llama: use optimized iqk matrix multiplications"  OFF)
+option(GGML_IQK_FA_ALL_QUANTS                "ggml: compile all quants for IQK FlashAttention"  OFF)
 
 #
 # Compile flags
@@ -89,13 +91,6 @@ list(APPEND GGML_SOURCES_CUDA ${SRCS})
 set(GGML_V3_CUDA_SOURCES otherarch/ggml_v3-cuda.cu otherarch/ggml_v3-cuda.h)
 set(GGML_V2_CUDA_SOURCES otherarch/ggml_v2-cuda.cu otherarch/ggml_v2-cuda.h)
 set(GGML_V2_LEGACY_CUDA_SOURCES otherarch/ggml_v2-cuda-legacy.cu otherarch/ggml_v2-cuda-legacy.h)
-
-set (GGML_SOURCES_IQK iqk-quantize.cpp)
-if (LLAMA_IQK_MULMAT)
-    add_compile_definitions(GGML_USE_IQK_MULMAT)
-    set(GGML_SOURCES_IQK_MM iqk_mul_mat.cpp)
-    set(GGML_HEADERS_IQK_MM iqk_mul_mat.h)
-endif()
 
 if (GGML_CUDA_USE_GRAPHS)
     add_compile_definitions(GGML_CUDA_USE_GRAPHS)
@@ -452,8 +447,6 @@ add_library(ggml
             ggml/src/llamafile/sgemm.h
             ggml/src/ggml-aarch64.c
             ggml/src/ggml-aarch64.h
-            # ggml/src/iqk/iqk_mul_mat.cpp
-            # ggml/src/iqk/iqk_mul_mat.h
             ggml/src/iqk/iqk_quantize.cpp
             ggml/src/iqk/iqk_quantize.h
             ${GGML_SOURCES_CUDA})
@@ -461,6 +454,18 @@ target_include_directories(ggml PUBLIC . ./ggml/include ./ggml/src ./include ./o
 target_compile_features(ggml PUBLIC c_std_11) # don't bump
 target_link_libraries(ggml PUBLIC Threads::Threads ${LLAMA_EXTRA_LIBS})
 set_target_properties(ggml PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+set (GGML_SOURCES_IQK iqk-quantize.cpp)
+if (GGML_IQK_MUL_MAT)
+    message(STATUS "Using optimized iqk matrix multiplications")
+    add_compile_definitions(GGML_USE_IQK_MULMAT)
+    set(GGML_SOURCES_IQK_MM iqk/iqk_mul_mat.cpp)
+    set(GGML_HEADERS_IQK_MM iqk/iqk_mul_mat.h)
+    # if (GGML_IQK_FA_ALL_QUANTS)
+        # message(STATUS "Including all IQK FA kernels")
+        # add_compile_definitions(GGML_IQK_FA_ALL_QUANTS)
+    # endif()
+endif()
 
 add_library(ggml_v1
             otherarch/ggml_v1.c
