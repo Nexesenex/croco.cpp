@@ -606,9 +606,22 @@ class ModelBase:
                         gguf.MODEL_TENSOR.ALTUP_ROUTER,
                         gguf.MODEL_TENSOR.LAUREL_L,
                         gguf.MODEL_TENSOR.LAUREL_R,
+                        gguf.MODEL_TENSOR.ATTN_V,
+                        gguf.MODEL_TENSOR.ATTN_K,
                     )
                 ):
                     if self.ftype in (
+                        gguf.LlamaFileType.MOSTLY_Q4_0,
+                        gguf.LlamaFileType.MOSTLY_Q4_1,
+                    ):
+                        data_qtype = gguf.GGMLQuantizationType.Q5_0  
+                    elif self.ftype in (
+                        gguf.LlamaFileType.MOSTLY_Q5_0,
+                        gguf.LlamaFileType.MOSTLY_Q5_1,
+                        # gguf.LlamaFileType.MOSTLY_Q6_0,
+                    ):
+                        data_qtype = gguf.GGMLQuantizationType.Q8_0
+                    elif self.ftype in (
                         gguf.LlamaFileType.MOSTLY_TQ1_0,
                         gguf.LlamaFileType.MOSTLY_TQ2_0,
                     ):
@@ -623,6 +636,16 @@ class ModelBase:
                         data_qtype = gguf.GGMLQuantizationType.F16
                     elif self.ftype == gguf.LlamaFileType.MOSTLY_BF16:
                         data_qtype = gguf.GGMLQuantizationType.BF16
+                    elif self.ftype == gguf.LlamaFileType.MOSTLY_Q4_0:
+                        data_qtype = gguf.GGMLQuantizationType.Q4_0
+                    elif self.ftype == gguf.LlamaFileType.MOSTLY_Q4_1:
+                        data_qtype = gguf.GGMLQuantizationType.Q4_1
+                    elif self.ftype == gguf.LlamaFileType.MOSTLY_Q5_0:
+                        data_qtype = gguf.GGMLQuantizationType.Q5_0
+                    elif self.ftype == gguf.LlamaFileType.MOSTLY_Q5_1:
+                        data_qtype = gguf.GGMLQuantizationType.Q5_1
+                    # elif self.ftype == gguf.LlamaFileType.MOSTLY_Q6_0: // To be implemented?
+                        # data_qtype = gguf.GGMLQuantizationType.Q6_0
                     elif self.ftype == gguf.LlamaFileType.MOSTLY_Q8_0:
                         data_qtype = gguf.GGMLQuantizationType.Q8_0
                     elif self.ftype == gguf.LlamaFileType.MOSTLY_TQ1_0:
@@ -831,6 +854,13 @@ class TextModel(ModelBase):
 
     def set_gguf_parameters(self):
         self.gguf_writer.add_block_count(self.block_count)
+        
+        logger.info("****************************************************************************************")
+        logger.info("** quantizing to `Q4_0`,`Q4_1`,`Q5_0`, or `Q5_1`is not equiv to using `llama-quantize`")
+        logger.info("** `Q4_0`,`Q4_1` are here using embeddings, output, attn_k and attn_v in q5_0")
+        logger.info("** `Q5_0`,`Q5_1` are here using embeddings, output, attn_k and attn_v in q8_0")
+        logger.info("** This, in order to generate a small but reliable conversion to create an iMatrix file.")
+        logger.info("****************************************************************************************")
 
         if (n_ctx := self.find_hparam(["max_position_embeddings", "n_ctx", "n_positions", "max_length", "max_sequence_length", "model_max_length"], optional=True)) is not None:
             self.gguf_writer.add_context_length(n_ctx)
@@ -11834,8 +11864,8 @@ def parse_args() -> argparse.Namespace:
         help="path to write to; default: based on input. {ftype} will be replaced by the outtype.",
     )
     parser.add_argument(
-        "--outtype", type=str, choices=["f32", "f16", "bf16", "q8_0", "tq1_0", "tq2_0", "auto"], default="auto",
-        help="output format - use f32 for float32, f16 for float16, bf16 for bfloat16, q8_0 for Q8_0, tq1_0 or tq2_0 for ternary, and auto for the highest-fidelity 16-bit float type",
+        "--outtype", type=str, choices=["f32", "f16", "bf16", "q8_0", "q4_0", "q4_1", "q5_0", "q5_1", "tq1_0", "tq2_0", "auto"], default="auto",
+        help="output format - use f32 for float32, f16 for float16, bf16 for bfloat16, q8_0 for Q8_0, tq1_0 or tq2_0 for ternary, q4_0, q4_1, q5_0, q5_1 for a smaller conversion to then create an iMatrix file for example, and auto for the highest-fidelity 16-bit float type depending on the first loaded tensor type",
     )
     parser.add_argument(
         "--bigendian", action="store_true",
@@ -11996,6 +12026,11 @@ def main() -> None:
         "f32": gguf.LlamaFileType.ALL_F32,
         "f16": gguf.LlamaFileType.MOSTLY_F16,
         "bf16": gguf.LlamaFileType.MOSTLY_BF16,
+        "q4_0": gguf.LlamaFileType.MOSTLY_Q4_0,
+        "q4_1": gguf.LlamaFileType.MOSTLY_Q4_1,
+        "q5_0": gguf.LlamaFileType.MOSTLY_Q5_0,
+        "q5_1": gguf.LlamaFileType.MOSTLY_Q5_1,
+        # "q6_0": gguf.LlamaFileType.MOSTLY_Q6_0,
         "q8_0": gguf.LlamaFileType.MOSTLY_Q8_0,
         "tq1_0": gguf.LlamaFileType.MOSTLY_TQ1_0,
         "tq2_0": gguf.LlamaFileType.MOSTLY_TQ2_0,
