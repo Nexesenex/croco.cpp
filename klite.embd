@@ -12,7 +12,7 @@ Current version indicated by LITEVER below.
 -->
 
 <script>
-	const LITEVER = 163;
+	const LITEVER = 165;
 	const urlParams = new URLSearchParams(window.location.search);
 	const localflag = true;
 	const STORAGE_PREFIX = (localflag?"e_":"")+"kaihordewebui_";
@@ -2293,6 +2293,7 @@ Current version indicated by LITEVER below.
 		padding:4px;
 		margin-right:6px;
 		border-radius:50%;
+		cursor:pointer;
 	}
 	.corpostyleitemheading
 	{
@@ -3653,6 +3654,15 @@ Current version indicated by LITEVER below.
 							}
 						}
 					}
+					else
+					{
+						if(globalabortcontroller)
+						{
+							globalabortcontroller.abort();
+							console.log("Abort Signal");
+							prepare_abort_controller();
+						}
+					}
 					if(was_empty && synchro_pending_stream!="")
 					{
 						render_gametext(false);
@@ -3756,6 +3766,15 @@ Current version indicated by LITEVER below.
 									last_stop_reason = "stop";
 								}
 							}
+						}
+					}
+					else
+					{
+						if(globalabortcontroller)
+						{
+							globalabortcontroller.abort();
+							console.log("Abort Signal");
+							prepare_abort_controller();
 						}
 					}
 					if(was_empty && synchro_pending_stream!="")
@@ -5945,7 +5964,7 @@ Current version indicated by LITEVER below.
 			try {
 				let new_loaded_storyobj = JSON.parse(text);
 				//we don't want to fiddle with the file as its very complex. only handle the parts we are interested in, and just leave the rest untouched.
-				if (new_loaded_storyobj.prompt != null && !new_loaded_storyobj.scenarioVersion) {
+				if (is_kai_json(new_loaded_storyobj) && !new_loaded_storyobj.scenarioVersion) {
 					//quick sanity check. if prompt does not exist, this is not a KAI save.
 					kai_json_load(new_loaded_storyobj,false);
 					if (selectedFilename && selectedFilename != "") {
@@ -6041,6 +6060,12 @@ Current version indicated by LITEVER below.
 	function safe_to_overwrite()
 	{
 		return (gametext_arr.length == 0 && current_memory == "" && current_anote == "" && current_wi.length == 0 && redo_arr.length == 0);
+	}
+
+	function is_kai_json(obj)
+	{
+		let is_kai = (!(obj.prompt==null) || obj.savedsettings!=null);
+		return is_kai;
 	}
 
 	function kai_json_load(storyobj, force_load_settngs)
@@ -6151,7 +6176,7 @@ Current version indicated by LITEVER below.
 				}
 			} else {
 				//v2 load
-				if(storyobj.prompt!="")
+				if(storyobj.prompt != "")
 				{
 					gametext_arr.push(storyobj.prompt);
 				}
@@ -6517,7 +6542,7 @@ Current version indicated by LITEVER below.
 	{
 		console.log("Loading nai obj");
 		restart_new_game(false);
-		if(obj.prompt!="")
+		if(obj.prompt != "")
 		{
 			gametext_arr.push(obj.prompt);
 		}
@@ -8395,7 +8420,8 @@ Current version indicated by LITEVER below.
 						console.log(values);
 						let mdlname = values[0].result;
 						if (!mdlname) {
-							msgbox("Error at Custom KoboldAI Endpoint!\n\nThe custom endpoint failed to respond correctly.");
+							msgbox("Error at Custom KoboldAI Endpoint!<br><br>The custom endpoint failed to respond correctly.<br><br>You may wish to <a href='#' class='color_blueurl' onclick='hide_popups();display_endpoint_container();'>try a different URL or API type</a>.","Error Encountered",true);
+
 							selected_models = [];
 							selected_workers = [];
 							custom_kobold_endpoint = "";
@@ -8521,8 +8547,7 @@ Current version indicated by LITEVER below.
 										.then(response => response.json())
 										.then(values5 => {
 											let tmpstory = values5;
-											let is_kai = !(tmpstory.prompt==null);
-											if(is_kai)
+											if(is_kai_json(tmpstory))
 											{
 												if (localsettings.persist_session && !safe_to_overwrite()) {
 													console.log("Preload story: Unsafe to overwrite");
@@ -8858,15 +8883,16 @@ Current version indicated by LITEVER below.
 			for(let i=0;i<SAVE_SLOTS;++i)
 			{
 				let testslot = localStorage.getItem(STORAGE_PREFIX + "slot_"+i+"_meta");
+				let lbl = (i+1);
 				entry = `<div style="display:flex; height:42px;">
 					<div style="margin:3px; text-align: center; align-self: center; width: calc(100% - 184px);">
-					`+(testslot?`[ Slot `+(i+1)+` - `+testslot+` ]`:`[ Slot `+(i+1)+` - Empty ]`)+`
+					`+(testslot?`[ Slot `+(lbl)+` - `+testslot+` ]`:`[ Slot `+(lbl)+` - Empty ]`)+`
 					</div>
 					<div style="text-align: right; align-self: center; width: 184px;">
-					<button type="button" title="Save To Slot ${i}" name="slc${i}" class="btn btn-primary" onclick="save_to_slot(${i})"><img class="btnicon-save"/></button>
-					<button type="button" title="Load From Slot ${i}" name="slc${i}" class="btn btn-primary" onclick="load_from_slot(${i})" `+(testslot?"":"disabled")+`><img class="btnicon-load"/></button>
-					<button type="button" title="Download Slot ${i}" name="slc${i}" class="btn btn-primary bg_green" onclick="download_from_slot(${i})" `+(testslot?"":"disabled")+`><img class="btnicon-download"/></button>
-					<button type="button" title="Delete Slot ${i}" name="slc${i}" class="btn btn-primary bg_red" onclick="delete_from_slot(${i})" `+(testslot?"":"disabled")+`><img class="btnicon-delete"/></button>
+					<button type="button" title="Save To Slot ${lbl}" class="btn btn-primary" onclick="save_to_slot(${i})"><img class="btnicon-save"/></button>
+					<button type="button" title="Load From Slot ${lbl}" class="btn btn-primary" onclick="load_from_slot(${i})" `+(testslot?"":"disabled")+`><img class="btnicon-load"/></button>
+					<button type="button" title="Download Slot ${lbl}" class="btn btn-primary bg_green" onclick="download_from_slot(${i})" `+(testslot?"":"disabled")+`><img class="btnicon-download"/></button>
+					<button type="button" title="Delete Slot ${lbl}" class="btn btn-primary bg_red" onclick="delete_from_slot(${i})" `+(testslot?"":"disabled")+`><img class="btnicon-delete"/></button>
 					</div></div>`;
 				filetable += entry;
 			}
@@ -15309,6 +15335,22 @@ Current version indicated by LITEVER below.
 		render_gametext(needsave);
 	}
 
+	var cosmetic_corpo_ai_nick = "KoboldAI";
+	function corpo_click_avatar()
+	{
+		inputBox("Set Cosmetic AI Nickname\n(This is purely cosmetic and does not affect responses, and is not saved).","Set Cosmetic AI Nickname",cosmetic_corpo_ai_nick,"Set Cosmetic AI Nickname", ()=>{
+			let userinput = getInputBoxValue();
+			userinput = userinput.trim();
+			if (userinput != null && userinput!="") {
+				cosmetic_corpo_ai_nick = userinput;
+			}else
+			{
+				cosmetic_corpo_ai_nick = "KoboldAI";
+			}
+			render_gametext(false);
+		},false,false,false);
+	}
+
 	var corpo_editing_turn = -1;
 	function render_corpo_ui(input)
 	{
@@ -15363,7 +15405,7 @@ Current version indicated by LITEVER below.
 				processed_msg = processed_msg.replace(/\[<\|.+?\|>\]/g, ""); //remove normal comments too
 			}
 
-			let namepart = (curr.myturn ? "User" : "KoboldAI");
+			let namepart = (curr.myturn ? "User" : cosmetic_corpo_ai_nick);
 			//advanced name replacement
 			if(localsettings.opmode==3 && curr.name) //chat mode
 			{
@@ -15427,7 +15469,7 @@ Current version indicated by LITEVER below.
 				+ `</div>`);
 
 			newbodystr += `<div class="corpostyleitem">
-				<div><img src="`+ (curr.myturn ? human_square : niko_square) + `" class="corpoavatar"/></div>
+				<div><img ${(curr.myturn ? "" : `onclick="corpo_click_avatar()"`)} src="${(curr.myturn ? human_square : niko_square)}" class="corpoavatar"/></div>
 				<div style="width:100%">
 				<div class="corpostyleitemheading">`+ namepart + `</div>
 				`+ bodypart + chunkbtns + `
@@ -15436,7 +15478,7 @@ Current version indicated by LITEVER below.
 		}
 		if(incomplete_resp)
 		{
-			let namepart = "KoboldAI";
+			let namepart = cosmetic_corpo_ai_nick;
 			let futuretext = (synchro_pending_stream!=""?(escapeHtml(pending_context_preinjection) + escapeHtml(synchro_pending_stream)):"...");
 			if(localsettings.opmode==3)
 			{
@@ -16857,6 +16899,10 @@ Current version indicated by LITEVER below.
 					replacedText = replacedText.replace(italics_regex, wrapperSpan(styleRole, 'action')); 		// Apply the actions style to *actions*.
 					replacedText = replacedText.replace(/“(.*?)”/g, wrapperSpan(styleRole, 'speech')); 	// Apply the speech style to "speech".
 					replacedText = replacedText.replace(/&quot;(.*?)&quot;/g, wrapperSpan(styleRole, 'speech')); 	// Apply the speech style to "speech".
+					if(localsettings.opmode==4)
+					{
+						replacedText = simpleMarkdown(replacedText);
+					}
 					return replacedText;
 				});
 			}

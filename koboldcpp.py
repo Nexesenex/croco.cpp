@@ -1206,6 +1206,7 @@ def extract_json_from_string(input_string):
     return []
 
 def transform_genparams(genparams, api_format):
+    global chatcompl_adapter
     #api format 1=basic,2=kai,3=oai,4=oai-chat,5=interrogate
     #alias all nonstandard alternative names for rep pen.
     rp1 = genparams.get('repeat_penalty', 1.0)
@@ -1351,7 +1352,10 @@ ws ::= | " " | "\n" [ \t]{0,20}
         firstimg = genparams.get('image', "")
         genparams["images"] = [firstimg]
         genparams["max_length"] = 42
-        genparams["prompt"] = "### Instruction: In one sentence, write a descriptive caption for this image.\n### Response:"
+        adapter_obj = {} if chatcompl_adapter is None else chatcompl_adapter
+        user_message_start = adapter_obj.get("user_start", "### Instruction:")
+        assistant_message_start = adapter_obj.get("assistant_start", "### Response:")
+        genparams["prompt"] = f"{user_message_start} In one sentence, write a descriptive caption for this image.\n{assistant_message_start}"
 
     return genparams
 
@@ -2796,14 +2800,7 @@ def show_gui():
     noqkvlabel = makelabel(tokens_tab,"Requirments Not Met",31,0,"Requires FlashAttention ENABLED and ContextShift DISABLED.")
     noqkvlabel.configure(text_color="#ff5555")
     qkvslider,qkvlabel,qkvtitle = makeslider(tokens_tab, "Quantize KV Cache:", quantkv_text, quantkv_var, 0, 2, 30, set=0,tooltip="Enable quantization of KV cache.\nRequires FlashAttention and disables ContextShift.")
-    makefileentry(tokens_tab, "ChatCompletions Adapter:", "Select ChatCompletions Adapter File", chatcompletionsadapter_var, 32, width=250, filetypes=[("JSON Adapter", "*.json")], tooltiptxt="Select an optional ChatCompletions Adapter JSON file to force custom instruct tags.")
-    def pickpremadetemplate():
-        initialDir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'kcpp_adapters')
-        initialDir = initialDir if os.path.isdir(initialDir) else None
-        fnam = askopenfilename(title="Pick Premade ChatCompletions Adapter",filetypes=[("JSON Adapter", "*.json")], initialdir=initialDir)
-        if fnam:
-            chatcompletionsadapter_var.set(fnam)
-    ctk.CTkButton(tokens_tab, 64, text="Pick Premade", command=pickpremadetemplate).grid(row=33, column=0, padx=322, stick="nw")
+
     togglerope(1,1,1)
     toggleflashattn(1,1,1)
     togglectxshift(1,1,1)
@@ -2816,6 +2813,15 @@ def show_gui():
     makefileentry(model_tab, "Lora Base:", "Select Lora Base File", lora_base_var, 5,width=280,tooltiptxt="Select an optional F16 GGML LoRA base file to use.\nLeave blank to skip.")
     makefileentry(model_tab, "LLaVA mmproj:", "Select LLaVA mmproj File", mmproj_var, 7,width=280,tooltiptxt="Select a mmproj file to use for LLaVA.\nLeave blank to skip.")
     makefileentry(model_tab, "Preloaded Story:", "Select Preloaded Story File", preloadstory_var, 9,width=280,tooltiptxt="Select an optional KoboldAI JSON savefile \nto be served on launch to any client.")
+    makefileentry(model_tab, "ChatCompletions Adapter:", "Select ChatCompletions Adapter File", chatcompletionsadapter_var, 12, width=250, filetypes=[("JSON Adapter", "*.json")], tooltiptxt="Select an optional ChatCompletions Adapter JSON file to force custom instruct tags.")
+    def pickpremadetemplate():
+        initialDir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'kcpp_adapters')
+        initialDir = initialDir if os.path.isdir(initialDir) else None
+        fnam = askopenfilename(title="Pick Premade ChatCompletions Adapter",filetypes=[("JSON Adapter", "*.json")], initialdir=initialDir)
+        if fnam:
+            chatcompletionsadapter_var.set(fnam)
+    ctk.CTkButton(model_tab, 64, text="Pick Premade", command=pickpremadetemplate).grid(row=13, column=0, padx=322, stick="nw")
+
     mmproj_var.trace("w", gui_changed_modelfile)
 
     # Network Tab
