@@ -434,7 +434,27 @@ endif()
 # Build libraries
 #
 
-add_library(ggml
+if (GGML_IQK_MUL_MAT)
+    add_library(ggml
+            ggml/src/ggml.c
+            ggml/include/ggml.h
+            ggml/src/ggml-alloc.c
+            ggml/include/ggml-alloc.h
+            ggml/src/ggml-backend.c
+            ggml/include/ggml-backend.h
+            ggml/src/ggml-quants.c
+            ggml/src/ggml-quants.h
+            ggml/src/llamafile/sgemm.cpp
+            ggml/src/llamafile/sgemm.h
+            ggml/src/ggml-aarch64.c
+            ggml/src/ggml-aarch64.h
+            ggml/src/iqk/iqk_quantize.cpp
+            ggml/src/iqk/iqk_quantize.h
+            ggml/src/iqk/iqk_mul_mat.cpp
+            ggml/src/iqk/iqk_mul_mat.h
+            ${GGML_SOURCES_CUDA})
+else()
+    add_library(ggml
             ggml/src/ggml.c
             ggml/include/ggml.h
             ggml/src/ggml-alloc.c
@@ -450,6 +470,7 @@ add_library(ggml
             ggml/src/iqk/iqk_quantize.cpp
             ggml/src/iqk/iqk_quantize.h
             ${GGML_SOURCES_CUDA})
+endif()
 target_include_directories(ggml PUBLIC . ./ggml/include ./ggml/src ./include ./otherarch ./otherarch/tools)
 target_compile_features(ggml PUBLIC c_std_11) # don't bump
 target_link_libraries(ggml PUBLIC Threads::Threads ${LLAMA_EXTRA_LIBS})
