@@ -696,11 +696,12 @@ struct gguf_context * gguf_init_from_file_impl(FILE * file, struct gguf_init_par
             if (info.t.type < 0) {
                 GGML_LOG_ERROR("%s: tensor '%s' has invalid ggml type %d (%s)\n",
                     __func__, info.t.name, info.t.type, ggml_type_name(info.t.type));
-                ok = false;
-                break;
+                // ok = false;
+                // break;
             }
             const size_t  type_size = ggml_type_size(info.t.type);
             const int64_t blck_size = ggml_blck_size(info.t.type);
+            // const int64_t row_size = ggml_row_size(info.t.type, info.t.ne[0]);
 
             // check that row size is divisible by block size
             if (blck_size == 0 || info.t.ne[0] % blck_size != 0) {
@@ -721,6 +722,7 @@ struct gguf_context * gguf_init_from_file_impl(FILE * file, struct gguf_init_par
 
             // calculate byte offsets given the tensor shape and type
             info.t.nb[0] = type_size;
+            // info.t.nb[1] = info.t.nb[0]*(info.t.ne[0]/blck_size);
             info.t.nb[1] = ggml_row_size(info.t.type, info.t.ne[0]);
             for (int j = 2; j < GGML_MAX_DIMS; ++j) {
                 info.t.nb[j] = info.t.nb[j - 1]*info.t.ne[j - 1];
@@ -1303,7 +1305,9 @@ void gguf_set_tensor_type(struct gguf_context * ctx, const char * name, enum ggm
     GGML_ASSERT(tensor->ne[0] % blck_size == 0 && "tensor row size not divisible by block size of new type");
 
     tensor->nb[0] = type_size;
-    tensor->nb[1] = tensor->nb[0]*(tensor->ne[0]/blck_size);
+    // tensor->nb[1] = tensor->nb[0]*(tensor->ne[0]/blck_size);
+    tensor->nb[1] = ggml_row_size(type, tensor->ne[0]);
+
     for (int i = 2; i < GGML_MAX_DIMS; i++) {
         tensor->nb[i] = tensor->nb[i - 1]*tensor->ne[i - 1];
     }
