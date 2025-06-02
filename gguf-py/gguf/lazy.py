@@ -225,4 +225,9 @@ class LazyNumpyTensor(LazyBase):
         eager = LazyNumpyTensor.to_eager(self)
         return eager.tofile(*args, **kwargs)
 
+    @property
+    def data(self):
+        eager = LazyNumpyTensor.to_eager(self)
+        return eager.data
+
     # TODO: __array_function__
