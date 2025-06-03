@@ -3849,16 +3849,52 @@ class LlamaFileType(IntEnum):
     MOSTLY_IQ5_KS_R4       = 341    #except 1d tensors
     MOSTLY_Q8_KV_R8        = 398    #except 1d tensors
     MOSTLY_Q8_K_R8         = 399    #except 1d tensors
-    MOSTLY_Q4_1_S          = 490   # except 1d tensors
-    MOSTLY_Q5_0_S          = 491   # except 1d tensors
-    MOSTLY_Q5_1_S          = 492   # except 1d tensors
-    MOSTLY_Q6_0_S          = 493   # except 1d tensors
-    MOSTLY_Q8_0_S          = 494   # except 1d tensors
-    MOSTLY_Q4_1_XS         = 495   # except 1d tensors
-    MOSTLY_Q5_0_XS         = 496   # except 1d tensors
-    MOSTLY_Q5_1_XS         = 497   # except 1d tensors
-    MOSTLY_Q6_0_XS         = 498   # except 1d tensors
-    MOSTLY_Q8_0_XS         = 499   # except 1d tensors
+
+    MOSTLY_Q4_0_M          = 900   # except 1d tensors
+    MOSTLY_Q4_1_M          = 901   # except 1d tensors
+    MOSTLY_Q5_0_M          = 902   # except 1d tensors
+    MOSTLY_Q5_1_M          = 903   # except 1d tensors
+    MOSTLY_Q6_0_M          = 904   # except 1d tensors
+    MOSTLY_Q8_0_M          = 905   # except 1d tensors
+
+    MOSTLY_Q4_0_L          = 910   # except 1d tensors
+    MOSTLY_Q4_1_L          = 911   # except 1d tensors
+    MOSTLY_Q5_0_L          = 912   # except 1d tensors
+    MOSTLY_Q5_1_L          = 913   # except 1d tensors
+    MOSTLY_Q6_0_L          = 914   # except 1d tensors
+    MOSTLY_Q8_0_L          = 915   # except 1d tensors
+
+    MOSTLY_Q4_0_XL         = 920   # except 1d tensors
+    MOSTLY_Q4_1_XL         = 921   # except 1d tensors
+    MOSTLY_Q5_0_XL         = 922   # except 1d tensors
+    MOSTLY_Q5_1_XL         = 923   # except 1d tensors
+    MOSTLY_Q6_0_XL         = 924   # except 1d tensors
+    MOSTLY_Q8_0_XL         = 925   # except 1d tensors
+
+    MOSTLY_Q4_0_XXL        = 930   # except 1d tensors
+    MOSTLY_Q4_1_XXL        = 931   # except 1d tensors
+    MOSTLY_Q5_0_XXL        = 932   # except 1d tensors
+    MOSTLY_Q5_1_XXL        = 933   # except 1d tensors
+    MOSTLY_Q6_0_XXL        = 934   # except 1d tensors
+    MOSTLY_Q8_0_XXL        = 935   # except 1d tensors
+
+    MOSTLY_Q4_1_S          = 951   # except 1d tensors
+    MOSTLY_Q5_0_S          = 952   # except 1d tensors
+    MOSTLY_Q5_1_S          = 953   # except 1d tensors
+    MOSTLY_Q6_0_S          = 954   # except 1d tensors
+    MOSTLY_Q8_0_S          = 955   # except 1d tensors
+
+    MOSTLY_Q4_1_XS         = 961   # except 1d tensors
+    MOSTLY_Q5_0_XS         = 962   # except 1d tensors
+    MOSTLY_Q5_1_XS         = 963   # except 1d tensors
+    MOSTLY_Q6_0_XS         = 964   # except 1d tensors
+    MOSTLY_Q8_0_XS         = 965   # except 1d tensors
+
+    MOSTLY_Q4_1_XXS        = 971   # except 1d tensors
+    MOSTLY_Q5_0_XXS        = 972   # except 1d tensors
+    MOSTLY_Q5_1_XXS        = 973   # except 1d tensors
+    MOSTLY_Q6_0_XXS        = 974   # except 1d tensors
+    MOSTLY_Q8_0_XXS        = 975   # except 1d tensors
 
     GUESSED              = 1024  # not specified in the model file
 
