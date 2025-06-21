@@ -51,6 +51,9 @@ option(LLAMA_HIPBLAS                         "llama: use hipBLAS"               
 # Other
 option(LLAMA_OPENMP                          "llama: use OpenMP"                                OFF)
 
+# Llama_Default for basic CPU dll made with CMake.
+option(LLAMA_DEFAULT                         "llama: use CPU?"                                  OFF)
+
 #
 # Compile flags
 #
@@ -577,3 +580,22 @@ if (LLAMA_HIPBLAS)
     )
 endif()
 
+if (LLAMA_DEFAULT)
+    set(TARGET koboldcpp_default)
+    add_library(${TARGET} SHARED expose.cpp expose.h)
+    target_include_directories(${TARGET} PUBLIC . ./ggml/include ./ggml/src ./ggml/src/ggml-cpu ./include ./otherarch ./otherarch/tools ./vendor/stb ./vendor ./otherarch/sdcpp ./otherarch/sdcpp/thirdparty ./tools ./common)
+    target_compile_features(${TARGET} PUBLIC cxx_std_17) # don't bump
+    set_target_properties(${TARGET} PROPERTIES PREFIX "")
+    set_target_properties(${TARGET} PROPERTIES OUTPUT_NAME "koboldcpp_default")
+    set_target_properties(${TARGET} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    target_link_libraries(${TARGET} PUBLIC Threads::Threads ggml ggml_v1 ggml_v2 ggml_v3 common2 gpttype_adapter whisper_adapter tts_adapter embeddings_adapter sdtype_adapter ${LLAMA_EXTRA_LIBS})
+    target_compile_features(${TARGET} PRIVATE cxx_std_17)
+
+    add_custom_command(
+    TARGET koboldcpp_default POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+        $<TARGET_FILE:koboldcpp_default>     # The generated DLL
+        ${CMAKE_SOURCE_DIR}/                # Destination directory
+    COMMENT "Copying DLL to parent directory"
+    )
+endif()
