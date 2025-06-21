@@ -10788,8 +10788,8 @@ def show_gui():
 
     import customtkinter as ctk
     nextstate = 0 #0=exit, 1=launch
-    original_windowwidth = int(590)
-    original_windowheight = int(590)
+    original_windowwidth = int(1000)
+    original_windowheight = int(740)
     windowwidth = original_windowwidth
     windowheight = original_windowheight
     ctk.set_appearance_mode("dark")
@@ -10918,7 +10918,7 @@ def show_gui():
     # slider data
     blasbatchsize_values = ["-1","16","32","64","128","256","512","1024","2048","4096"]
     blasbatchsize_text = ["Don't Batch","16","32","64","128","256","512","1024","2048","4096"]
-    contextsize_text = ["256", "512", "1024", "2048", "3072", "4096", "6144", "8192", "10240", "12288", "14336", "16384", "20480", "24576", "28672", "32768", "40960", "49152", "57344", "65536", "81920", "98304", "114688", "131072","163840","196608","229376","262144"]
+    contextsize_text = ["256", "512", "768", "1024", "1280", "1536", "1792", "2048", "2304", "2560", "2816", "3072", "3328", "3584", "3840", "4096", "4352", "4608", "4864", "5120", "5376", "5632", "5888", "6144", "6400", "6656", "6912", "7168", "7424", "7680", "7936", "8192", "8448", "8704", "8960", "9216", "9472", "9728", "9984", "10240", "10496", "10752", "11008", "11264", "11520", "11776", "12032", "12288", "12544", "12800", "13056", "13312", "13568", "13824", "14080", "14336", "14592", "14848", "15104", "15360", "15616", "15872", "16128", "16384", "16896", "17408", "17920", "18432", "18944", "19456", "19968", "20480", "20992", "21504", "22016", "22528", "23040", "23552", "24064", "24576", "25088", "25600", "26112", "26624", "27136", "27648", "28160", "28672", "29184", "29696", "30208", "30720", "31232", "31744", "32256", "32768", "33792", "34816", "35840", "36864", "37888", "38912", "39936", "40960", "41984", "43008", "44032", "45056", "46080", "47104", "48128", "49152", "50176", "51200", "52224", "53248", "54272", "55296", "56320", "57344", "58368", "59392", "60416", "61440", "62464", "63488", "64512", "65536", "67584", "69632", "71680", "73728", "75776", "77824", "79872", "81920", "83968", "86016", "88064", "90112", "92160", "94208", "96256", "98304", "100352", "102400", "104448", "106496", "108544", "110592", "112640", "114688", "116736", "118784", "120832", "122880", "124928", "126976", "129024", "131072", "135168", "139264", "143360", "147456", "151552", "155648", "159744", "163840", "167936", "172032", "176128", "180224", "184320", "188416", "192512", "196608", "200704", "204800", "208896", "212992", "217088", "221184", "225280", "229376", "233472", "237568", "241664", "245760", "249856", "253952", "258048", "262144", "270336", "278528", "286720", "294912", "303104", "311296", "319488", "327680", "335872", "344064", "352256", "360448", "368640", "376832", "385024", "393216", "401408", "409600", "417792", "425984", "434176", "442368", "450560", "458752", "466944", "475136", "483328", "491520", "499712", "507904", "516096", "524288", "540672", "557056", "573440", "589824", "606208", "622592", "638976", "655360", "671744", "688128", "704512", "720896", "737280", "753664", "770048", "786432", "802816", "819200", "835584", "851968", "868352", "884736", "901120", "917504", "933888", "950272", "966656", "983040", "999424", "1015808", "1032192", "1048576", "1081344", "1114112", "1146880", "1179648", "1212416", "1245184", "1277952", "1310720", "1343488", "1376256", "1409024", "1441792", "1474560", "1507328", "1540096", "1572864", "1605632", "1638400", "1671168", "1703936", "1736704", "1769472", "1802240", "1835008", "1867776", "1900544", "1933312", "1966080", "1998848", "2031616", "2064384", "2097152", "2162688", "2228224", "2293760", "2359296", "2424832", "2490368", "2555904", "2621440", "2686976", "2752512", "2818048", "2883584", "2949120", "3014656", "3080192", "3145728", "3211264", "3276800", "3342336", "3407872", "3473408", "3538944", "3604480", "3670016", "3735552", "3801088", "3866624", "3932160", "3997696", "4063232", "4128768", "4194304", "4325376", "4456448", "4587520", "4718592", "4849664", "4980736", "5111808", "5242880", "5373952", "5505024", "5636096", "5767168", "5898240", "6029312", "6160384", "6291456", "6422528", "6553600", "6684672", "6815744", "6946816", "7077888", "7208960", "7340032", "7471104", "7602176", "7733248", "7864320",  "7995392", "8126464", "8257536", "8388608", "8650752", "8912896", "9175040", "9437184", "9699328", "9961472", "10223616", "10485760"]
     quantkv_text = ["F16 (Off)","8-Bit","4-Bit","BF16"]
 
     if not any(runopts):
@@ -11643,7 +11643,7 @@ def show_gui():
         makecheckbox(quick_tab, name, properties[0], int(idx/2) + 20, idx % 2, tooltiptxt=properties[1])
 
     # context size
-    makeslider(quick_tab, "Context Size:", contextsize_text, context_var, 40, width=280, set=7,tooltip="What is the maximum context size to support. Model specific. You cannot exceed it.\nLarger contexts require more memory, and not all models support it.")
+    makeslider(quick_tab, "Context Size:", contextsize_text, context_var, 40, width=430, set=7,tooltip="What is the maximum context size to support. Model specific. You cannot exceed it.\nLarger contexts require more memory, and not all models support it.")
 
     # load model
     makefileentry(quick_tab, "GGUF Text Model:", "Select GGUF or GGML Model File", model_var, 50, 280, onchoosefile=on_picked_model_file,tooltiptxt="Select a GGUF or GGML model file on disk to be loaded.")
@@ -11723,7 +11723,7 @@ def show_gui():
     makelabelentry(context_tab, "CacheSlots:", smartcacheslots_var, row=5, padx=(300), singleline=True, tooltip="Number of slots for smartcache",labelpadx=(220))
 
     # context size
-    makeslider(context_tab, "Context Size:",contextsize_text, context_var, 18, width=280, set=7,tooltip="What is the maximum context size to support. Model specific. You cannot exceed it.\nLarger contexts require more memory, and not all models support it.")
+    makeslider(context_tab, "Context Size:",contextsize_text, context_var, 18, width=430, set=7,tooltip="What is the maximum context size to support. Model specific. You cannot exceed it.\nLarger contexts require more memory, and not all models support it.")
     context_var.trace_add("write", changed_gpulayers_estimate)
     makelabelentry(context_tab, "Default Gen Amt:", defaultgenamt_var, row=20, padx=(120), singleline=True, tooltip="How many tokens to generate by default, if not specified. Must be smaller than context size. Usually, your frontend GUI will override this.")
     makelabelentry(context_tab, "Prompt Limit:", genlimit_var, row=20, padx=(300), singleline=True, tooltip="If set, restricts max output tokens to this limit regardless of API request. Set to 0 to disable.",labelpadx=(210))
@@ -15226,7 +15226,7 @@ if __name__ == '__main__':
     compatgroup.add_argument("--usecuda", "--usecublas", "--usehipblas", help="Use CUDA for GPU Acceleration. Requires CUDA. Enter a number afterwards to select and use 1 GPU. Leaving no number will use all GPUs.", nargs='*',metavar=('[main GPU ID] [mmq|nommq] [rowsplit]'), choices=['normal', 'lowvram', '0', '1', '2', '3', 'all', 'mmq', 'nommq', 'rowsplit'])
     compatgroup.add_argument("--usevulkan", help="Use Vulkan for GPU Acceleration. Can optionally specify one or more GPU Device ID (e.g. --usevulkan 0), leave blank to autodetect.", metavar=('[Device IDs]'), nargs='*', type=int, default=None)
     compatgroup.add_argument("--usecpu", help="Do not use any GPU acceleration (CPU Only)", action='store_true')
-    parser.add_argument("--contextsize","--ctx-size", "-c", help="Controls the memory allocated for maximum context size, only change if you need more RAM for big contexts. (default 8192).",metavar=('[256 to 262144]'), type=check_range(int,256,262144), default=8192)
+    parser.add_argument("--contextsize", help="Controls the memory allocated for maximum context size, only change if you need more RAM for big contexts. (default 2048).",metavar=('[256 to 10485760]'), type=check_range(int,256,10485760), default=2048)
     parser.add_argument("--gpulayers","--gpu-layers","--n-gpu-layers","-ngl", help="Set number of layers to offload to GPU when using GPU. Requires GPU. Set to -1 to try autodetect, set to 0 to disable GPU offload.",metavar=('[GPU layers]'), nargs='?', const=1, type=int, default=-1)
     parser.add_argument("--tensor_split","--tensorsplit","--tensor-split","-ts", help="For CUDA and Vulkan only, ratio to split tensors across multiple GPUs, space-separated list of proportions, e.g. 7 3", metavar=('[Ratios]'), type=float, nargs='+')
     parser.add_argument("--autofit","--fit","-fit", help="Automatically attempt to fit the model in the best possible way. Overrides everything else. Experimental.", action='store_true')
