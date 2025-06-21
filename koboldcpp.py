@@ -12283,6 +12283,17 @@ def kcpp_main_process(launch_args, g_memory=None, gui_launcher=False):
         else:
             save_to_file = (args.benchmark and args.benchmark!="stdout" and args.benchmark!="")
             benchmaxctx = maxctx
+            if maxctx > 16384 : benchmaxctx = maxctx - 412
+            elif maxctx > 32768 : benchmaxctx = maxctx - 924
+            elif maxctx > 65536 : benchmaxctx = maxctx - 1948
+            elif maxctx > 131072 : benchmaxctx = maxctx - 3996
+            elif maxctx > 262144 : benchmaxctx = maxctx - 8092
+            elif maxctx > 524288 : benchmaxctx = maxctx - 16284
+            elif maxctx > 1048576 : benchmaxctx = maxctx - 32668
+            elif maxctx > 2097152 : benchmaxctx = maxctx - 65436
+            elif maxctx > 4194304 : benchmaxctx = maxctx - 130972
+            elif maxctx > 8388608 : benchmaxctx = maxctx - 262044
+            else : benchmaxctx = maxctx - 156
             benchlen = args.genlimit if args.genlimit > 0 else 100
             benchtemp = 0.1
             benchtopk = 1
