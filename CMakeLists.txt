@@ -40,6 +40,26 @@ if (NOT MSVC)
     option(LLAMA_F16C               "llama: enable F16C"                                    ON)
 endif()
 
+option(LLAMA_USE_SYSTEM_GGML "Use system libggml"                                           OFF)
+
+if (EMSCRIPTEN)
+    set(BUILD_SHARED_LIBS_DEFAULT OFF)
+
+    option(LLAMA_WASM_SINGLE_FILE "llama: embed WASM inside the generated llama.js" ON)
+else()
+    if (MINGW)
+        set(BUILD_SHARED_LIBS_DEFAULT OFF)
+    else()
+        set(BUILD_SHARED_LIBS_DEFAULT ON)
+    endif()
+endif()
+
+# option(BUILD_SHARED_LIBS "build shared libraries" ${BUILD_SHARED_LIBS_DEFAULT})
+
+if (WIN32)
+    set(LLAMA_WIN_VER "0x602" CACHE STRING "llama: Windows Version")
+endif()
+
 # 3rd party libs
 option(LLAMA_CUBLAS                          "llama: use CUDA"                                ON)
 set(LLAMA_CUDA_PEER_MAX_BATCH_SIZE "128" CACHE STRING
@@ -49,6 +69,20 @@ option(LLAMA_HIPBLAS                         "llama: use hipBLAS"               
 
 # Other
 option(LLAMA_OPENMP                          "llama: use OpenMP"                                OFF)
+
+# Llama_Default for basic Konoldcpp_default.dll made with CMake.
+option(LLAMA_DEFAULT                         "llama: use CPU"                                  OFF)
+
+# Croco.Cpp Specifics
+option(LLAMA_CUDA_FA_ALL_QUANTS              "llama: compile 18 quants for FlashAttention"      OFF)
+option(GGML_CUDA_USE_GRAPHS                  "Use Cuda Graphs to increase a bit performancess"  ON)
+set(GGML_SCHED_MAX_COPIES   "1" CACHE STRING "llama: max input copies for pipeline parallelism")
+set(LLAMA_SCHED_MAX_COPIES  "1" CACHE STRING "llama: max input copies for pipeline parallelism")			
+option(LLAMA_CUDA_ENABLE_UNIFIED_MEMORY      "llama: enable to avoid OOM in Full Offload"       OFF)
+option(GGML_CCACHE                          "ggml: use ccache if available"                     OFF)
+set   (GGML_CUDA_COMPRESSION_MODE "size" CACHE STRING
+                                            "ggml: cuda link binary compression mode; requires cuda 12.8+")
+set_property(CACHE GGML_CUDA_COMPRESSION_MODE PROPERTY STRINGS "none;speed;balance;size")
 
 #
 # Compile flags
@@ -92,6 +126,26 @@ set(GGML_V3_CUDA_SOURCES otherarch/ggml_v3-cuda.cu otherarch/ggml_v3-cuda.h)
 set(GGML_V2_CUDA_SOURCES otherarch/ggml_v2-cuda.cu otherarch/ggml_v2-cuda.h)
 set(GGML_V2_LEGACY_CUDA_SOURCES otherarch/ggml_v2-cuda-legacy.cu otherarch/ggml_v2-cuda-legacy.h)
 
+# Ccache
+
+if (GGML_CCACHE)
+    find_program(GGML_CCACHE_FOUND ccache)
+    find_program(GGML_SCCACHE_FOUND sccache)
+
+    if (GGML_CCACHE_FOUND OR GGML_SCCACHE_FOUND)
+        if(GGML_CCACHE_FOUND)
+            set(GGML_CCACHE_VARIANT ccache)
+        else()
+            set(GGML_CCACHE_VARIANT sccache)
+        endif()
+        # TODO: should not be set globally
+        set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${GGML_CCACHE_VARIANT}")
+        set(ENV{CCACHE_SLOPPINESS} time_macros)
+        message(STATUS "${GGML_CCACHE_VARIANT} found, compilation results will be cached. Disable with GGML_CCACHE=OFF.")
+    else()
+        message(STATUS "Warning: ccache not found - consider installing it for faster compilation or disable this warning with GGML_CCACHE=OFF")
+    endif ()
+endif()
 
 if (LLAMA_CUBLAS)
     cmake_minimum_required(VERSION 3.17)
@@ -105,6 +159,18 @@ if (LLAMA_CUBLAS)
         add_compile_definitions(GGML_USE_LLAMAFILE)
         add_compile_definitions(GGML_USE_CUDA)
         add_compile_definitions(SD_USE_CUDA)
+
+        file(GLOB   GGML_HEADERS_CUDA "*.cuh")
+        list(APPEND GGML_HEADERS_CUDA "../../include/ggml-cuda.h")
+		
+        if (CUDAToolkit_VERSION VERSION_GREATER_EQUAL "12.8")
+            # Options are:
+            # - none (not recommended)
+            # - speed (nvcc's default)
+            # - balance
+            # - size
+            list(APPEND CUDA_FLAGS -compress-mode=${GGML_CUDA_COMPRESSION_MODE})
+        endif()
 
         add_compile_definitions(GGML_CUDA_PEER_MAX_BATCH_SIZE=${LLAMA_CUDA_PEER_MAX_BATCH_SIZE})
 
@@ -130,6 +196,8 @@ if (LLAMA_CUBLAS)
         set(LLAMA_EXTRA_LIBS ${LLAMA_EXTRA_LIBS} CUDA::cuda_driver)
 
     if (NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+        # 35 == Lowest CUDA 11 standard for Kepler
+        # 37 == Highest CUDA 11 standard for Kepler
         # 50 == lowest CUDA 12 standard
         # 60 == f16 CUDA intrinsics
         # 61 == integer CUDA intrinsics
@@ -407,7 +475,8 @@ endif()
 
 if (MINGW)
     # Target Windows 8 for PrefetchVirtualMemory
-    add_compile_definitions(_WIN32_WINNT=0x602)
+    add_compile_definitions(_WIN32_WINNT=${LLAMA_WIN_VER})
+	# add_compile_definitions(_WIN32_WINNT=0x602)
 endif()
 
 #
@@ -595,3 +664,22 @@ if (LLAMA_HIPBLAS)
     )
 endif()
 
+if (LLAMA_DEFAULT)
+    set(TARGET koboldcpp_default)
+    add_library(${TARGET} SHARED expose.cpp expose.h)
+    target_include_directories(${TARGET} PUBLIC . ./ggml/include ./ggml/src ./ggml/src/ggml-cpu ./include ./otherarch ./otherarch/tools ./vendor/stb ./vendor ./otherarch/sdcpp ./otherarch/sdcpp/thirdparty ./tools ./common)
+    target_compile_features(${TARGET} PUBLIC cxx_std_17) # don't bump
+    set_target_properties(${TARGET} PROPERTIES PREFIX "")
+    set_target_properties(${TARGET} PROPERTIES OUTPUT_NAME "koboldcpp_default")
+    set_target_properties(${TARGET} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    target_link_libraries(${TARGET} PUBLIC Threads::Threads ggml ggml_v1 ggml_v2 ggml_v3 common2 gpttype_adapter whisper_adapter tts_adapter embeddings_adapter sdtype_adapter ${LLAMA_EXTRA_LIBS})
+    target_compile_features(${TARGET} PRIVATE cxx_std_17)
+
+    add_custom_command(
+    TARGET koboldcpp_default POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+        $<TARGET_FILE:koboldcpp_default>     # The generated DLL
+        ${CMAKE_SOURCE_DIR}/                # Destination directory
+    COMMENT "Copying DLL to parent directory"
+    )
+endif()
