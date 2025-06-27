@@ -43,7 +43,7 @@ struct load_model_inputs
     const char * model_filename = nullptr;
     const char * lora_filename = nullptr;
     const char * draftmodel_filename = nullptr;
-    const int draft_amount = 8;
+    const int draft_amount = 4;
     const int draft_gpulayers = 999;
     const float draft_gpusplit[tensor_split_max] = {};
     const char * mmproj_filename = nullptr;
@@ -74,6 +74,8 @@ struct load_model_inputs
     const float tensor_split[tensor_split_max] = {};
     const int quant_k = 0;
     const int quant_v = 0;
+    const int draft_quant_k = -1;
+    const int draft_quant_v = -1;
     const bool check_slowness = false;
     const bool highpriority = false;
     const bool swa_support = false;
