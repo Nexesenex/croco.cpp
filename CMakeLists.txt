@@ -177,13 +177,73 @@ if (LLAMA_CUBLAS)
 
         add_compile_definitions(GGML_CUDA_PEER_MAX_BATCH_SIZE=${LLAMA_CUDA_PEER_MAX_BATCH_SIZE})
 
-        # only build minimal quants required for fattn quant kv
-        list(APPEND GGML_SOURCES_CUDA
-            ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-f16.cu
-            ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q4_0-q4_0.cu
-            ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q8_0.cu
-            ggml/src/ggml-cuda/template-instances/fattn-vec-instance-bf16-bf16.cu
-        )
+        if (GGML_CUDA_USE_GRAPHS)
+            add_compile_definitions(GGML_CUDA_USE_GRAPHS)
+        endif()
+
+        if (LLAMA_CUDA_FA_ALL_QUANTS)
+            list(APPEND GGML_SOURCES_CUDA
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-f16.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q4_0-q4_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q8_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-q8_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-q6_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q6_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q5_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q4_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-iq4_nl.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q6_0-q6_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q6_0-q5_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q6_0-iq4_nl.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_1-q5_1.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_1-q5_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_1-iq4_nl.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_0-q5_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_0-iq4_nl.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-iq4_nl-iq4_nl.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-bf16-bf16.cu
+            
+                # all quants necessary for Kobold CPP Frankenstein are compiled
+                # the other are ignored but not deleted from the ggml_cuda templates directory
+                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q4_1-q4_0.cu
+                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q4_1-q4_1.cu
+                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_0-q4_0.cu
+                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_0-q4_1.cu
+                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_1-q4_0.cu
+                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_1-q4_1.cu
+                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q4_1.cu
+                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q5_1.cu
+                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-f16.cu
+                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-q4_0.cu
+                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-q4_1.cu
+                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-q5_0.cu
+                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-q5_1.cu
+            )
+            add_compile_definitions(GGML_CUDA_FA_ALL_QUANTS)
+        else ()
+            # only build minimal quants required for fattn quant kv
+            list(APPEND GGML_SOURCES_CUDA
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-f16.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q4_0-q4_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q8_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-bf16-bf16.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-iq4_nl-iq4_nl.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_0-iq4_nl.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_1-q5_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_1-q5_1.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q6_0-iq4_nl.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q6_0-q5_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q4_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-iq4_nl.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q5_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q6_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-q8_0.cu
+            )
+        endif()
+		
+        if (LLAMA_CUDA_ENABLE_UNIFIED_MEMORY)
+            add_compile_definitions(GGML_CUDA_ENABLE_UNIFIED_MEMORY)
+        endif()
 
         if (LLAMA_STATIC)
             if (WIN32)
