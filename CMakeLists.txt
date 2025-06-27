@@ -174,13 +174,77 @@ if (LLAMA_CUBLAS)
 
         add_compile_definitions(GGML_CUDA_PEER_MAX_BATCH_SIZE=${LLAMA_CUDA_PEER_MAX_BATCH_SIZE})
 
-        # only build minimal quants required for fattn quant kv
-        list(APPEND GGML_SOURCES_CUDA
-            ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-f16.cu
-            ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q4_0-q4_0.cu
-            ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q8_0.cu
-            ggml/src/ggml-cuda/template-instances/fattn-vec-instance-bf16-bf16.cu
-        )
+        if (GGML_CUDA_USE_GRAPHS)
+            add_compile_definitions(GGML_CUDA_USE_GRAPHS)
+        endif()
+
+        # Build All MMQ Kernels
+        # file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/mmq*.cu")
+        # list(APPEND GGML_SOURCES_CUDA ${SRCS})
+
+        if (LLAMA_CUDA_FA_ALL_QUANTS)
+            list(APPEND GGML_SOURCES_CUDA
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-f16.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q4_0-q4_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q8_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-bf16-bf16.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-iq4_nl-iq4_nl.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_0-iq4_nl.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_1-q5_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q6_0-iq4_nl.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q6_0-q5_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q4_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-iq4_nl.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q5_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q6_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-q8_0.cu
+                # all quants necessary for Kobold CPP Frankenstein are compiled
+                # the other are ignored but not deleted from the ggml_cuda templates directory
+                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q4_1-q4_0.cu
+                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q4_1-q4_1.cu
+                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_0-q4_0.cu
+                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_0-q4_1.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_0-q5_0.cu
+                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_1-q4_0.cu
+                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_1-q4_1.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_1-iq4_nl.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_1-q5_1.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q6_0-q6_0.cu
+                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q4_1.cu
+                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q5_1.cu
+                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-f16.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-q4_0.cu
+                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-q4_1.cu
+                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-q5_0.cu
+                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-q5_1.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-q6_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-q8_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-f16.cu
+            add_compile_definitions(GGML_CUDA_FA_ALL_QUANTS)
+            )
+        else ()
+            # only build minimal quants required for fattn quant kv
+            list(APPEND GGML_SOURCES_CUDA
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-f16.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q4_0-q4_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q8_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-bf16-bf16.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-iq4_nl-iq4_nl.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_0-iq4_nl.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_1-q5_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q6_0-iq4_nl.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q6_0-q5_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q4_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-iq4_nl.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q5_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q6_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-q8_0.cu
+            )
+        endif()
+		
+        if (LLAMA_CUDA_ENABLE_UNIFIED_MEMORY)
+            add_compile_definitions(GGML_CUDA_ENABLE_UNIFIED_MEMORY)
+        endif()
 
         if (LLAMA_STATIC)
             if (WIN32)
@@ -271,6 +335,100 @@ if (LLAMA_HIPBLAS)
             ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q8_0.cu
             ggml/src/ggml-cuda/template-instances/fattn-vec-instance-bf16-bf16.cu
         )
+
+        if (LLAMA_CUDA_FA_ALL_QUANTS)
+            # all quants necessary for Kobold CPP Frankenstein are compiled
+            # the other are ignored but not deleted from the ggml_cuda templates directory
+            file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q4_0-q4_0.cu")
+            list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            # file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q4_1-q4_0.cu")
+            # list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*iq4_nl-iq4_nl.cu")
+            list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            # file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q4_1-q4_1.cu")
+            # list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            # file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q5_0-q4_0.cu")
+            # list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            # file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q5_0-q4_1.cu")
+            # list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q5_0-iq4_nl.cu")
+            list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q5_0-q5_0.cu")
+            list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            # file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q5_1-q4_0.cu")
+            # list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            # file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q5_1-q4_1.cu")
+            # list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q5_1-iq4_nl.cu")
+            list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q5_1-q5_0.cu")
+            list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q5_1-q5_1.cu")
+            list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q6_0-iq4_nl.cu")
+            list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q6_0-q5_0.cu")
+            list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q6_0-q6_0.cu")
+            list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            # file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q8_0-q4_0.cu")
+            # list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            # file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q8_0-q4_1.cu")
+            # list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q8_0-iq4_nl.cu")
+            list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q8_0-q5_0.cu")
+            list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q8_0-q6_0.cu")
+            list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            # file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q8_0-q5_1.cu")
+            # list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q8_0-q8_0.cu")
+            list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            # file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q8_0-f16.cu")
+            # list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            # file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*f16-q4_0.cu")
+            # list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            # file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*f16-q4_1.cu")
+            # list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            # file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*f16-q5_0.cu")
+            # list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            # file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*f16-q5_1.cu")
+            # list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*f16-q6_0.cu")
+            list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*f16-q8_0.cu")
+            list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*f16-f16.cu")
+            list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            add_compile_definitions(GGML_CUDA_FA_ALL_QUANTS)
+        else ()
+            # only build minimal quants required for fattn quant kv
+            file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q4_0-q4_0.cu")
+            list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*iq4_nl-iq4_nl.cu")
+            list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q5_0-iq4_nl.cu")
+            list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q5_1-q5_0.cu")
+            list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q6_0-iq4_nl.cu")
+            list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q6_0-q5_0.cu")
+            list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q8_0-iq4_nl.cu")
+            list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q8_0-q5_0.cu")
+            list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q8_0-q6_0.cu")
+            list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*q8_0-q8_0.cu")
+            list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*f16-q8_0.cu")
+            list(APPEND GGML_SOURCES_ROCM ${SRCS})
+            file(GLOB SRCS "ggml/src/ggml-cuda/template-instances/fattn-vec*f16-f16.cu")
+            list(APPEND GGML_SOURCES_ROCM ${SRCS})
+        endif()
 
         # only build minimal quants required for fattn quant kv
         set_source_files_properties(${GGML_SOURCES_ROCM} PROPERTIES LANGUAGE CXX)
