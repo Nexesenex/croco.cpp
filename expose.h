@@ -70,6 +70,8 @@ struct load_model_inputs
     const float tensor_split[tensor_split_max] = {};
     const int quant_k = 0;
     const int quant_v = 0;
+    const int draft_quant_k = -1;
+    const int draft_quant_v = -1;
     const bool check_slowness = false;
     const bool highpriority = false;
     const bool swa_support = false;
