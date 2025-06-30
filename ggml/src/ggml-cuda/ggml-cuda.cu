@@ -3445,6 +3445,7 @@ static bool ggml_backend_cuda_device_supports_op(ggml_backend_dev_t dev, const g
                     case GGML_TYPE_IQ3_XXS:
                     case GGML_TYPE_IQ4_NL:
                     case GGML_TYPE_IQ4_XS:
+                    case GGML_TYPE_IQ3_KS:
                     case GGML_TYPE_IQ4_KS:
                     case GGML_TYPE_IQ4_KSS:
                     case GGML_TYPE_IQ2_K:

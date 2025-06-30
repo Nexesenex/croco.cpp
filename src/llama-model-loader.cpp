@@ -34,7 +34,8 @@ static std::string llama_model_ftype_name(llama_ftype ftype) {
         case LLAMA_FTYPE_MOSTLY_TQ1_0:    return "TQ1_0 - 1.69 bpw ternary";
         case LLAMA_FTYPE_MOSTLY_TQ2_0:    return "TQ2_0 - 2.06 bpw ternary";
 
-        case LLAMA_FTYPE_MOSTLY_IQ3_KS_V1:   return "IQ3_KS_V1 - 3.25 bpw";
+        case LLAMA_FTYPE_MOSTLY_IQ3_KS_V1: return "IQ3_KS_V1 - 3.1875 bpw";
+        case LLAMA_FTYPE_MOSTLY_IQ3_KS:   return "IQ3_KS - 3.1875 bpw";
 
         case LLAMA_FTYPE_ALL_F32:         return "all F32";
         case LLAMA_FTYPE_MOSTLY_F16:      return "F16";
