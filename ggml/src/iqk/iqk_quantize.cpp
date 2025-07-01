@@ -3343,7 +3343,7 @@ struct IQ4KSRow final : public BaseRowBS32<block_iq4_ks> {
         }
     }
 };
-struct IQ3KSRow final : public BaseRowBS32<block_iq3_ks> {
+struct IQ3KSRow final : public BaseRowBS32<block_iq3_ks_v1> {
     static const int8_t * values() { return iq3nl_values; }
     static const int8_t * shifted_values() { return iq3nl_values + 8; }
     static inline int best_index(const int8_t * values, float x) { return best_index_iq3nl(values, x); }
@@ -3368,21 +3368,21 @@ struct IQ3KSRow final : public BaseRowBS32<block_iq3_ks> {
 }
 
 //
-// ========================================= iq3_ks
+// ========================================= iq3_ks_v1
 //
 
-void quantize_row_iq3_ks_ref(const float * GGML_RESTRICT x, block_iq3_ks  * GGML_RESTRICT y, int64_t k) {
-    quantize_iq3_ks(x, (void *)y, 1, k, nullptr);
+void quantize_row_iq3_ks_v1_ref(const float * GGML_RESTRICT x, block_iq3_ks_v1  * GGML_RESTRICT y, int64_t k) {
+    quantize_iq3_ks_v1(x, (void *)y, 1, k, nullptr);
 }
 
-void quantize_row_iq3_ks(const float * GGML_RESTRICT x, void * GGML_RESTRICT y, int64_t k) {
-    quantize_iq3_ks(x, (void *)y, 1, k, nullptr);
+void quantize_row_iq3_ks_v1(const float * GGML_RESTRICT x, void * GGML_RESTRICT y, int64_t k) {
+    quantize_iq3_ks_v1(x, (void *)y, 1, k, nullptr);
 }
 
-size_t quantize_iq3_ks(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrows, int64_t n_per_row, const float * imatrix) {
+size_t quantize_iq3_ks_v1(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrows, int64_t n_per_row, const float * imatrix) {
     constexpr int kBlockSize = 32;
     GGML_ASSERT(n_per_row%QK_K == 0);
-    auto row_size = ggml_row_size(GGML_TYPE_IQ3_KS, n_per_row);
+    auto row_size = ggml_row_size(GGML_TYPE_IQ3_KS_V1, n_per_row);
     char * qrow = (char *)dst;
     float weight[kBlockSize];
     std::vector<float> all_scales(n_per_row/kBlockSize);
@@ -3396,12 +3396,12 @@ size_t quantize_iq3_ks(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst
     return nrows * row_size;
 }
 
-void dequantize_row_iq3_ks(const block_iq3_ks  * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
+void dequantize_row_iq3_ks_v1(const block_iq3_ks_v1  * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k) {
     constexpr int kBlockSize = 32;
     GGML_ASSERT(k%QK_K == 0);
     const float * dptr = (const float *)x;
     float d = *dptr;
-    x = (const block_iq3_ks *)(dptr + 1);
+    x = (const block_iq3_ks_v1 *)(dptr + 1);
     int nblock = k/QK_K;
     for (int ibl = 0; ibl < nblock; ++ibl) {
         auto qs = x[ibl].qs;
@@ -3420,12 +3420,12 @@ void dequantize_row_iq3_ks(const block_iq3_ks  * GGML_RESTRICT x, float * GGML_R
     }
 }
 
-void vec_dot_iq3_ks_q8_k(int n, float * s, size_t bs, const void * vx, size_t bx, const void * vy, size_t by, int nrc) {
+void vec_dot_iq3_ks_v1_q8_k(int n, float * s, size_t bs, const void * vx, size_t bx, const void * vy, size_t by, int nrc) {
     //constexpr int kBlockSize = 32;
     GGML_ASSERT(nrc == 1);
     GGML_ASSERT(n % QK_K == 0);
 #if GGML_USE_IQK_MULMAT
-    if (iqk_mul_mat(1, 1, n, GGML_TYPE_IQ3_KS, vx, 0, GGML_TYPE_Q8_K, vy, 0, s, 0, 0, 1)) {
+    if (iqk_mul_mat(1, 1, n, GGML_TYPE_IQ3_KS_V1, vx, 0, GGML_TYPE_Q8_K, vy, 0, s, 0, 0, 1)) {
         return;
     }
 #endif
@@ -3435,7 +3435,7 @@ void vec_dot_iq3_ks_q8_k(int n, float * s, size_t bs, const void * vx, size_t bx
 
     const float * dptr = (const float *)vx;
     float d = *dptr;
-    const block_iq3_ks * x = (const block_iq3_ks *)(dptr + 1);
+    const block_iq3_ks_v1 * x = (const block_iq3_ks_v1 *)(dptr + 1);
     const block_q8_K   * y = (const block_q8_K   *)vy;
 
     float sumf = 0;

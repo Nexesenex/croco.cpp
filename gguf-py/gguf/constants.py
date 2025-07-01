@@ -2557,7 +2557,7 @@ class GGMLQuantizationType(IntEnum):
     IQ3_KT    = 154
     IQ4_KT    = 155
 
-    IQ3_KS    = 196
+    IQ3_KS_V1_V1    = 196
 
     Q4_0_R8   = 202
     Q5_0_R4   = 206
@@ -2655,7 +2655,7 @@ class LlamaFileType(IntEnum):
     MOSTLY_IQ3_KT          = 143    #except 1d tensors
     MOSTLY_IQ4_KT          = 144    #except 1d tensors
 
-    MOSTLY_IQ3_KS          = 185    #except 1d tensors
+    MOSTLY_IQ3_KS_V1_V1          = 185    #except 1d tensors
 
     MOSTLY_Q4_0_R8         = 202    #except 1d tensors
     MOSTLY_Q8_0_R8         = 207    #except 1d tensors

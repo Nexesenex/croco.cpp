@@ -131,7 +131,7 @@ enum sd_type_t {
     SD_TYPE_IQ3_KT   = 154,
     SD_TYPE_IQ4_KT   = 155,
 
-    SD_TYPE_IQ3_KS   = 196,
+    SD_TYPE_IQ3_KS_V1   = 196,
 
     SD_TYPE_Q4_0_R8   = 202,
     SD_TYPE_Q5_0_R4   = 206,

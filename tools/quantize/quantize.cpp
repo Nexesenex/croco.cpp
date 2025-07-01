@@ -60,7 +60,7 @@ static const std::vector<quant_option> QUANT_OPTIONS = {
     // Note: Ensure COPY comes after F32 to avoid ftype 0 from matching.
     { "COPY",     LLAMA_FTYPE_ALL_F32,         "only copy tensors, no quantizing",  },
 
-    { "IQ3_KS",   LLAMA_FTYPE_MOSTLY_IQ3_KS,   " 3.25 bpw non-linear quantization", },
+    { "IQ3_KS_V1",   LLAMA_FTYPE_MOSTLY_IQ3_KS_V1,   " 3.25 bpw non-linear quantization", },
 
     { "Q6_0",     LLAMA_FTYPE_MOSTLY_Q6_0,     " 6.5 bpw quantization",             },
     { "IQ2_XXS_R4",LLAMA_FTYPE_MOSTLY_IQ2_XXS_R4,"IQ2_XXS repacked",            },

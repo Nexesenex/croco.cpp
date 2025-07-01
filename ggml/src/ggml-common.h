@@ -762,8 +762,8 @@ typedef struct {
     uint8_t scales[QK_K/32];
     uint8_t qs[QK_K/4];
     uint8_t qh[QK_K/8];
-} block_iq3_ks;
-static_assert(sizeof(block_iq3_ks) == QK_K/32 + QK_K/4 + QK_K/8, "wrong iq3_ks block size/padding");
+} block_iq3_ks_v1;
+static_assert(sizeof(block_iq3_ks_v1) == QK_K/32 + QK_K/4 + QK_K/8, "wrong iq3_ks_v1 block size/padding");
 
 typedef struct {
     ggml_half d;
