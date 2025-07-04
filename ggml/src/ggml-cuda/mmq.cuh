@@ -879,7 +879,7 @@ static __device__ __forceinline__ void vec_dot_q8_0_q8_1_mma(
         #pragma unroll
         for (int l = 0; l < tile_C::ne/2; ++l) {
             const int j = tile_C::get_j(l);
-            if constexpr (ds_layout == MMQ_Q8_1_DS_LAYOUT_D4) {
+            if (ds_layout == MMQ_Q8_1_DS_LAYOUT_D4) {
                 dB[l] = y_df[j*MMQ_TILE_Y_K + k01/QI8_1];
             } else {
                 dB[l] = __low2float(y_ds[j*MMQ_TILE_Y_K + k01/QI8_1]);
@@ -906,7 +906,7 @@ static __device__ __forceinline__ void vec_dot_q8_0_q8_1_mma(
             #pragma unroll
             for (int l = 0; l < tile_C::ne/2; ++l) {
                 const int j = j0 + tile_C::get_j(l);
-                if constexpr (ds_layout == MMQ_Q8_1_DS_LAYOUT_D4) {
+                if (ds_layout == MMQ_Q8_1_DS_LAYOUT_D4) {
                     dB[l] = y_df[j*MMQ_TILE_Y_K + k01/QI8_1];
                 } else {
                     dB[l] = __low2float(y_ds[j*MMQ_TILE_Y_K + k01/QI8_1]);
