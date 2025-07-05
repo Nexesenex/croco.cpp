@@ -4999,12 +4999,12 @@ size_t quantize_iq1_m(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst,
     return nrow * nblock * sizeof(block_iq1_m);
 }
 
-void quantize_row_iq1_m_ref  (const float * GGML_RESTRICT x, block_iq1_s   * GGML_RESTRICT y, int64_t k) {
+void quantize_row_iq1_m_ref  (const float * GGML_RESTRICT x, block_iq1_m   * GGML_RESTRICT y, int64_t k) {
     int nblock = k/QK_K;
     float qw[QK_K];
     for (int j = 0; j < QK_K; ++j) qw[j] = 1;
     for (int ibl = 0; ibl < nblock; ++ibl) {
-        quantize_iq1_s(x + ibl*QK_K, &y[ibl], 1, QK_K, qw);
+        quantize_iq1_m(x + ibl*QK_K, &y[ibl], 1, QK_K, qw);
     }
 }
 

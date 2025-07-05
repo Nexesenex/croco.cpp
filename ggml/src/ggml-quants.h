@@ -38,8 +38,8 @@ GGML_API void quantize_row_q8_K64_ref(const float * GGML_RESTRICT x, block_q8_K6
 GGML_API void quantize_row_tq1_0_ref(const float * GGML_RESTRICT x, block_tq1_0 * GGML_RESTRICT y, int64_t k);
 GGML_API void quantize_row_tq2_0_ref(const float * GGML_RESTRICT x, block_tq2_0 * GGML_RESTRICT y, int64_t k);
 
-GGML_API void quantize_row_iq1_s_ref(const float * GGML_RESTRICT x, block_iq2_xxs * GGML_RESTRICT y, int64_t k);
-GGML_API void quantize_row_iq1_m_ref(const float * GGML_RESTRICT x, block_iq2_xs * GGML_RESTRICT y, int64_t k);
+GGML_API void quantize_row_iq1_s_ref(const float * GGML_RESTRICT x, block_iq1_s * GGML_RESTRICT y, int64_t k);
+GGML_API void quantize_row_iq1_m_ref(const float * GGML_RESTRICT x, block_iq1_m * GGML_RESTRICT y, int64_t k);
 GGML_API void quantize_row_iq2_xxs_ref(const float * GGML_RESTRICT x, block_iq2_xxs * GGML_RESTRICT y, int64_t k);
 GGML_API void quantize_row_iq2_xs_ref (const float * GGML_RESTRICT x, block_iq2_xs  * GGML_RESTRICT y, int64_t k);
 GGML_API void quantize_row_iq3_xxs_ref(const float * GGML_RESTRICT x, block_iq3_xxs * GGML_RESTRICT y, int64_t k);

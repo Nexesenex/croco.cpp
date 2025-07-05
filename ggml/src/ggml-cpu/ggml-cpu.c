@@ -1807,8 +1807,8 @@ void ggml_compute_forward_mul_mat(
     int64_t                  const vec_dot_num_rows     = type_traits_cpu[src0->type].nrows;
     // int64_t                  const matmul_num_cols      = type_traits_cpu[type].ncols;
 #if !GGML_USE_IQK_MULMAT
-    ggml_from_float_to_mat_t const from_float_to_mat    = type_traits[vec_dot_type].from_float_to_mat;
-    int64_t                  const blck_size_interleave = type_traits[type].blck_size_interleave;
+    // ggml_from_float_to_mat_t const from_float_to_mat    = type_traits[vec_dot_type].from_float_to_mat;
+    // int64_t                  const blck_size_interleave = type_traits[type].blck_size_interleave;
 #endif
 
     GGML_ASSERT(ne0 == ne01);

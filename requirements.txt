@@ -1,8 +1,11 @@
 numpy>=1.26.4
 sentencepiece>=0.2.0
 transformers>=4.51.3
-gguf~=0.13.0
+gguf~=0.10.0
 customtkinter>=5.2.2
 protobuf>=4.21.12
 psutil>=6.1.1
 darkdetect>=0.8.0
+pdfplumber>=0.11.6
+PyMuPdf>=1.26.0
+tqdm>=4.67.1
