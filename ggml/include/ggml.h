@@ -220,6 +220,7 @@
 #define GGML_MAX_SRC            10
 #define GGML_MAX_N_THREADS      512
 #define GGML_MAX_OP_PARAMS      64
+#define GGML_MAX_CONTEXTS       2048 // Bump from 64 to allow loading more than 64 model shards - https://github.com/ggml-org/whisper.cpp/discussions/2520
 
 #ifndef GGML_MAX_NAME
 #   define GGML_MAX_NAME        128
