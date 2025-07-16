@@ -2558,6 +2558,7 @@ class GGMLQuantizationType(IntEnum):
     IQ4_KT    = 155
     IQ3_KS    = 156
     IQ2_KL    = 157
+    IQ1_KT    = 158
 
     IQ3_KS_V1_V1    = 196
 
@@ -2657,6 +2658,7 @@ class LlamaFileType(IntEnum):
     MOSTLY_IQ3_KT          = 143    #except 1d tensors
     MOSTLY_IQ4_KT          = 144    #except 1d tensors
     MOSTLY_IQ3_KS          = 145    #except 1d tensors
+    MOSTLY_IQ1_KT          = 146    #except 1d tensors
 
     MOSTLY_IQ3_KS_V1_V1    = 185    #except 1d tensors
 
@@ -2848,6 +2850,7 @@ GGML_QUANT_SIZES: dict[GGMLQuantizationType, tuple[int, int]] = {
     GGMLQuantizationType.Q8_K128     : ( 128,  140),
     GGMLQuantizationType.Q8_KV       : (  32,   32),
     GGMLQuantizationType.IQ5_KS      : ( 256,  168),
+    GGMLQuantizationType.IQ1_KT      : ( 256,   56),
     GGMLQuantizationType.IQ2_KT      : ( 256,   68),
     GGMLQuantizationType.IQ3_KT      : ( 256,  100),
     GGMLQuantizationType.IQ4_KT      : ( 256,  128),

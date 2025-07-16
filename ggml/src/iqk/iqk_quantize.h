@@ -87,6 +87,12 @@ GGML_API size_t quantize_iq2_kl(const float * GGML_RESTRICT src, void * GGML_RES
 GGML_API void dequantize_row_iq2_kl(const block_iq2_kl  * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k);
 GGML_API void vec_dot_iq2_kl_q8_k(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc);
 
+GGML_API void quantize_row_iq1_kt_ref(const float * GGML_RESTRICT x, block_iq1_kt  * GGML_RESTRICT y, int64_t k);
+GGML_API void quantize_row_iq1_kt(const float * GGML_RESTRICT x, void * GGML_RESTRICT y, int64_t k);
+GGML_API size_t quantize_iq1_kt(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrows, int64_t n_per_row, const float * imatrix);
+GGML_API void dequantize_row_iq1_kt(const block_iq1_kt  * GGML_RESTRICT x, float * GGML_RESTRICT y, int64_t k);
+GGML_API void vec_dot_iq1_kt_q8_k(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc);
+
 GGML_API void quantize_row_iq2_kt_ref(const float * GGML_RESTRICT x, block_iq2_kt  * GGML_RESTRICT y, int64_t k);
 GGML_API void quantize_row_iq2_kt(const float * GGML_RESTRICT x, void * GGML_RESTRICT y, int64_t k);
 GGML_API size_t quantize_iq2_kt(const float * GGML_RESTRICT src, void * GGML_RESTRICT dst, int64_t nrows, int64_t n_per_row, const float * imatrix);
