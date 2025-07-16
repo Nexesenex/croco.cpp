@@ -6915,6 +6915,9 @@ bool ggml_validate_row_data(enum ggml_type type, const void * data, size_t nbyte
     }
 
     if (nbytes % ggml_type_size(type) != 0) {
+/*     if (type != GGML_TYPE_IQ2_BN && type != GGML_TYPE_IQ1_BN
+        && type != GGML_TYPE_IQ2_TN && type != GGML_TYPE_IQ1_TN &&
+        && type != GGML_TYPE_IQ2_KS && type != GGML_TYPE_IQ4_KS && type != GGML_TYPE_IQ4_KSS && type != GGML_TYPE_IQ3_KS_V1 && type != GGML_TYPE_IQ3_KS && type != GGML_TYPE_IQ5_KS && type != GGML_TYPE_IQ1_KT && type != GGML_TYPE_IQ2_KT && type != GGML_TYPE_IQ3_KT && type != GGML_TYPE_IQ4_KT && nbytes % ggml_type_size(type) != 0) {
         fprintf(stderr, "%s: invalid size %zu for type %s (type size = %zu)\n", __func__, nbytes, ggml_type_name(type), ggml_type_size(type));
         return false;
     }
@@ -7167,6 +7170,91 @@ bool ggml_validate_row_data(enum ggml_type type, const void * data, size_t nbyte
             {
                 VALIDATE_ROW_DATA_D_F16_IMPL(block_iq6_k, data, nb);
             } break;
+        // case GGML_TYPE_IQ2_KS:
+            // {
+                // VALIDATE_ROW_DATA_D_F16_IMPL(block_iq2_ks, data, nb);
+            // } break;
+        // case GGML_TYPE_IQ4_KS:
+            // {
+                // VALIDATE_ROW_DATA_D_F16_IMPL(block_iq4_ks, data, nb);
+            // } break;
+        // case GGML_TYPE_IQ5_KS:
+            // {
+                // VALIDATE_ROW_DATA_D_F16_IMPL(block_iq5_ks, data, nb);
+            // } break;
+        // case GGML_TYPE_IQ4_KSS:
+            // {
+                // VALIDATE_ROW_DATA_D_F16_IMPL(block_iq4_kss, data, nb);
+            // } break;
+        // case GGML_TYPE_IQ1_KT:
+            // {
+                // VALIDATE_ROW_DATA_D_F16_IMPL(block_iq1_kt, data, nb);
+            // } break;
+        // case GGML_TYPE_IQ2_KT:
+            // {
+                // VALIDATE_ROW_DATA_D_F16_IMPL(block_iq2_kt, data, nb);
+            // } break;
+        // case GGML_TYPE_IQ3_KT:
+            // {
+                // VALIDATE_ROW_DATA_D_F16_IMPL(block_iq3_kt, data, nb);
+            // } break;
+        // case GGML_TYPE_IQ4_KT:
+            // {
+                // VALIDATE_ROW_DATA_D_F16_IMPL(block_iq4_kt, data, nb);
+            // } break;
+        // case GGML_TYPE_IQ2_K: break;
+        // case GGML_TYPE_IQ3_K: break;
+        // case GGML_TYPE_IQ4_K: break;
+        // case GGML_TYPE_IQ5_K: break;
+        // case GGML_TYPE_IQ6_K: break;
+        case GGML_TYPE_IQ2_KS: break;
+        case GGML_TYPE_IQ3_KS_V1: break;
+        case GGML_TYPE_IQ1_KT: break;
+        case GGML_TYPE_IQ2_KT: break;
+        case GGML_TYPE_IQ3_KT: break;
+        case GGML_TYPE_IQ4_KT: break;
+        case GGML_TYPE_IQ3_KS: break;
+        case GGML_TYPE_IQ2_KL: break;
+        case GGML_TYPE_IQ4_KS: break;
+        case GGML_TYPE_IQ5_KS: break;
+        case GGML_TYPE_IQ4_KSS: break;
+        case GGML_TYPE_IQ4_NL_R4: break;
+        case GGML_TYPE_IQ4_XS_R8: break;
+        case GGML_TYPE_IQ2_XXS_R4: break;
+        case GGML_TYPE_IQ2_XS_R4: break;
+        case GGML_TYPE_IQ3_XXS_R4: break;
+        case GGML_TYPE_IQ3_S_R4: break;
+        case GGML_TYPE_IQ2_S_R4: break;
+        case GGML_TYPE_IQ1_S_R4: break;
+        case GGML_TYPE_IQ1_M_R4: break;
+        case GGML_TYPE_Q4_0_R8: break;
+        case GGML_TYPE_Q5_0_R4: break;
+        case GGML_TYPE_Q6_0_R4: break;
+        case GGML_TYPE_Q8_0_R8: break;
+        case GGML_TYPE_Q2_K_R4: break;
+        case GGML_TYPE_Q3_K_R4: break;
+        case GGML_TYPE_Q4_K_R4: break;
+        case GGML_TYPE_Q5_K_R4: break;
+        case GGML_TYPE_Q6_K_R4: break;
+        case GGML_TYPE_IQ2_K_R4: break;
+        case GGML_TYPE_IQ3_K_R4: break;
+        case GGML_TYPE_IQ4_K_R4: break;
+        case GGML_TYPE_IQ5_K_R4: break;
+        case GGML_TYPE_IQ4_KS_R4:break;
+        case GGML_TYPE_IQ5_KS_R4:break;
+        case GGML_TYPE_Q8_KV_R8: break;
+        case GGML_TYPE_Q8_K_R8:  break;
+        case GGML_TYPE_Q8_KV:    break;
+        case GGML_TYPE_BF16_R16: break;
+        case GGML_TYPE_Q4_0_4_4:
+        // case GGML_TYPE_Q4_0_4_8:
+            // {
+                // VALIDATE_ROW_DATA_DVEC_F16_IMPL(block_q4_0x4, data, nbytes / sizeof(block_q4_0x4), 4);
+            // } break;
+        // case GGML_TYPE_Q4_0_8_8:
+            // {
+                // VALIDATE_ROW_DATA_DVEC_F16_IMPL(block_q4_0x8, data, nbytes / sizeof(block_q4_0x8), 8);
+            // } break;
         case GGML_TYPE_I8:
         case GGML_TYPE_I16:
         case GGML_TYPE_I32:
