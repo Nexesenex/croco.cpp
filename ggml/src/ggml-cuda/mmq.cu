@@ -69,6 +69,39 @@ static void ggml_cuda_mul_mat_q_switch_type(ggml_backend_cuda_context & ctx, con
         case GGML_TYPE_IQ4_NL:
             mul_mat_q_case<GGML_TYPE_IQ4_NL>(ctx, args, stream);
             break;
+        case GGML_TYPE_IQ2_KL:
+            mul_mat_q_case<GGML_TYPE_IQ2_KL>(ctx, args, stream);
+            break;
+        case GGML_TYPE_IQ3_KS:
+            mul_mat_q_case<GGML_TYPE_IQ3_KS>(ctx, args, stream);
+            break;
+        case GGML_TYPE_IQ4_KS:
+            mul_mat_q_case<GGML_TYPE_IQ4_KS>(ctx, args, stream);
+            break;
+        case GGML_TYPE_IQ4_KS_R4:
+            mul_mat_q_case<GGML_TYPE_IQ4_KS_R4>(ctx, args, stream);
+            break;
+        case GGML_TYPE_IQ4_KT:
+            mul_mat_q_case<GGML_TYPE_IQ4_KT>(ctx, args, stream);
+            break;
+        case GGML_TYPE_IQ1_KT:
+            mul_mat_q_case<GGML_TYPE_IQ1_KT>(ctx, args, stream);
+            break;
+        case GGML_TYPE_IQ2_KT:
+            mul_mat_q_case<GGML_TYPE_IQ2_KT>(ctx, args, stream);
+            break;
+        case GGML_TYPE_IQ3_KT:
+            mul_mat_q_case<GGML_TYPE_IQ3_KT>(ctx, args, stream);
+            break;
+        case GGML_TYPE_IQ5_KS:
+            mul_mat_q_case<GGML_TYPE_IQ5_KS>(ctx, args, stream);
+            break;
+        case GGML_TYPE_IQ5_KS_R4:
+            mul_mat_q_case<GGML_TYPE_IQ5_KS_R4>(ctx, args, stream);
+            break;
+        case GGML_TYPE_IQ2_KS:
+            mul_mat_q_case<GGML_TYPE_IQ2_KS>(ctx, args, stream);
+            break;
         case GGML_TYPE_IQ2_K:
             mul_mat_q_case<GGML_TYPE_IQ2_K>(ctx, args, stream);
             break;
@@ -317,6 +350,17 @@ bool ggml_cuda_should_use_mmq(enum ggml_type type, int cc, int64_t ne11, int64_t
         case GGML_TYPE_IQ4_K:
         case GGML_TYPE_IQ5_K:
         case GGML_TYPE_IQ6_K:
+        case GGML_TYPE_IQ2_KL:
+        case GGML_TYPE_IQ3_KS:
+        case GGML_TYPE_IQ4_KS:
+        case GGML_TYPE_IQ4_KS_R4:
+        case GGML_TYPE_IQ5_KS:
+        case GGML_TYPE_IQ5_KS_R4:
+        case GGML_TYPE_IQ2_KS:
+        case GGML_TYPE_IQ1_KT:
+        case GGML_TYPE_IQ2_KT:
+        case GGML_TYPE_IQ3_KT:
+        case GGML_TYPE_IQ4_KT:
             mmq_supported = true;
             break;
         default:
