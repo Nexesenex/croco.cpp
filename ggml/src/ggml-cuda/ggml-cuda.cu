@@ -1769,8 +1769,7 @@ static void ggml_cuda_op_mul_mat(
             dev[id].src1_ddq = dev[id].src1_ddq_alloc.alloc(ctx.pool(id), src_1_ddq_size);
 
             if (src1_on_device && src1_is_contiguous) {
-                quantize_src1(
-                    dev[id].src1_ddf, dev[id].src1_ddq, src0->type, ne10,
+                quantize_src1(dev[id].src1_ddf, nullptr, dev[id].src1_ddq, src0->type, ne10,
                     nb11/sizeof(float), nb12/sizeof(float), nb13/sizeof(float),
                     src1_padded_col_size, ne11, ne12, ne13, stream);
                 CUDA_CHECK(cudaGetLastError());
@@ -1871,7 +1870,7 @@ static void ggml_cuda_op_mul_mat(
 
                 if (quantize_src1 && !src1_is_contiguous) {
                     quantize_src1(
-                        src1_ddf_i, src1_ddq_i, src0->type, ne10, ne10, ne11*ne10, ne12*ne11*ne10,
+                        src1_ddf_i, nullptr, src1_ddq_i, src0->type, ne10, ne10, ne11*ne10, ne12*ne11*ne10,
                         src1_padded_col_size, src1_ncols, 1, 1, stream);
                     CUDA_CHECK(cudaGetLastError());
                 }
