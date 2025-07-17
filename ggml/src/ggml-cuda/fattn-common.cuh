@@ -826,9 +826,13 @@ void launch_fattn(
 ) {
     constexpr int ncols = ncols1 * ncols2;
 
+    const bool is_mla = DV == 512; // TODO better parameterization
+
     const ggml_tensor * Q = dst->src[0];
     const ggml_tensor * K = dst->src[1];
     const ggml_tensor * V = dst->src[2];
+
+    GGML_ASSERT(V || is_mla);
 
     const ggml_tensor * mask = dst->src[3];
 
