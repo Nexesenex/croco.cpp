@@ -268,7 +268,10 @@ extern "C"
     bool has_finished() {
         return generation_finished;
     }
-
+    bool has_audio_support()
+    {
+        return audio_multimodal_supported;
+    }
     float get_last_eval_time() {
         return last_eval_time;
     }

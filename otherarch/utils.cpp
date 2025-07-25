@@ -11,6 +11,17 @@
 #include <sstream>
 #include <ctime>
 
+#define MINIAUDIO_IMPLEMENTATION
+#ifndef MTMD_AUDIO_DEBUG
+#   define MA_NO_ENCODING
+#endif
+#define MA_NO_DEVICE_IO
+#define MA_NO_RESOURCE_MANAGER
+#define MA_NO_NODE_GRAPH
+#define MA_NO_ENGINE
+#define MA_NO_GENERATION
+#define MA_API static
+#include "miniaudio/miniaudio.h"
 
 void utreplace(std::string & str, const std::string & needle, const std::string & replacement) {
     size_t pos = 0;
@@ -501,47 +512,47 @@ kcpp_embd_batch::kcpp_embd_batch(float * embd, int32_t n_tokens, int32_t npast, 
 
 kcpp_embd_batch::kcpp_embd_batch(std::vector<llama_token> & tokens, int32_t npast, bool use_mrope, bool return_all_logits)
 {
-       int32_t seq_id = 0;
-        int32_t n_tokens = tokens.size();
-        pos.resize(n_tokens * (use_mrope?4:1));
-        std::fill(pos.begin(), pos.end(), 0);
-        n_seq_id.resize(n_tokens);
-        seq_ids.resize(n_tokens + 1);
-        logits.resize(n_tokens);
-        seq_id_0.resize(1);
-        seq_id_0[0] = seq_id;
-        seq_ids[n_tokens] = nullptr;
-        batch = {
-            /*n_tokens       =*/ n_tokens,
-            /*tokens         =*/ tokens.data(),
-            /*embd           =*/ nullptr,
-            /*pos            =*/ pos.data(),
-            /*n_seq_id       =*/ n_seq_id.data(),
-            /*seq_id         =*/ seq_ids.data(),
-            /*logits         =*/ logits.data(),
-        };
+    int32_t seq_id = 0;
+    int32_t n_tokens = tokens.size();
+    pos.resize(n_tokens * (use_mrope?4:1));
+    std::fill(pos.begin(), pos.end(), 0);
+    n_seq_id.resize(n_tokens);
+    seq_ids.resize(n_tokens + 1);
+    logits.resize(n_tokens);
+    seq_id_0.resize(1);
+    seq_id_0[0] = seq_id;
+    seq_ids[n_tokens] = nullptr;
+    batch = {
+        /*n_tokens       =*/ n_tokens,
+        /*tokens         =*/ tokens.data(),
+        /*embd           =*/ nullptr,
+        /*pos            =*/ pos.data(),
+        /*n_seq_id       =*/ n_seq_id.data(),
+        /*seq_id         =*/ seq_ids.data(),
+        /*logits         =*/ logits.data(),
+    };
 
-        if(!use_mrope)
-        {
-           for (int i = 0; i < n_tokens; i++) {
-                batch.pos     [i] = npast + i;
-                batch.n_seq_id[i] = 1;
-                batch.seq_id  [i] = seq_id_0.data();
-                batch.logits  [i] = (return_all_logits?true:false);
-            }
+    if(!use_mrope)
+    {
+        for (int i = 0; i < n_tokens; i++) {
+            batch.pos     [i] = npast + i;
+            batch.n_seq_id[i] = 1;
+            batch.seq_id  [i] = seq_id_0.data();
+            batch.logits  [i] = (return_all_logits?true:false);
         }
-        else
-        {
-            for (int i = 0; i < n_tokens; i++) {
-                batch.n_seq_id[i] = 1;
-                batch.seq_id  [i] = seq_id_0.data();
-                batch.logits  [i] = (return_all_logits?true:false);
-            }
-             for (int j = 0; j < batch.n_tokens * 3; j++) {
-                batch.pos[j] = npast + (j % batch.n_tokens);
-            }
+    }
+    else
+    {
+        for (int i = 0; i < n_tokens; i++) {
+            batch.n_seq_id[i] = 1;
+            batch.seq_id  [i] = seq_id_0.data();
+            batch.logits  [i] = (return_all_logits?true:false);
         }
-        batch.logits[n_tokens - 1] = true;
+        for (int j = 0; j < batch.n_tokens * 3; j++) {
+            batch.pos[j] = npast + (j % batch.n_tokens);
+        }
+    }
+    batch.logits[n_tokens - 1] = true;
 }
 
 std::vector<std::string> split_string(const std::string& input, const std::string& separator) {
@@ -559,4 +570,59 @@ std::vector<std::string> split_string(const std::string& input, const std::strin
     result.push_back(input.substr(start));
 
     return result;
+}
+
+
+static bool buf_is_audio_file(const char * buf, size_t len) {
+    if (len < 12) {
+        return false;
+    }
+
+    // RIFF ref: https://en.wikipedia.org/wiki/Resource_Interchange_File_Format
+    // WAV ref: https://www.mmsp.ece.mcgill.ca/Documents/AudioFormats/WAVE/WAVE.html
+    bool is_wav = memcmp(buf, "RIFF", 4) == 0 && memcmp(buf + 8, "WAVE", 4) == 0;
+    bool is_mp3 = len >= 3 && (
+        memcmp(buf, "ID3", 3) == 0 ||
+        // Check for MPEG sync word (simplified check)
+        ((unsigned char)buf[0] == 0xFF && ((unsigned char)buf[1] & 0xE0) == 0xE0)
+    );
+    bool is_flac = memcmp(buf, "fLaC", 4) == 0;
+
+    return is_wav || is_mp3 || is_flac;
+}
+
+// returns true if the buffer is a valid audio file
+bool kcpp_decode_audio_from_buf(const unsigned char * buf_in, size_t len, int target_sampler_rate, std::vector<float> & pcmf32_mono) {
+    if (!buf_is_audio_file((const char *)buf_in, len))
+    {
+        return false;
+    }
+
+    ma_result result;
+    const int channels = 1;
+    ma_decoder_config decoder_config = ma_decoder_config_init(ma_format_f32, channels, target_sampler_rate);
+    ma_decoder decoder;
+
+    result = ma_decoder_init_memory(buf_in, len, &decoder_config, &decoder);
+    if (result != MA_SUCCESS) {
+        return false;
+    }
+
+    ma_uint64 frame_count;
+    ma_uint64 frames_read;
+    result = ma_decoder_get_length_in_pcm_frames(&decoder, &frame_count);
+    if (result != MA_SUCCESS) {
+        ma_decoder_uninit(&decoder);
+        return false;
+    }
+
+    pcmf32_mono.resize(frame_count);
+    result = ma_decoder_read_pcm_frames(&decoder, pcmf32_mono.data(), frame_count, &frames_read);
+    if (result != MA_SUCCESS) {
+        ma_decoder_uninit(&decoder);
+        return false;
+    }
+
+    ma_decoder_uninit(&decoder);
+    return true;
 }

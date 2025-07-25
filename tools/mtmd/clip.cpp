@@ -392,7 +392,7 @@ struct clip_ctx {
     std::vector<ggml_backend_buffer_type_t> backend_buft;
 
     ggml_backend_t backend = nullptr;
-
+    ggml_backend_t backend_cpu;
     ggml_backend_buffer_ptr buf;
 
     int max_nodes = 8192;
@@ -404,29 +404,35 @@ struct clip_ctx {
 
     clip_ctx(clip_context_params & ctx_params) {
 
+        backend_cpu = ggml_backend_cpu_init(); //always has CPU backend
+        if (!backend_cpu) {
+            throw std::runtime_error("failed to initialize CPU backend");
+        }
+
         if(enable_gpu_clip)
         {
         #ifdef GGML_USE_CUDA
             backend = ggml_backend_cuda_init(0);
-            LOG_INF("%s: CLIP using CUDA backend\n", __func__);
         #endif
         #ifdef GGML_USE_METAL
             backend = ggml_backend_metal_init();
-            LOG_INF("%s: CLIP using Metal backend\n", __func__);
         #endif
         #ifdef GGML_USE_VULKAN
             backend = ggml_backend_vk_init(0);
-            LOG_INF("%s: CLIP using Vulkan backend\n", __func__);
         #endif
         }
 
-        if (!backend) {
-            backend = ggml_backend_cpu_init();
+        if (backend) {
+            LOG_INF("%s: CLIP using %s backend\n", __func__, ggml_backend_name(backend));
+            backend_ptrs.push_back(backend);
+            backend_buft.push_back(ggml_backend_get_default_buffer_type(backend));
+        } else {
+            backend = backend_cpu;
             LOG_INF("%s: CLIP using CPU backend\n", __func__);
         }
 
-        backend_ptrs.push_back(backend);
-        backend_buft.push_back(ggml_backend_get_default_buffer_type(backend));
+        backend_ptrs.push_back(backend_cpu);
+        backend_buft.push_back(ggml_backend_get_default_buffer_type(backend_cpu));
 
         sched.reset(
             ggml_backend_sched_new(backend_ptrs.data(), backend_buft.data(), backend_ptrs.size(), 8192, false, true)
@@ -435,6 +441,9 @@ struct clip_ctx {
 
     ~clip_ctx() {
         ggml_backend_free(backend);
+        if (backend != backend_cpu) {
+            ggml_backend_free(backend_cpu);
+        }
     }
 
     // this function is added so that we don't change too much of the existing code
@@ -1430,8 +1439,7 @@ struct clip_graph {
                 ggml_tensor * x = embeddings;
                 embeddings = ggml_mul_mat(ctx0, model.mm_model_mlp_2_w, embeddings);
                 x = ggml_mul_mat(ctx0, model.mm_model_mlp_1_w,x);
-                embeddings = ggml_silu_inplace(ctx0, embeddings);
-                embeddings = ggml_mul(ctx0, embeddings,x);
+                embeddings = ggml_swiglu_split(ctx0, embeddings, x);
                 embeddings = ggml_mul_mat(ctx0, model.mm_model_mlp_3_w, embeddings);
             }
             // arrangement of BOI/EOI token embeddings
@@ -1527,15 +1535,8 @@ struct clip_graph {
                 cur = ggml_mul_mat(ctx0, model.mm_1_w, cur);
 
                 // swiglu
-                {
-                    int64_t split_point = cur->ne[0] / 2;
-                    ggml_tensor * x0 = ggml_cont(ctx0, ggml_view_2d(ctx0, cur, split_point, cur->ne[1], cur->nb[1], 0));
-                    ggml_tensor * x1 = ggml_cont(ctx0, ggml_view_2d(ctx0, cur, split_point, cur->ne[1], cur->nb[1], split_point * ggml_element_size(cur)));
-
-                    // see SwiGLU in ultravox_model.py, the second half passed through is silu, not the first half
-                    x1 = ggml_silu(ctx0, x1);
-                    cur = ggml_mul(ctx0, x0, x1);
-                }
+                // see SwiGLU in ultravox_model.py, the second half passed through is silu, not the first half
+                cur = ggml_swiglu_swapped(ctx0, cur);
 
                 // mid-norm
                 cur = ggml_rms_norm(ctx0, cur, 1e-6);
@@ -1794,33 +1795,40 @@ private:
             cur = tmp;
         }
 
+        // we only support parallel ffn for now
         switch (type_op) {
             case FFN_SILU:
-                {
+                if (gate) {
+                    cur = ggml_swiglu_split(ctx0, cur, tmp);
+                    cb(cur, "ffn_swiglu", il);
+                } else {
                     cur = ggml_silu(ctx0, cur);
                     cb(cur, "ffn_silu", il);
                 } break;
             case FFN_GELU:
-                {
+                if (gate) {
+                    cur = ggml_geglu_split(ctx0, cur, tmp);
+                    cb(cur, "ffn_geglu", il);
+                } else {
                     cur = ggml_gelu(ctx0, cur);
                     cb(cur, "ffn_gelu", il);
                 } break;
             case FFN_GELU_ERF:
-                {
+                if (gate) {
+                    cur = ggml_geglu_erf_split(ctx0, cur, tmp);
+                    cb(cur, "ffn_geglu_erf", il);
+                } else {
                     cur = ggml_gelu_erf(ctx0, cur);
-                    cb(cur, "ggml_gelu_erf", il);
+                    cb(cur, "ffn_gelu_erf", il);
                 } break;
             case FFN_GELU_QUICK:
-                {
+                if (gate) {
+                    cur = ggml_geglu_quick_split(ctx0, cur, tmp);
+                    cb(cur, "ffn_geglu_quick", il);
+                } else {
                     cur = ggml_gelu_quick(ctx0, cur);
-                    cb(cur, "ffn_relu", il);
+                    cb(cur, "ffn_gelu_quick", il);
                 } break;
-        }
-
-        // we only support parallel ffn for now
-        if (gate) {
-            cur = ggml_mul(ctx0, cur, tmp);
-            cb(cur, "ffn_gate_par", il);
         }
 
         if (down) {

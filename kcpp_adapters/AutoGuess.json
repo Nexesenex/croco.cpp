@@ -178,6 +178,39 @@
         "assistant_end": "<｜end▁of▁sentence｜>"
     }
 }, {
+    "search": ["<|bom|>","is_last_checked_defined"],
+    "name": "Jamba",
+    "adapter": {
+        "system_start": "<|bom|><|system|>",
+        "system_end": "<|eom|>",
+        "user_start": "<|bom|><|user|>",
+        "user_end": "<|eom|>",
+        "assistant_start": "<|bom|><|assistant|>",
+        "assistant_end": "<|eom|>"
+    }
+}, {
+    "search": ["<|im_start|>assistant<|im_middle|>", "<|im_assistant|>assistant<|im_middle|>", "<|im_end|>"],
+    "name": "ChatML (Kimi).",
+    "adapter": {
+        "system_start": "<|im_start|>system<|im_middle|>",
+        "system_end": "<|im_end|>",
+        "user_start": "<|im_start|>user<|im_middle|>",
+        "user_end": "<|im_end|>",
+        "assistant_start": "<|im_start|>assistant<|im_middle|>",
+        "assistant_end": "<|im_end|>"
+    }
+}, {
+    "search": ["<|userprompt|>", "<|endofuserprompt|>", "<|response|>", "<|endofresponse|>"],
+    "name": "Dots",
+    "adapter": {
+        "system_start": "<|system|>\n",
+        "system_end": "<|endofsystem|>\n",
+        "user_start": "<|userprompt|>\n",
+        "user_end": "<|endofuserprompt|>\n",
+        "assistant_start": "<|response|>\n",
+        "assistant_end": "<|endofresponse|>\n"
+    }
+}, {
     "search": ["rwkv-world"],
     "name": "RWKV World",
     "adapter": {

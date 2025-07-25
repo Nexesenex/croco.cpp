@@ -29,7 +29,7 @@
 #define MA_API static
 #include "miniaudio/miniaudio.h"
 
-#define STB_IMAGE_IMPLEMENTATION
+// #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
 
 #define LOG_INF(...) fprintf(stdout, __VA_ARGS__)

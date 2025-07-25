@@ -1,5 +1,7 @@
 #include "clip.h"
+#include "clip-impl.h"
 #include "llava.h"
+#include "mtmd-audio.h"
 
 #include "llama.h"
 #include "ggml-cpp.h"
@@ -13,35 +15,6 @@
 #include <vector>
 #include <memory>
 
-#if defined(LLAVA_LOG_OFF)
-#   define LOG_INF(...)
-#   define LOG_WRN(...)
-#   define LOG_ERR(...)
-#   define LOG_DBG(...)
-#else // defined(LLAVA_LOG_OFF)
-#   define LOG_INF(...) do { fprintf(stdout, __VA_ARGS__); } while (0)
-#   define LOG_WRN(...) do { fprintf(stderr, __VA_ARGS__); } while (0)
-#   define LOG_ERR(...) do { fprintf(stderr, __VA_ARGS__); } while (0)
-#   define LOG_DBG(...) do { fprintf(stdout, __VA_ARGS__); } while (0)
-#endif // defined(LLAVA_LOG_OFF)
-
-// RGB uint8 image
-struct clip_image_u8 {
-    int nx;
-    int ny;
-
-    std::vector<uint8_t> buf;
-};
-
-// RGB float32 image (NHWC)
-// Memory layout: RGBRGBRGB...
-struct clip_image_f32 {
-    int nx;
-    int ny;
-
-    std::vector<float> buf;
-};
-
 struct clip_image_grid_shape {
     int first;
     int second;
@@ -52,11 +25,6 @@ struct clip_image_f32_batch_deleter {
     void operator()(clip_image_f32_batch * val) { clip_image_f32_batch_free(val); }
 };
 typedef std::unique_ptr<clip_image_f32_batch, clip_image_f32_batch_deleter> clip_image_f32_batch_ptr;
-
-struct clip_image_size_deleter {
-    void operator()(clip_image_f32_batch * val) { clip_image_f32_batch_free(val); }
-};
-typedef std::unique_ptr<clip_image_size, clip_image_size_deleter> clip_image_size_ptr;
 
 /**
  * Selects the best resolution from a list of possible resolutions based on the original size.
@@ -470,4 +438,29 @@ struct llava_image_embed * llava_image_embed_make_with_filename(struct clip_ctx 
 void llava_image_embed_free(struct llava_image_embed * embed) {
     free(embed->embed);
     free(embed);
+}
+
+//kcpp helper function
+bool audio_embd_make_with_clip_img(clip_ctx * ctx_clip, int n_threads, const whisper_preprocessor::whisper_mel & mel_spec, float ** image_embd_out, int * n_img_pos_out)
+{
+    clip_image_f32_ptr mel_f32(clip_image_f32_init());
+    mel_f32->nx  = mel_spec.n_len;
+    mel_f32->ny  = mel_spec.n_mel;
+    mel_f32->buf = std::move(mel_spec.data);
+    size_t n_tokens = clip_n_output_tokens(ctx_clip, mel_f32.get());
+
+    clip_image_f32_batch batch_f32;
+    batch_f32.is_audio = true;
+    batch_f32.entries.push_back(std::move(mel_f32));
+
+    int n_mmproj_embd = clip_n_mmproj_embd(ctx_clip);
+    float * audio_embd = (float *)malloc(n_tokens * n_mmproj_embd * sizeof(float));
+    bool ok = clip_image_batch_encode(
+        ctx_clip,
+        n_threads,
+        &batch_f32,
+        audio_embd);
+    *image_embd_out = audio_embd;
+    *n_img_pos_out = n_tokens;
+    return ok;
 }

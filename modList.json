@@ -1,0 +1,32 @@
+[
+    {
+        "id": "KLITECharacterManager",
+        "name": "KLITE Character Manager",
+        "url": "https://raw.githubusercontent.com/PeterPeet/KLITE-Tools/refs/heads/main/KLITECharacterManager.js",
+        "conflicts": [
+            "KLITE-RPmod"
+        ]
+    },
+    {
+        "id": "KLITEThemeCustomizationTool",
+        "name": "KLITE Theme Customization Tool",
+        "url": "https://raw.githubusercontent.com/PeterPeet/KLITE-Tools/refs/heads/main/KLITEThemeCustomizationTool.js",
+        "conflicts": [
+            "KLITE-RPmod"
+        ]
+    },
+    {
+        "id": "KLITEHotkeysMod",
+        "name": "KLITE Hotkeys Mod",
+        "url": "https://raw.githubusercontent.com/PeterPeet/KLITE-Tools/refs/heads/main/KLITEHotkeysMod.js",
+        "conflicts": [
+            "KLITE-RPmod"
+        ]
+    },
+    {
+        "id": "KLITE-RPmod",
+        "name": "KLITE RP Mod",
+        "url": "https://raw.githubusercontent.com/PeterPeet/KLITE-RPmod/refs/heads/main/KLITE-RPmod_ALPHA.js",
+        "conflicts": []
+    }
+]

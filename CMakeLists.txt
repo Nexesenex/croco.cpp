@@ -117,6 +117,10 @@ add_compile_definitions(GGML_USE_CPU)
 add_compile_definitions(GGML_USE_CPU_AARCH64)
 add_compile_definitions(NOMINMAX)
 
+if (GGML_HIP_FORCE_ROCWMMA_FATTN_GFX12)
+    add_compile_definitions(GGML_HIP_ROCWMMA_FATTN_GFX12)
+endif()
+
 if (MSVC)
     add_compile_options("$<$<COMPILE_LANGUAGE:C>:/utf-8>")
     add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:/utf-8>")
@@ -968,7 +972,9 @@ add_library(common2
             src/unicode.cpp
             src/unicode-data.cpp
             otherarch/utils.cpp
-            otherarch/utils.h)
+            otherarch/utils.h
+            tools/mtmd/mtmd-audio.cpp
+            tools/mtmd/mtmd-audio.h)
 target_include_directories(common2 PUBLIC . ./ggml/include ./ggml/src ./ggml/src/ggml-cpu ./include ./otherarch ./otherarch/tools ./vendor/stb ./vendor ./otherarch/sdcpp ./otherarch/sdcpp/thirdparty ./tools ./common)
 target_compile_features(common2 PUBLIC cxx_std_17) # don't bump
 target_link_libraries(common2 PRIVATE ggml ${LLAMA_EXTRA_LIBS})
