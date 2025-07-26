@@ -587,6 +587,7 @@ static void speculative_decoding_setup(std::string spec_model_filename, const ll
     draft_ctx_params.offload_kqv = base_ctx_params.offload_kqv;
     draft_model_params.main_gpu = base_model_params.main_gpu;
     draft_model_params.split_mode = llama_split_mode::LLAMA_SPLIT_MODE_LAYER;
+    draft_ctx_params.kv_unified = base_ctx_params.kv_unified;
     #if defined(GGML_USE_CUDA) || defined(GGML_USE_VULKAN)
     bool ts_all_zero = true;
     for (int i = 0; i < tensor_split_max; ++i) {
@@ -1943,6 +1944,8 @@ void PurgeMissingTokens(llama_context * ctx, llama_context * draft_ctx, std::vec
         }
     }
 
+    //printf("\nPN: %d, NTL: %d, CCT: %d,TS:%d, diff:%d, sft:%d\n",purgeneeded,new_tokens_len,current_context_tokens.size(),trimstart,(new_tokens_len - trimstart),ShortfallThreshold);
+
     if(!purgeneeded || new_tokens_len < 6 || current_context_tokens.size() < 6 || new_tokens_len - trimstart < ShortfallThreshold)
     {
         return; //no purge is needed
@@ -1956,7 +1959,7 @@ void PurgeMissingTokens(llama_context * ctx, llama_context * draft_ctx, std::vec
 
     auto shared = LongestCommonSubseq(curr_ctx_without_memory, new_ctx_without_memory);
 
-    // printf("\nSharedSize: %d, LCSTokThreshold: %d, ArrPass: %d\n",shared.size(),LCSTokThreshold,ArrStartWith(new_ctx_without_memory, shared));
+    //printf("\nSharedSize: %d, LCSTokThreshold: %d, ArrPass: %d\n",shared.size(),LCSTokThreshold,ArrStartWith(new_ctx_without_memory, shared));
     if (shared.size() > LCSTokThreshold && ArrStartWith(new_ctx_without_memory, shared)) // enough tokens in common
     {
         int found = ArrFindIndexOf(current_context_tokens,shared);
@@ -2343,16 +2346,10 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
         llama_model_params model_params = llama_model_default_params();
         llama_context_params llama_ctx_params = llama_context_default_params();
         llama_ctx_params.n_ctx = clamped_max_context_length;
-        if(kcpp_data->use_contextshift)
-        {
-           llama_ctx_params.n_ctx += extra_context_handle_fragmentation;
-        }
-        else
-        {
-            llama_ctx_params.n_ctx += (extra_context_handle_fragmentation/2);
-        }
+        llama_ctx_params.n_ctx += extra_context_handle_fragmentation;
 
         llama_ctx_params.offload_kqv = !inputs.low_vram;
+        llama_ctx_params.kv_unified = true;
         model_params.use_mmap = inputs.use_mmap;
         model_params.use_mlock = inputs.use_mlock;
         model_params.n_gpu_layers = inputs.gpulayers;
@@ -2394,11 +2391,7 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
         {
             printf("Warning, you are running Qwen2 without Flash Attention. If you observe incoherent output, try enabling it.\n");
         }
-        if(file_format_meta.model_architecture == GGUFArch::ARCH_QWEN2VL)
-        {
-            printf("Qwen2VL detected! Mrope will be used, and context shift will be disabled!\n");
-            kcpp_data->use_contextshift = false;
-        }
+
         model_params.main_gpu = kcpp_parseinfo_maindevice;
 
         #if defined(GGML_USE_CUDA)
@@ -2533,6 +2526,11 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
         }
 
         llama_model * llamamodel = llama_model_load_from_file(kcpp_data->model_filename.c_str(), model_params);
+        if(file_format_meta.model_architecture == GGUFArch::ARCH_QWEN2VL || llama_model_rope_type(llamamodel)==LLAMA_ROPE_TYPE_MROPE)
+        {
+            printf("\nMRope is used, context shift will be disabled!\n");
+            kcpp_data->use_contextshift = false;
+        }
 
         if(overwriteRope)
         {
@@ -3261,13 +3259,12 @@ int GetThreadsToUse(bool blasmode)
 }
 
 //this function prepares the clip embds for llava. it's only needed when images change
-static void PrepareMediaEmbds(const int nctx, const std::vector<int> & media_sep, const std::vector<int> & media_intro)
+static void PrepareMediaEmbds(const int nctx, const std::vector<int> & media_intro)
 {
     bool vision_on = (clp_ctx_v != nullptr && clp_img_data != nullptr);
     bool audio_on = (clp_ctx_a != nullptr);
     if (vision_on || audio_on)
     {
-        int sepsize = media_sep.size();
         int introsize = media_intro.size();
         last_media_mem.clear();
 
@@ -3300,7 +3297,7 @@ static void PrepareMediaEmbds(const int nctx, const std::vector<int> & media_sep
                     int cliptokensneeded = chunk.clp_image_tokens;
                     if(cliptokensneeded>0 && cliptokensneeded < nctx)
                     {
-                        int tokcnt = (i==0?(chunk.clp_image_tokens):(chunk.clp_image_tokens+sepsize));
+                        int tokcnt = (chunk.clp_image_tokens + media_objects[i].chunk_start_seq.size() + media_objects[i].chunk_end_seq.size());
                         if(i==0)
                         {
                             tokcnt += introsize;
@@ -3312,6 +3309,7 @@ static void PrepareMediaEmbds(const int nctx, const std::vector<int> & media_sep
                     }
                     else
                     {
+                        media_composite_image_signature = ""; //force invalidate
                         printf("\nWarning: Vision Image excluded - Context size too low or not enough clip tokens! (needed %d)\nImage will be IGNORED! You probably want to relaunch with a larger context size!\n",cliptokensneeded);
                     }
                     media_objects[i].mediachunks.push_back(chunk);
@@ -3353,7 +3351,7 @@ static void PrepareMediaEmbds(const int nctx, const std::vector<int> & media_sep
                 int cliptokensneeded = total_chunk_tokens;
                 if(cliptokensneeded>0 && cliptokensneeded < nctx)
                 {
-                    int tokcnt = (i==0?(cliptokensneeded):(cliptokensneeded+sepsize));
+                    int tokcnt = (cliptokensneeded + media_objects[i].chunk_start_seq.size() + media_objects[i].chunk_end_seq.size());
                     if(i==0)
                     {
                         tokcnt += introsize;
@@ -3365,6 +3363,7 @@ static void PrepareMediaEmbds(const int nctx, const std::vector<int> & media_sep
                 }
                 else
                 {
+                    media_composite_image_signature = ""; //force invalidate
                     printf("\nWarning: Audio Embd excluded - Context size too low or not enough clip tokens! (needed %d)\nAudio will be IGNORED! You probably want to relaunch with a larger context size!\n",cliptokensneeded);
                 }
 
@@ -3544,6 +3543,8 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
             media_object lv;
             lv.b64data = item;
             lv.is_audio = false;
+            TokenizeString("<image>", lv.chunk_start_seq, file_format, false);
+            TokenizeString("</image>\n\n", lv.chunk_end_seq, file_format, false);
             media_objects.push_back(lv);
             new_media_composite += item;
         }
@@ -3556,6 +3557,8 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
             media_object lv;
             lv.b64data = item;
             lv.is_audio = true;
+            TokenizeString("<audio>", lv.chunk_start_seq, file_format, false);
+            TokenizeString("</audio>\n\n", lv.chunk_end_seq, file_format, false);
             media_objects.push_back(lv);
             new_media_composite += item;
         }
@@ -3567,7 +3570,7 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
         media_composite_image_signature = new_media_composite;
         if(debugmode==1 && !is_quiet)
         {
-            printf("\nLLAVA images changed, existing cache invalidated");
+            printf("\nAttached media changed, existing multimodal cache invalidated");
         }
         media_data_changed = true;
     }
@@ -3728,8 +3731,7 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
     // tokenize the prompt
     std::vector<int> embd_inp;
     std::vector<int> embd_inp_mem; //for storing added memory
-    std::vector<int> media_sep; //to separate between different llava images
-    std::vector<int> media_intro; //to separate between different llava images
+    std::vector<int> media_intro; //added before media list
     std::vector<int> guidance_embd; //holds the guidance prompt
     bool media_embds_built = false;
 
@@ -3737,7 +3739,6 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
 
     TokenizeString(kcpp_data->prompt, embd_inp, file_format, add_bos_token);
     bool use_mrope = (file_format == FileFormat::GGUF_GENERIC && file_format_meta.model_architecture == GGUFArch::ARCH_QWEN2VL);
-    TokenizeString("\n\n", media_sep, file_format, false);
     TokenizeString("\nAttached Media:\n", media_intro, file_format, false);
 
     if(media_composite_image_signature=="")
@@ -3746,7 +3747,7 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
     }
     if(media_data_changed)
     {
-        PrepareMediaEmbds(nctx, media_sep, media_intro);
+        PrepareMediaEmbds(nctx, media_intro);
         media_embds_built = true;
     }
 
@@ -3774,7 +3775,7 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
     {
         if(last_media_mem.size() + kcpp_data->n_predict + 4 > nctx)
         {
-            printf("\nWarning: Too many LLaVA tokens, max context exceeded! They will be ignored!\n");
+            printf("\nWarning: Too many multimodal tokens, max context exceeded! They will be ignored!\n");
         }
         else
         {
@@ -4099,7 +4100,31 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
                 {
                     draft_used = false;
                     kcpp_embd_batch batch = kcpp_embd_batch(embd, n_past, use_mrope, false);
-                    evalres = (llama_decode(llama_ctx_v4, batch.batch)==0);
+                    int32_t decode_status = llama_decode(llama_ctx_v4, batch.batch);
+                    if(decode_status==1 && embd.size()>128)
+                    {
+                        printf("Couldn't find a big KV slot. Retry with smaller batch size of 128...\n");
+                        std::vector<std::vector<gpt_vocab::id>> parts = split_big_vector(embd,128);
+                        int temp_past = n_past;
+                        evalres = true;
+                        for(int p=0;p<parts.size();++p)
+                        {
+                            std::vector<gpt_vocab::id> chunk = parts[p];
+                            kcpp_embd_batch smallbatch = kcpp_embd_batch(chunk, temp_past, use_mrope, false);
+                            int32_t decode_status2 = llama_decode(llama_ctx_v4, smallbatch.batch);
+                            if(debugmode==1 && !is_quiet)
+                            {
+                                printf("Retry chunk: %d at %d... status: %s\n",chunk.size(),temp_past,(decode_status2==0?"ok":"fail"));
+                            }
+                            evalres = (evalres && (decode_status2==0));
+                            temp_past += chunk.size();
+                        }
+                    }
+                    else
+                    {
+                        evalres = (decode_status==0);
+                    }
+
                     if(draft_ctx)
                     {
                         evalres = (evalres && (llama_decode(draft_ctx, batch.batch)==0));
@@ -4183,6 +4208,7 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
             if (!evalres)
             {
                 fprintf(stderr, "\nFailed to predict at token position %d! Check your context buffer sizes!\n",n_past);
+                media_composite_image_signature = ""; //force invalidate
                 output.text = nullptr;
                 output.status = 0;
                 output.prompt_tokens = output.completion_tokens = 0;
@@ -4626,9 +4652,9 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
                 {
                     if(!media_embds_built) //this should never happen! however, handle it anyway
                     {
-                        PrepareMediaEmbds(nctx, media_sep, media_intro);
+                        PrepareMediaEmbds(nctx, media_intro);
                         media_embds_built = true;
-                        printf("\nSomehow vision embd was not prepared (maybe no fast forward), rebuilding it...\n");
+                        printf("\nSomehow media embeds was not prepared (maybe no fast forward), rebuilding it...\n");
                     }
 
                     //if partial batch, dispatch existing first
@@ -4641,7 +4667,6 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
                         //batch is empty, do image processing
                         int llavatokenscounted = 0;
                         int llavatokensevaled = 0;
-                        int sepsize = media_sep.size();
                         int introsize = media_intro.size();
                         while(input_consumed < embd_inp.size() && (embd_inp[input_consumed]==MEDIA_TOKEN_IDENTIFIER_A || embd_inp[input_consumed]==MEDIA_TOKEN_IDENTIFIER_B))
                         {
@@ -4664,19 +4689,20 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
                                 auto evr = llama_decode(llama_ctx_v4, batch.batch);
                                 if(evr!=0)
                                 {
-                                    printf("\nError when appending llava intro: %d\n",evr);
+                                    printf("\nError when appending media intro: %d\n",evr);
                                 }
                                 else
                                 {
-                                    printf("\rProcessing LLaVa Intro (%d tokens)",introsize);
+                                    printf("\rProcessing Media Intro (%d tokens)",introsize);
                                 }
                                 n_past += introsize;
                                 llavatokensevaled += introsize;
                             }
-                            if(sepsize>0 && i>0)
-                            {
+
+                            int start_size = media_objects[i].chunk_start_seq.size();
+                            if (start_size > 0) {
                                 //add a separator between each image
-                                kcpp_embd_batch batch = kcpp_embd_batch(media_sep, n_past, use_mrope, false);
+                                kcpp_embd_batch batch = kcpp_embd_batch(media_objects[i].chunk_start_seq, n_past, use_mrope, false);
                                 auto evr = llama_decode(llama_ctx_v4, batch.batch);
                                 if(evr!=0)
                                 {
@@ -4684,10 +4710,10 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
                                 }
                                 else
                                 {
-                                    printf("\rProcessing Media Separator (%d tokens)",sepsize);
+                                    printf("\rProcessing Media Start Separator (%d tokens)",start_size);
                                 }
-                                n_past += sepsize;
-                                llavatokensevaled += sepsize;
+                                n_past += start_size;
+                                llavatokensevaled += start_size;
                             }
 
                             for(int j=0;j<media_objects[i].mediachunks.size();++j)
@@ -4702,7 +4728,7 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
                                 if(!err)
                                 {
                                     media_composite_image_signature = ""; //force invalidate
-                                    fprintf(stderr, "\nFailed to eval llava image at %d!\n",n_past);
+                                    fprintf(stderr, "\nFailed to eval media tokens at %d!\n",n_past);
                                     output.text = nullptr;
                                     output.status = 0;
                                     output.prompt_tokens = output.completion_tokens = 0;
@@ -4711,11 +4737,28 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
                                     return output;
                                 }
                             }
+
+                            int end_size = media_objects[i].chunk_end_seq.size();
+                            if (end_size > 0) {
+                                //add a separator between each image
+                                kcpp_embd_batch batch = kcpp_embd_batch(media_objects[i].chunk_end_seq, n_past, use_mrope, false);
+                                auto evr = llama_decode(llama_ctx_v4, batch.batch);
+                                if(evr!=0)
+                                {
+                                    printf("\nError when appending media separator: %d\n",evr);
+                                }
+                                else
+                                {
+                                    printf("\rProcessing Media End Separator (%d tokens)",end_size);
+                                }
+                                n_past += end_size;
+                                llavatokensevaled += end_size;
+                            }
                         }
                         if(llavatokenscounted!=llavatokensevaled)
                         {
                             media_composite_image_signature = ""; //force invalidate
-                            fprintf(stderr, "\nLLAVA image tokens mismatch at %d! (%d vs %d tokens)\n",n_past,llavatokenscounted,llavatokensevaled);
+                            fprintf(stderr, "\nMedia tokens mismatch at %d! (%d vs %d tokens)\n",n_past,llavatokenscounted,llavatokensevaled);
                             output.text = nullptr;
                             output.status = 0;
                             output.prompt_tokens = output.completion_tokens = 0;

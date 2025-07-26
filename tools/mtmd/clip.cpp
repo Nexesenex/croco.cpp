@@ -392,7 +392,7 @@ struct clip_ctx {
     std::vector<ggml_backend_buffer_type_t> backend_buft;
 
     ggml_backend_t backend = nullptr;
-    ggml_backend_t backend_cpu;
+    ggml_backend_t backend_cpu = nullptr;
     ggml_backend_buffer_ptr buf;
 
     int max_nodes = 8192;

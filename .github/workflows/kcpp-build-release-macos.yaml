@@ -13,7 +13,7 @@ env:
 
 jobs:
   osx:
-    runs-on: macos-latest
+    runs-on: macos-14
     steps:
       - name: Clone
         id: checkout

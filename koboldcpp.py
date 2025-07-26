@@ -56,7 +56,7 @@ logprobs_max = 5
 default_draft_amount = 8
 default_ttsmaxlen = 4096
 default_visionmaxres = 1024
-net_save_slots = 10
+net_save_slots = 12
 savestate_limit = 3 #3 savestate slots
 default_vae_tile_threshold = 768
 
@@ -76,12 +76,12 @@ extra_images_max = 4
 # extra_images_max = 4
 
 # global vars
-KcppVersion = "1.96025"
-LcppVersion = "b5898"
-IKLcppVersion = "IKLpr599"
-EsoboldVersion = "RMv1.14.1m"
+KcppVersion = "1.97000"
+LcppVersion = "b5987"
+IKLcppVersion = "IKLpr624"
+EsoboldVersion = "RMv1.14.9m"
 CudaSpecifics = "Cu128_Ar86_SMC2_DmmvX32Y1"
-ReleaseDate = "2025/07/15"
+ReleaseDate = "2025/07/25"
 showdebug = True
 # guimode = False
 
@@ -976,7 +976,7 @@ def utfprint(str, importance = 2): #0 = only debugmode, 1 = except quiet, 2 = al
             return
     maxlen = 32000
     if args.debugmode >= 1:
-        maxlen = 64000
+        maxlen = 192000
     try:
         strlength = len(str)
         if strlength > maxlen: #limit max output len
@@ -1611,7 +1611,7 @@ def autoset_gpu_layers(ctxsize, sdquanted, blasbatchsize, quantkv_var, flashatte
                 match = re.search(r'-(\d{5})-of-(\d{5})\.', fname)
                 if match:
                     total_parts = int(match.group(2))
-                    if total_parts > 1 and total_parts <= 9:
+                    if total_parts > 1 and total_parts <= 999:
                         if showmultigpuwarning:
                             showmultigpuwarning = False
                             print("Multi-Part GGUF detected. Layer estimates may not be very accurate - recommend setting layers manually.")
@@ -3685,7 +3685,7 @@ def transform_genparams(genparams, api_format):
             user_message_end = adapter_obj.get("user_end", "")
             assistant_message_start = adapter_obj.get("assistant_start", "\n### Response:\n")
             assistant_message_end = adapter_obj.get("assistant_end", "")
-            tools_message_start = adapter_obj.get("tools_start", "")
+            tools_message_start = adapter_obj.get("tools_start", "\nTool Results:\n")
             tools_message_end = adapter_obj.get("tools_end", "")
             images_added = []
             audio_added = []
@@ -3743,6 +3743,8 @@ ws ::= | " " | "\n" [ \t]{0,20}
                     pass
 
             message_index = 0
+            attachedimgid = 0
+            attachedaudid = 0
             for message in messages_array:
                 message_index += 1
                 if message['role'] == "system":
@@ -3762,6 +3764,13 @@ ws ::= | " " | "\n" [ \t]{0,20}
                         for img in imgs:
                             images_added.append(img)
                 if not curr_content:
+                    if "tool_calls" in message:
+                        try:
+                            if len(message.get("tool_calls"))>0:
+                                tcfnname = message.get("tool_calls")[0].get("function").get("name")
+                                messages_string += f"\n(Made a function call to {tcfnname})\n"
+                        except Exception:
+                            messages_string += "\n(Made a function call)\n"
                     pass  # do nothing
                 elif isinstance(curr_content, str):
                     messages_string += curr_content
@@ -3772,13 +3781,15 @@ ws ::= | " " | "\n" [ \t]{0,20}
                         elif item['type']=="image_url":
                             if 'image_url' in item and item['image_url'] and item['image_url']['url'] and item['image_url']['url'].startswith("data:image"):
                                 images_added.append(item['image_url']['url'].split(",", 1)[1])
-                                messages_string += "\n(Attached Image)\n"
+                                attachedimgid += 1
+                                messages_string += f"\n(Attached Image {attachedimgid})\n"
                         elif item['type']=="input_audio":
                             if 'input_audio' in item and item['input_audio'] and item['input_audio']['data']:
                                 audio_added.append(item['input_audio']['data'])
-                                messages_string += "\n(Attached Audio)\n"
+                                attachedaudid += 1
+                                messages_string += f"\n(Attached Audio {attachedaudid})\n"
                 # If last message, add any tools calls after message content and before message end token if any
-                if message['role'] == "user" and message_index == len(messages_array):
+                if (message['role'] == "user" or message['role'] == "tool") and message_index == len(messages_array):
                     # tools handling: Check if user is passing a openai tools array, if so add to end of prompt before assistant prompt unless tool_choice has been set to None
                     tools_array = genparams.get('tools', [])
                     chosen_tool = genparams.get('tool_choice', "auto")
@@ -3790,6 +3801,8 @@ ws ::= | " " | "\n" [ \t]{0,20}
                         if chosen_tool=="auto":
                             # if you want a different template, you can set 'custom_tools_prompt' in the chat completions adapter as follows
                             custom_tools_prompt = adapter_obj.get("custom_tools_prompt", "Can the user query be answered by a listed tool above? (One word response: yes or no):")
+                            if message['role'] == "tool":
+                                custom_tools_prompt = adapter_obj.get("custom_tools_prompt", "Can the user query be further answered by another listed tool above? (If response is already complete, reply NO) (One word response: yes or no):")
                             # note: message string already contains the instruct start tag!
                             pollgrammar = r'root ::= "yes" | "no" | "Yes" | "No" | "YES" | "NO"'
                             temp_poll = {
@@ -4368,7 +4381,7 @@ class KcppServerRequestHandler(http.server.SimpleHTTPRequestHandler):
                     for tc in tool_calls:
                         tcarg = tc.get("function",{}).get("arguments",None)
                         tc["id"] = f"call_{random.randint(10000, 99999)}"
-                        if tcarg and not isinstance(tcarg, str):
+                        if tcarg is not None and not isinstance(tcarg, str):
                             tc["function"]["arguments"] = json.dumps(tcarg)
                     recvtxt = None
                     currfinishreason = "tool_calls"
@@ -4923,7 +4936,8 @@ Change Mode<br>
             response_body = (json.dumps({"models":[{"name":"koboldcpp","model":f"{friendlymodelname}:latest","modified_at":"2024-07-19T15:26:55.6122841+08:00","expires_at": "2055-06-04T19:06:25.5433636+08:00","size":394998579,"size_vram":394998579,"digest":"b5dc5e784f2a3ee1582373093acf69a2f4e2ac1710b253a001712b86a61f88bb","details":{"parent_model":"","format":"gguf","family":"koboldcpp","families":["koboldcpp"],"parameter_size":"128M","quantization_level":"Q4_0"}},{"name":"koboldcpp","model":friendlymodelname,"modified_at":"2024-07-19T15:26:55.6122841+08:00","expires_at": "2055-06-04T19:06:25.5433636+08:00","size":394998579,"size_vram":394998579,"digest":"b5dc5e784f2a3ee1582373093acf69a2f4e2ac1710b253a001712b86a61f88bb","details":{"parent_model":"","format":"gguf","family":"koboldcpp","families":["koboldcpp"],"parameter_size":"128M","quantization_level":"Q4_0"}}]}).encode())
         elif self.path.endswith('/api/version'): #ollama compatible, NOT the kcpp version
             response_body = (json.dumps({"version":"0.7.0"}).encode())
-
+        elif self.path=='/ping':
+            response_body = (json.dumps({"status": "healthy"}).encode())
 
         #comfyui compatible
         elif self.path=='/system_stats':
@@ -5771,7 +5785,7 @@ Change Mode<br>
 
                 trunc_len = 8000
                 if args.debugmode >= 1:
-                    trunc_len = 16000
+                    trunc_len = 32000
 
                 printablegenparams_raw = truncate_long_json(genparams,trunc_len)
                 utfprint("\nInput: " + json.dumps(printablegenparams_raw),1)
@@ -7137,8 +7151,7 @@ def show_gui():
     # makefileentry(model_tab, "Text Lora Base:", "Select Lora Base File", lora_base_var, 5,width=280,singlerow=True,tooltiptxt="Select an optional F16 GGML Text LoRA base file to use.\nLeave blank to skip.")
 
     makelabelentry(model_tab, "Multiplier: ", loramult_var, 5, 50,padx=390,singleline=True,tooltip="Scale multiplier for Text LoRA Strength. Default is 1.0", labelpadx=330)
-    makefileentry(model_tab, "Vision mmproj:", "Select Vision mmproj File", mmproj_var, 7,width=280,singlerow=True,tooltiptxt="Select a mmproj file to use for vision models like LLaVA.\nLeave blank to skip.")
-
+    makefileentry(model_tab, "Mmproj File:", "Select Audio or Vision mmproj File", mmproj_var, 7,width=280,singlerow=True,tooltiptxt="Select a mmproj file to use for multimodal models for vision and audio recognition.\nLeave blank to skip.")
     makecheckbox(model_tab, "Vision Force CPU", mmprojcpu_var, 9, tooltiptxt="Force CLIP for Vision mmproj always on CPU.")
     makelabelentry(model_tab, "Vision MaxRes:", visionmaxres_var, 9, padx=320, singleline=True, tooltip=f"Clamp MMProj vision maximum allowed resolution. Allowed values are between 512 to 2048 px (default {default_visionmaxres}).", labelpadx=220)
 
@@ -8172,8 +8185,17 @@ def setuptunnel(global_memory, has_sd):
             else:
                 print("Starting Cloudflare Tunnel for Linux, please wait...", flush=True)
                 tunnelbinary = "./cloudflared-linux-amd64"
-            tunnelproc = subprocess.Popen(f"{tunnelbinary} tunnel --url {httpsaffix}://localhost:{int(args.port)}{ssladd}", text=True, encoding='utf-8', shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+
+            tunnelproc = None
+            if sys.platform == "linux":
+                clean_env = os.environ.copy()
+                clean_env.pop("LD_LIBRARY_PATH", None)
+                clean_env["PATH"] = "/usr/bin:/bin"
+                tunnelproc = subprocess.Popen(f"{tunnelbinary} tunnel --url {httpsaffix}://localhost:{int(args.port)}{ssladd}", text=True, encoding='utf-8', shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, env=clean_env)
+            else:
+                tunnelproc = subprocess.Popen(f"{tunnelbinary} tunnel --url {httpsaffix}://localhost:{int(args.port)}{ssladd}", text=True, encoding='utf-8', shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
             time.sleep(10)
+
             def tunnel_reader():
                 nonlocal tunnelproc,tunneloutput,tunnelrawlog
                 pattern = r'https://[\w\.-]+\.trycloudflare\.com'
@@ -8414,7 +8436,7 @@ def download_model_from_url(url, permitted_types=[".gguf",".safetensors", ".ggml
                 match = re.search(r'-(\d{5})-of-(\d{5})\.', url)
                 if match:
                     total_parts = int(match.group(2))
-                    if total_parts > 1 and total_parts <= 9:
+                    if total_parts > 1 and total_parts <= 999:
                         current_part = 1
                         base_url = url
                         for part_num in range(current_part + 1, total_parts + 1):

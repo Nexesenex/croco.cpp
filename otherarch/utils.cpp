@@ -356,6 +356,16 @@ std::string get_timestamp_str()
     return timestamp;
 }
 
+//split a big vector into multiple small vectors of chunk size or less
+std::vector<std::vector<int>> split_big_vector(const std::vector<int>& big_arr, size_t chunk_size) {
+    std::vector<std::vector<int>> small_arrs;
+    for (size_t i = 0; i < big_arr.size(); i += chunk_size) {
+        size_t end = std::min(i + chunk_size, big_arr.size());
+        small_arrs.emplace_back(big_arr.begin() + i, big_arr.begin() + end);
+    }
+    return small_arrs;
+}
+
 std::vector<float> resample_wav(const std::vector<float>& input, uint32_t input_rate, uint32_t output_rate) {
 
     size_t input_size = input.size();

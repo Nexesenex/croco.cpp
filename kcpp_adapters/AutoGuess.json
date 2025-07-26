@@ -12,20 +12,7 @@
     }
 }, {
     "search": ["<|im_start|>assistant", "<|im_end|>", "You are provided with function signatures within <tools>"],
-    "name": "ChatML (Qwen 2.5 based).",
-    "adapter": {
-        "system_start": "<|im_start|>system\n",
-        "system_end": "<|im_end|>\n",
-        "user_start": "<|im_start|>user\n",
-        "user_end": "<|im_end|>\n",
-        "assistant_start": "<|im_start|>assistant\n",
-        "assistant_end": "<|im_end|>\n",
-        "tools_start": "\n\n# Tools\n\nYou may call one or more functions to assist with the user query.\n\nYou are provided with function signatures within <tools></tools> XML tags:\n\n<tools>\n",
-        "tools_end": "\n</tools>\n\nFor each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:\n<tool_call>\n{\"name\": <function-name>, \"arguments\": <args-json-object>}\n</tool_call><|im_end|>\n"
-    }
-}, {
-    "search": ["<|im_start|>assistant", "<|im_end|>"],
-    "name": "ChatML (Generic).",
+    "name": "ChatML (Qwen 2.5 based)",
     "adapter": {
         "system_start": "<|im_start|>system\n",
         "system_end": "<|im_end|>\n",
@@ -35,8 +22,19 @@
         "assistant_end": "<|im_end|>\n"
     }
 }, {
+    "search": ["<|im_user|>user<|im_middle|>", "<|im_assistant|>assistant<|im_middle|>", "<|im_end|>"],
+    "name": "ChatML (Kimi)",
+    "adapter": {
+        "system_start": "<|im_system|>system<|im_middle|>",
+        "system_end": "<|im_end|>",
+        "user_start": "<|im_user|>user<|im_middle|>",
+        "user_end": "<|im_end|>",
+        "assistant_start": "<|im_assistant|>assistant<|im_middle|>",
+        "assistant_end": "<|im_end|>"
+    }
+}, {
     "search": ["System role not supported", "<start_of_turn>"],
-    "name": "Google Gemma 2.",
+    "name": "Google Gemma 2",
     "adapter": {
         "system_start": "<start_of_turn>user\n",
         "system_end": "<end_of_turn>\n",
@@ -47,7 +45,7 @@
     }
 }, {
     "search": ["<start_of_image>", "<start_of_turn>", "<end_of_turn>"],
-    "name": "Google Gemma 3.",
+    "name": "Google Gemma 3",
     "adapter": {
         "system_start": "<start_of_turn>user\n",
         "system_end": "<end_of_turn>\n",
@@ -58,7 +56,7 @@
     }
 }, {
     "search": ["<image_soft_token>", "<start_of_turn>model", "<end_of_turn>"],
-    "name": "Google Gemma 3n.",
+    "name": "Google Gemma 3n",
     "adapter": {
         "system_start": "<start_of_turn>user\n",
         "system_end": "<end_of_turn>\n",
@@ -69,7 +67,7 @@
     }
 },{
     "search": ["<|start_header_id|>assistant<|end_header_id|>"],
-    "name": "Llama 3.x.",
+    "name": "Llama 3.x",
     "adapter": {
         "system_start": "<|start_header_id|>system<|end_header_id|>\n\n",
         "system_end": "<|eot_id|>",
@@ -109,17 +107,6 @@
         "user_start": "[INST] ",
         "user_end": "",
         "assistant_start": "[/INST]",
-        "assistant_end": "</s>"
-    }
-}, {
-    "search": ["[/INST]"],
-    "name": "Mistral (Generic)",
-    "adapter": {
-        "system_start": "[INST]",
-        "system_end": "[/INST]\n",
-        "user_start": "[INST]",
-        "user_end": "",
-        "assistant_start": "[/INST]\n",
         "assistant_end": "</s>"
     }
 }, {
@@ -189,17 +176,6 @@
         "assistant_end": "<|eom|>"
     }
 }, {
-    "search": ["<|im_start|>assistant<|im_middle|>", "<|im_assistant|>assistant<|im_middle|>", "<|im_end|>"],
-    "name": "ChatML (Kimi).",
-    "adapter": {
-        "system_start": "<|im_start|>system<|im_middle|>",
-        "system_end": "<|im_end|>",
-        "user_start": "<|im_start|>user<|im_middle|>",
-        "user_end": "<|im_end|>",
-        "assistant_start": "<|im_start|>assistant<|im_middle|>",
-        "assistant_end": "<|im_end|>"
-    }
-}, {
     "search": ["<|userprompt|>", "<|endofuserprompt|>", "<|response|>", "<|endofresponse|>"],
     "name": "Dots",
     "adapter": {
@@ -220,6 +196,28 @@
         "user_end": "\n",
         "assistant_start": "ASSISTANT: ",
         "assistant_end": "</s>\n"
+    }
+}, {
+    "search": ["[/INST]"],
+    "name": "Mistral (Generic)",
+    "adapter": {
+        "system_start": "[INST]",
+        "system_end": "[/INST]\n",
+        "user_start": "[INST]",
+        "user_end": "",
+        "assistant_start": "[/INST]\n",
+        "assistant_end": "</s>"
+    }
+}, {
+    "search": ["<|im_start|>assistant", "<|im_end|>"],
+    "name": "ChatML (Generic)",
+    "adapter": {
+        "system_start": "<|im_start|>system\n",
+        "system_end": "<|im_end|>\n",
+        "user_start": "<|im_start|>user\n",
+        "user_end": "<|im_end|>\n",
+        "assistant_start": "<|im_start|>assistant\n",
+        "assistant_end": "<|im_end|>\n"
     }
 }
 ]

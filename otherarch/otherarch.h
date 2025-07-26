@@ -512,6 +512,8 @@ struct media_object
     std::string b64data = "";
     std::vector<media_chunk> mediachunks;
     bool is_audio = false; //if true its audio, otherwise its vision
+    std::vector<int> chunk_start_seq;
+    std::vector<int> chunk_end_seq;
 };
 
 struct speculative_draft_result

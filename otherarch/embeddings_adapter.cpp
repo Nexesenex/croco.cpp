@@ -135,6 +135,7 @@ bool embeddingstype_load_model(const embeddings_load_model_inputs inputs)
     ctx_params.n_threads = nthreads;
     ctx_params.n_threads_batch = nthreads;
     ctx_params.flash_attn = inputs.flash_attention;
+    ctx_params.kv_unified = true;
 
     embeddings_ctx = llama_init_from_model(embeddingsmodel, ctx_params);
 
