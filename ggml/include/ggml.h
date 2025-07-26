@@ -590,7 +590,6 @@ extern "C" {
         GGML_OP_RMS_NORM,
         GGML_OP_RMS_NORM_BACK,
         GGML_OP_GROUP_NORM,
-        GGML_OP_FUSED_RMS_NORM,
         GGML_OP_FUSED_MUL_UNARY,
         GGML_OP_MULTI_ADD,
         GGML_OP_L2_NORM,
@@ -1373,18 +1372,6 @@ extern "C" {
     GGML_API struct ggml_tensor * ggml_rms_norm_inplace(
             struct ggml_context * ctx,
             struct ggml_tensor  * a,
-            float                 eps);
-
-    GGML_API struct ggml_tensor * ggml_fused_rms_norm(
-            struct ggml_context * ctx,
-            struct ggml_tensor  * a,
-            struct ggml_tensor  * b,
-            float                 eps);
-
-    GGML_API struct ggml_tensor * ggml_fused_rms_norm_inplace(
-            struct ggml_context * ctx,
-            struct ggml_tensor  * a,
-            struct ggml_tensor  * b,
             float                 eps);
 
     // group normalize along ne0*ne1*n_groups

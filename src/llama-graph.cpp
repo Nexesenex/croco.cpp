@@ -611,16 +611,6 @@ ggml_tensor * llm_graph_context::build_norm(
          ggml_tensor * mb,
        llm_norm_type   type,
                  int   il) const {
-
-    if (type == LLM_NORM_RMS && mw) {
-        cur = ggml_fused_rms_norm(ctx0, cur, mw, hparams.f_norm_rms_eps);
-        if (mb) {
-            cb(cur, "fused_norm", il);
-            cur = ggml_add(ctx0, cur, mb);
-        }
-        return cur;
-    }
-
     switch (type) {
         case LLM_NORM:       cur = ggml_norm    (ctx0, cur, hparams.f_norm_eps);     break;
         case LLM_NORM_RMS:   cur = ggml_rms_norm(ctx0, cur, hparams.f_norm_rms_eps); break;
