@@ -161,7 +161,27 @@ static __device__ void quantize_f32_q8_0_block(const float * __restrict__ x, blo
     }
 }
 
+static __device__ const int8_t iq4nl_index[241] = {
+     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 16, 16,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+     1, 17, 17,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2, 18,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,
+     3,  3,  3,  3,  3,  3, 19,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4, 20,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,
+     5,  5, 21, 21,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6, 22,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7, 23, 23,  8,  8,  8,  8,
+     8,  8,  8,  8,  8,  8, 24,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9, 25, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 26, 26,
+    11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 27, 27, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 28, 13, 13, 13,
+    13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 29, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14,
+    14, 14, 14, 14, 30, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15
+};
+static __device__ __forceinline__ int best_index_iq4nl(const int8_t * values, float x) {
+    int ix = (int)x - values[0];
+    if (ix < 0 || ix >= 241) return ix < 0 ? 0 : 15;
+    ix = iq4nl_index[ix];
+    return ix < 16 ? ix : x - values[ix-16] < values[ix-15] - x ? ix-16 : ix-15;
+}
+
 static __device__ void quantize_f32_iq4_nl_block(const float * __restrict__ x, block_iq4_nl * __restrict__ y) {
+    // const float * xi = (const float *) cxi;
+    // block_iq4_nl * dsti = (block_iq4_nl *) cdsti;
+
     float amax = 0.0f;
     float vmax = 0.0f;
 
@@ -176,12 +196,14 @@ static __device__ void quantize_f32_iq4_nl_block(const float * __restrict__ x, b
     float d = vmax / kvalues_iq4nl[0];
     const float id = d ? 1.0f/d : 0.0f;
 
+    //dsti->d = d;
+
     float sumqx = 0, sumq2 = 0;
     for (int j = 0; j < QK4_NL/2; ++j) {
         const float x0 = x[0        + j]*id;
         const float x1 = x[QK4_NL/2 + j]*id;
-        const uint8_t xi0 = best_index_int8(16, kvalues_iq4nl, x0);
-        const uint8_t xi1 = best_index_int8(16, kvalues_iq4nl, x1);
+        const uint8_t xi0 = best_index_iq4nl(kvalues_iq4nl, x0);
+        const uint8_t xi1 = best_index_iq4nl(kvalues_iq4nl, x1);
         y->qs[j] = xi0 | (xi1 << 4);
         const float v0 = kvalues_iq4nl[xi0];
         const float v1 = kvalues_iq4nl[xi1];
@@ -192,6 +214,41 @@ static __device__ void quantize_f32_iq4_nl_block(const float * __restrict__ x, b
     }
 
     y->d = sumq2 > 0 ? sumqx/sumq2 : d;
+}
+
+static __device__ void quantize_f32_q6_0_block(const float * __restrict__ x, block_q6_0 * __restrict__ y) {
+    // const float * xi = (const float *) cxi;
+    // block_q6_0 * dsti = (block_q6_0 *) cdsti;
+
+    float amax = 0.0f;
+    float vmax = 0.0f;
+
+    for (int j = 0; j < QK6_0; ++j) {
+        const float v  = x[j];
+        const float av = fabsf(x[j]);
+        if (amax < av) {
+            amax = av;
+            vmax = v;
+        }
+    }
+
+    const float d  = vmax / -32;
+    const float id = d ? 1.0f/d : 0.0f;
+
+    y->d = d;
+    memset(y->qh, 0, QK6_0/4);
+
+    for (int j = 0; j < QK6_0/2; ++j) {
+        const float x0 = x[0       + j]*id;
+        const float x1 = x[QK4_0/2 + j]*id;
+
+        const uint8_t xi0 = min(63, (int8_t)(x0 + 32.5f));
+        const uint8_t xi1 = min(63, (int8_t)(x1 + 32.5f));
+
+        y->qs[j]  = (xi0 & 0xf) | ((xi1 & 0xf) << 4);
+        const uint8_t h = (xi0 >> 4) | ((xi1 >> 4) << 2);
+        y->qh[j%(QK6_0/4)] |= (h << 4*(j/(QK6_0/4)));
+    }
 }
 
 // Wrapper functions for cpy.cu compatibility
@@ -209,6 +266,10 @@ static __device__ void cpy_blck_f32_q5_0(const char * cxi, char * cdsti) {
 
 static __device__ void cpy_blck_f32_q5_1(const char * cxi, char * cdsti) {
     quantize_f32_q5_1_block((const float *)cxi, (block_q5_1 *)cdsti);
+}
+
+static __device__ void cpy_blck_f32_q6_0(const char * cxi, char * cdsti) {
+    quantize_f32_q6_0_block((const float *)cxi, (block_q6_0 *)cdsti);
 }
 
 static __device__ void cpy_blck_f32_q8_0(const char * cxi, char * cdsti) {
