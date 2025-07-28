@@ -2775,7 +2775,7 @@ def getTextFromPDFEncapsulated(decoded_bytes):
         return pageOutputs
 
     def run_serial(pages):
-        from tqdm.auto import tqdm
+        # from tqdm.auto import tqdm
         results = []
         for i in tqdm(range(len(pages)), desc="Processing pages"):
             results.append(process_page(pages[i]))
@@ -2784,7 +2784,7 @@ def getTextFromPDFEncapsulated(decoded_bytes):
 
     def run_parallel(pages):
         from multiprocessing import cpu_count
-        from tqdm.auto import tqdm
+        # from tqdm.auto import tqdm
 
         # Parallel execution based on either the number of pages or number of CPU cores
         num_cores = min(cpu_count(), len(pages))
@@ -2847,7 +2847,7 @@ def getJsonFromPDFEncapsulatedPyMuPdf(decoded_bytes):
     # from tqdm.auto import tqdm
     # import fitz
     # import io
-    from concurrent.futures import ThreadPoolExecutor
+    # from concurrent.futures import ThreadPoolExecutor
     # import json
     # import re
     # import multiprocessing
@@ -3108,8 +3108,8 @@ def getJsonFromPDFEncapsulatedPyMuPdf(decoded_bytes):
 # Text extraction from PDF by Vic49
 # Modified for compatibility with KCPP by Esolithe
 def getTextFromPDFJsonEncapsulatedPyMuPdf(pages):
-    import json
-    import textwrap
+    # import json
+    # import textwrap
 
     def col_widths(rows):
         w = []
