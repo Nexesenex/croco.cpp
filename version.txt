@@ -21,6 +21,7 @@ VSVersionInfo(
                         StringStruct(u'LegalCopyright', u'Croco.CppIsFreeAndOpenSource-AGPLv3'),
                         StringStruct(u'OriginalFilename', u'Croco.Cpp.exe'),
                         StringStruct(u'ProductName', u'Croco.Cpp'),
+                        StringStruct(u'ProductVersion', u'0.0.0.0'),
                     ]
                 )
             ]

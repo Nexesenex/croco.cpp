@@ -3359,6 +3359,7 @@ def websearch(query):
     utfprint("Performing new websearch...",1)
 
     def fetch_searched_webpage(url, random_agent=False):
+        from urllib.parse import quote, urlsplit, urlunsplit
         uagent = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
         if random_agent:
             agents = ["Mozilla/5.0 (Macintosh; Intel Mac OS X 13_2) Gecko/20100101 Firefox/114.0",
@@ -3369,11 +3370,17 @@ def websearch(query):
             uagent = random.choice(agents)
         if args.debugmode != -1 and not args.quiet:
             utfprint(f"WebSearch URL: {url}")
+        # Encode non-ASCII parts of the URL
         try:
+            split_url = urlsplit(url)
+            encoded_path = quote(split_url.path)
+            encoded_url = urlunsplit((split_url.scheme, split_url.netloc, encoded_path, split_url.query, split_url.fragment))
+
             ssl_cert_dir = os.environ.get('SSL_CERT_DIR')
             if not ssl_cert_dir and not nocertify and os.name != 'nt':
                 os.environ['SSL_CERT_DIR'] = '/etc/ssl/certs'
-            req = urllib.request.Request(url, headers={'User-Agent': uagent})
+
+            req = urllib.request.Request(encoded_url, headers={'User-Agent': uagent})
             with urllib.request.urlopen(req, timeout=15) as response:
                 html_content = response.read().decode('utf-8', errors='ignore')
                 # if args.debugmode != -1 and not args.quiet:
@@ -3381,7 +3388,7 @@ def websearch(query):
                 return html_content
         except urllib.error.HTTPError: #we got blocked? try 1 more time with a different user agent
             try:
-                req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36'})
+                req = urllib.request.Request(encoded_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36'})
                 with urllib.request.urlopen(req, timeout=15) as response:
                     html_content = response.read().decode('utf-8', errors='ignore')
                     # if args.debugmode != -1 and not args.quiet:
