@@ -272,6 +272,10 @@ extern "C"
     {
         return audio_multimodal_supported;
     }
+    bool has_vision_support()
+    {
+        return vision_multimodal_supported;
+    }
     float get_last_eval_time() {
         return last_eval_time;
     }

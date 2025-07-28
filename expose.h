@@ -295,6 +295,7 @@ extern std::string draftmodel_filename;
 extern std::vector<std::string> generated_tokens;
 extern bool generation_finished;
 extern bool audio_multimodal_supported;
+extern bool vision_multimodal_supported;
 extern float last_eval_time;
 extern float last_process_time;
 extern int last_token_count;
