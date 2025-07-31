@@ -102,7 +102,7 @@ ttsmodelpath = "" #if empty, not initialized
 embeddingsmodelpath = "" #if empty, not initialized
 maxctx = 8192
 maxhordectx = 0 #set to whatever maxctx is if 0
-maxhordelen = 512
+maxhordelen = 1024
 modelbusy = threading.Lock()
 requestsinqueue = 0
 defaultport = 5001
@@ -3641,11 +3641,110 @@ def extract_all_names_from_tool_array(tools_array):
             pass
     return toolnames
 
+#returns the found JSON of the correct tool to use, or None if no tool is suitable
+def determine_tool_json_to_use(genparams, curr_ctx, assistant_message_start, is_followup_tool):
+    # tools handling: Check if user is passing a openai tools array, if so add to end of prompt before assistant prompt unless tool_choice has been set to None
+    tools_array = genparams.get('tools', [])
+    chosen_tool = genparams.get('tool_choice', "auto")
+    # first handle auto mode, determine whether a tool is needed
+    used_tool_json = None
+    if tools_array and len(tools_array) > 0 and chosen_tool is not None and chosen_tool!="none":
+        tools_string = json.dumps(tools_array, indent=0)
+        should_use_tools = True
+        if chosen_tool=="auto":
+            # if you want a different template, you can set 'custom_tools_prompt' in the chat completions adapter as follows
+            custom_tools_prompt = "Can the user query be answered by a listed tool above? (One word response: yes or no):"
+            if is_followup_tool:
+                custom_tools_prompt = "Can the user query be further answered by another listed tool above? (If response is already complete, reply NO) (One word response: yes or no):"
+            # note: message string already contains the instruct start tag!
+            pollgrammar = r'root ::= "yes" | "no" | "Yes" | "No" | "YES" | "NO"'
+            temp_poll = {
+                "prompt": f"{curr_ctx}\n\nTool List:\n{tools_string}\n\n{custom_tools_prompt}{assistant_message_start}",
+                "max_length":5,
+                "temperature":0.1,
+                "top_k":1,
+                "rep_pen":1,
+                "ban_eos_token":False,
+                "grammar":pollgrammar
+                }
+            temp_poll_result = generate(genparams=temp_poll)
+            if temp_poll_result and "yes" not in temp_poll_result['text'].lower():
+                should_use_tools = False
+            if not args.quiet:
+                print(f"\nRelevant tool is listed: {temp_poll_result['text']} ({should_use_tools})")
+
+        if should_use_tools:
+            #first, try and extract a specific tool if selected
+            used_tool_json = extract_tool_info_from_tool_array(chosen_tool, tools_array)
+            if used_tool_json: #already found the tool we want, remove all others
+                pass
+            elif len(tools_array)==1:
+                used_tool_json = tools_array[0]
+            else: # we have to find the tool we want the old fashioned way
+                toolnames = extract_all_names_from_tool_array(tools_array)
+                if len(toolnames) == 1:
+                    used_tool_json = extract_tool_info_from_tool_array(toolnames[0], tools_array)
+                else:
+                    pollgrammar = ""
+                    for name in toolnames:
+                        pollgrammar += ("" if pollgrammar=="" else " | ")
+                        pollgrammar += "\"" + name + "\""
+                    pollgrammar = r'root ::= ' + pollgrammar
+                    decide_tool_prompt = "Which of the listed tools should be used next? Pick exactly one. (Reply directly with the selected tool's name):"
+                    temp_poll = {
+                        "prompt": f"{curr_ctx}\n\nTool List:\n{tools_string}\n\n{decide_tool_prompt}{assistant_message_start}",
+                        "max_length":16,
+                        "temperature":0.1,
+                        "top_k":1,
+                        "rep_pen":1,
+                        "ban_eos_token":False,
+                        "grammar":pollgrammar
+                        }
+                    temp_poll_result = generate(genparams=temp_poll)
+                    if temp_poll_result:
+                        raw = temp_poll_result['text'].lower()
+                        for name in toolnames:
+                            if name.lower() in raw:
+                                used_tool_json = extract_tool_info_from_tool_array(name, tools_array)
+                                if not args.quiet:
+                                    print(f"\nAttempting to use tool: {name}")
+                                break
+
+    return used_tool_json
+
+
 def transform_genparams(genparams, api_format):
     global chatcompl_adapter, maxctx
 
     if api_format < 0: #not text gen, do nothing
         return
+
+    jsongrammar = r"""
+root   ::= arr
+value  ::= object | array | string | number | ("true" | "false" | "null") ws
+arr  ::=
+  "[\n" ws (
+            value
+    (",\n" ws value)*
+  )? "]"
+object ::=
+  "{" ws (
+            string ":" ws value
+    ("," ws string ":" ws value)*
+  )? "}" ws
+array  ::=
+  "[" ws (
+            value
+    ("," ws value)*
+  )? "]" ws
+string ::=
+  "\"" (
+    [^"\\\x7F\x00-\x1F] |
+    "\\" (["\\bfnrt] | "u" [0-9a-fA-F]{4})
+  )* "\"" ws
+number ::= ("-"? ([0-9] | [1-9] [0-9]{0,15})) ("." [0-9]+)? ([eE] [-+]? [1-9] [0-9]{0,15})? ws
+ws ::= | " " | "\n" [ \t]{0,20}
+"""
 
     #api format 1=basic,2=kai,3=oai,4=oai-chat,5=interrogate,6=ollama,7=ollamachat
     #alias all nonstandard alternative names for rep pen.
@@ -3696,32 +3795,6 @@ def transform_genparams(genparams, api_format):
             tools_message_end = adapter_obj.get("tools_end", "")
             images_added = []
             audio_added = []
-            jsongrammar = r"""
-root   ::= arr
-value  ::= object | array | string | number | ("true" | "false" | "null") ws
-arr  ::=
-  "[\n" ws (
-            value
-    (",\n" ws value)*
-  )? "]"
-object ::=
-  "{" ws (
-            string ":" ws value
-    ("," ws string ":" ws value)*
-  )? "}" ws
-array  ::=
-  "[" ws (
-            value
-    ("," ws value)*
-  )? "]" ws
-string ::=
-  "\"" (
-    [^"\\\x7F\x00-\x1F] |
-    "\\" (["\\bfnrt] | "u" [0-9a-fA-F]{4})
-  )* "\"" ws
-number ::= ("-"? ([0-9] | [1-9] [0-9]{0,15})) ("." [0-9]+)? ([eE] [-+]? [1-9] [0-9]{0,15})? ws
-ws ::= | " " | "\n" [ \t]{0,20}
-"""
 
             # handle structured outputs
             respformat = genparams.get('response_format', None)
@@ -3797,93 +3870,28 @@ ws ::= | " " | "\n" [ \t]{0,20}
                                 messages_string += f"\n(Attached Audio {attachedaudid})\n"
                 # If last message, add any tools calls after message content and before message end token if any
                 if (message['role'] == "user" or message['role'] == "tool") and message_index == len(messages_array):
-                    # tools handling: Check if user is passing a openai tools array, if so add to end of prompt before assistant prompt unless tool_choice has been set to None
-                    tools_array = genparams.get('tools', [])
-                    chosen_tool = genparams.get('tool_choice', "auto")
-                    # first handle auto mode, determine whether a tool is needed
-                    if tools_array and len(tools_array) > 0 and chosen_tool is not None and chosen_tool!="none":
-                        tools_string = json.dumps(tools_array, indent=0)
-                        should_use_tools = True
-                        user_end = assistant_message_start
-                        if chosen_tool=="auto":
-                            # if you want a different template, you can set 'custom_tools_prompt' in the chat completions adapter as follows
-                            custom_tools_prompt = adapter_obj.get("custom_tools_prompt", "Can the user query be answered by a listed tool above? (One word response: yes or no):")
-                            if message['role'] == "tool":
-                                custom_tools_prompt = adapter_obj.get("custom_tools_prompt", "Can the user query be further answered by another listed tool above? (If response is already complete, reply NO) (One word response: yes or no):")
-                            # note: message string already contains the instruct start tag!
-                            pollgrammar = r'root ::= "yes" | "no" | "Yes" | "No" | "YES" | "NO"'
-                            temp_poll = {
-                                "prompt": f"{messages_string}\n\nTool List:\n{tools_string}\n\n{custom_tools_prompt}{user_end}",
-                                "max_length":4,
-                                "temperature":0.1,
-                                "top_k":1,
-                                "rep_pen":1,
-                                "ban_eos_token":False,
-                                "grammar":pollgrammar
-                                }
-                            temp_poll_result = generate(genparams=temp_poll)
-                            if temp_poll_result and "yes" not in temp_poll_result['text'].lower():
-                                should_use_tools = False
-                            if not args.quiet:
-                                print(f"\nRelevant tool is listed: {temp_poll_result['text']} ({should_use_tools})")
+                    used_tool_json = determine_tool_json_to_use(genparams, messages_string, assistant_message_start, (message['role'] == "tool"))
 
-                        if should_use_tools:
-                            #first, try and extract a specific tool if selected
-                            used_tool_json = extract_tool_info_from_tool_array(chosen_tool, tools_array)
-                            if used_tool_json: #already found the tool we want, remove all others
-                                pass
-                            elif len(tools_array)==1:
-                                used_tool_json = tools_array[0]
-                            else: # we have to find the tool we want the old fashioned way
-                                toolnames = extract_all_names_from_tool_array(tools_array)
-                                if len(toolnames) == 1:
-                                     used_tool_json = extract_tool_info_from_tool_array(toolnames[0], tools_array)
-                                else:
-                                    pollgrammar = ""
-                                    for name in toolnames:
-                                        pollgrammar += ("" if pollgrammar=="" else " | ")
-                                        pollgrammar += "\"" + name + "\""
-                                    pollgrammar = r'root ::= ' + pollgrammar
-                                    decide_tool_prompt = "Which of the listed tools should be used? Pick exactly one. (Reply directly with the selected tool's name):"
-                                    temp_poll = {
-                                        "prompt": f"{messages_string}\n\nTool List:\n{tools_string}\n\n{decide_tool_prompt}{user_end}",
-                                        "max_length":8,
-                                        "temperature":0.1,
-                                        "top_k":1,
-                                        "rep_pen":1,
-                                        "ban_eos_token":False,
-                                        "grammar":pollgrammar
-                                        }
-                                    temp_poll_result = generate(genparams=temp_poll)
-                                    if temp_poll_result:
-                                        raw = temp_poll_result['text'].lower()
-                                        for name in toolnames:
-                                            if name.lower() in raw:
-                                                used_tool_json = extract_tool_info_from_tool_array(name, tools_array)
-                                                if not args.quiet:
-                                                    print(f"\nAttempting to use tool: {name}")
-                                                break
-
-                            if used_tool_json:
-                                toolparamjson = None
-                                toolname = None
-                                # Set temperature lower automatically if function calling, cannot exceed 0.5
-                                genparams["temperature"] = (1.0 if genparams.get("temperature", 0.5) > 1.0 else genparams.get("temperature", 0.5))
-                                genparams["using_openai_tools"] = True
-                                # Set grammar to llamacpp example grammar to force json response (see https://github.com/ggerganov/llama.cpp/blob/master/grammars/json_arr.gbnf)
-                                genparams["grammar"] = jsongrammar
-                                try:
-                                    toolname = used_tool_json.get('function').get('name')
-                                    toolparamjson = used_tool_json.get('function').get('parameters')
-                                    bettergrammarjson = {"type":"array","items":{"type":"object","properties":{"id":{"type":"string","enum":["call_001"]},"type":{"type":"string","enum":["function"]},"function":{"type":"object","properties":{"name":{"type":"string"},"arguments":{}},"required":["name","arguments"],"additionalProperties":False}},"required":["id","type","function"],"additionalProperties":False}}
-                                    bettergrammarjson["items"]["properties"]["function"]["properties"]["arguments"] = toolparamjson
-                                    decoded = convert_json_to_gbnf(bettergrammarjson)
-                                    if decoded:
-                                        genparams["grammar"] = decoded
-                                except Exception:
-                                    pass
-                                tool_json_formatting_instruction = f"\nPlease use the provided schema to fill the parameters to create a function call for {toolname}, in the following format: " + json.dumps([{"id": "call_001", "type": "function", "function": {"name": f"{toolname}", "arguments": {"first property key": "first property value", "second property key": "second property value"}}}], indent=0)
-                                messages_string += f"\n\nJSON Schema:\n{used_tool_json}\n\n{tool_json_formatting_instruction}{user_end}"
+                    if used_tool_json:
+                        toolparamjson = None
+                        toolname = None
+                        # Set temperature lower automatically if function calling, cannot exceed 0.5
+                        genparams["temperature"] = (1.0 if genparams.get("temperature", 0.5) > 1.0 else genparams.get("temperature", 0.5))
+                        genparams["using_openai_tools"] = True
+                        # Set grammar to llamacpp example grammar to force json response (see https://github.com/ggerganov/llama.cpp/blob/master/grammars/json_arr.gbnf)
+                        genparams["grammar"] = jsongrammar
+                        try:
+                            toolname = used_tool_json.get('function').get('name')
+                            toolparamjson = used_tool_json.get('function').get('parameters')
+                            bettergrammarjson = {"type":"array","items":{"type":"object","properties":{"id":{"type":"string","enum":["call_001"]},"type":{"type":"string","enum":["function"]},"function":{"type":"object","properties":{"name":{"type":"string"},"arguments":{}},"required":["name","arguments"],"additionalProperties":False}},"required":["id","type","function"],"additionalProperties":False}}
+                            bettergrammarjson["items"]["properties"]["function"]["properties"]["arguments"] = toolparamjson
+                            decoded = convert_json_to_gbnf(bettergrammarjson)
+                            if decoded:
+                                genparams["grammar"] = decoded
+                        except Exception:
+                            pass
+                        tool_json_formatting_instruction = f"\nPlease use the provided schema to fill the parameters to create a function call for {toolname}, in the following format: " + json.dumps([{"id": "call_001", "type": "function", "function": {"name": f"{toolname}", "arguments": {"first property key": "first property value", "second property key": "second property value"}}}], indent=0)
+                        messages_string += f"\n\nJSON Schema:\n{used_tool_json}\n\n{tool_json_formatting_instruction}{assistant_message_start}"
 
 
                 if message['role'] == "system":

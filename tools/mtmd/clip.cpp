@@ -4552,6 +4552,11 @@ projector_type clip_get_projector_type(const struct clip_ctx * ctx) {
     return ctx->proj_type();
 }
 
+int clip_get_projector_type_ext(clip_ctx * ctx) {
+    return ctx->proj_type();
+}
+
+
 void clip_image_f32_batch_add_mel(struct clip_image_f32_batch * batch, int n_mel, int n_frames, float * mel) {
     clip_image_f32 * audio = new clip_image_f32;
     audio->nx = n_frames;

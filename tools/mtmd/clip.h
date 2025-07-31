@@ -102,6 +102,7 @@ bool clip_is_llava(const struct clip_ctx * ctx);
 bool clip_is_gemma3(const struct clip_ctx * ctx);
 bool clip_is_pixtral(const struct clip_ctx * ctx);
 void set_clip_uses_gpu(bool usegpu);
+int clip_get_projector_type_ext(clip_ctx * ctx);
 
 bool clip_encode_float_image (struct clip_ctx * ctx, int n_threads, float * img, int h, int w, float * vec);
 

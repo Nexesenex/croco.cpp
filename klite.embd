@@ -12,7 +12,7 @@ Current version indicated by LITEVER below.
 -->
 
 <script id="init-config">
-	const LITEVER = 262;
+	const LITEVER = 266;
 	const urlParams = new URLSearchParams(window.location.search);
 	var localflag = urlParams.get('local'); //this will be replaced automatically in embedded kcpp
 	const STORAGE_PREFIX = (localflag?"e_":"")+"kaihordewebui_";
@@ -3620,7 +3620,7 @@ Current version indicated by LITEVER below.
 		websearch_retain: false,
 		websearch_template: "",
 
-		max_context_length: (localflag?4096:2048),
+		max_context_length: (localflag?4096:3072),
 		max_length: (localflag?512:256),
 		auto_ctxlen: true,
 		auto_genamt: true,
@@ -11788,11 +11788,6 @@ Current version indicated by LITEVER below.
 									document.getElementById("max_context_length_slide").max = ep_maxctx;
 									document.getElementById("max_context_length_slide_label").innerText = ep_maxctx;
 								}
-								if(ep_maxctx && ep_maxctx>4096 && document.getElementById("max_length_slide").max<1024)
-								{
-									document.getElementById("max_length_slide").max = 1024;
-									document.getElementById("max_length_slide_label").innerText = 1024;
-								}
 
 							}).catch(error => {
 								console.log("Failed to get KAI max ctx: " + error);
@@ -11850,17 +11845,17 @@ Current version indicated by LITEVER below.
 											document.getElementById("max_context_length_slide").max = ep_maxctx;
 											document.getElementById("max_context_length_slide_label").innerText = ep_maxctx;
 										}
-										if(ep_maxctx && ep_maxctx>=4096 && document.getElementById("max_length_slide").max<1024)
-										{
-											document.getElementById("max_length_slide").max = 1024;
-											document.getElementById("max_length_slide_label").innerText = 1024;
-										}
-										if(ep_maxctx && ep_maxctx>=16384 && document.getElementById("max_length_slide").max<2048)
+										if(ep_maxctx && ep_maxctx>=8192 && document.getElementById("max_length_slide").max<2048)
 										{
 											document.getElementById("max_length_slide").max = 2048;
 											document.getElementById("max_length_slide_label").innerText = 2048;
 										}
-										if(localflag && localsettings.max_context_length==4096 && ep_maxctx>4096)
+										if(ep_maxctx && ep_maxctx>=16384 && document.getElementById("max_length_slide").max<4096)
+										{
+											document.getElementById("max_length_slide").max = 4096;
+											document.getElementById("max_length_slide_label").innerText = 4096;
+										}
+										if(localflag && localsettings.max_context_length==defaultsettings.max_context_length && ep_maxctx>4096)
 										{
 											localsettings.max_context_length = ep_maxctx;
 										}
@@ -25023,7 +25018,7 @@ Current version indicated by LITEVER below.
 		<div class="flex" style="margin-top: 6px;">
 			<div id="actionmenuitems">
 				<button type="button" class="btn btn-primary mainnav" id="btn_actmem" onclick="btn_memory()">Context</button>
-				<button type="button" class="btn btn-primary mainnav" id="btn_actundo" onpointerdown="btn_back_longpress_start()" onpointerleave="btn_back_longpress_end()" onpointerup="btn_back_longpress_end()" onclick="btn_back()">Back</button>
+				<button type="button" class="btn btn-primary mainnav" id="btn_actundo" onpointerdown="btn_back_longpress_start()" onpointerleave="btn_back_longpress_end()" onpointerup="btn_back_longpress_end()" onclick="btn_back()">Undo</button>
 				<button type="button" class="btn btn-primary mainnav" id="btn_actredo" onpointerdown="btn_redo_longpress_start()" onpointerleave="btn_redo_longpress_end()" onpointerup="btn_redo_longpress_end()" onclick="btn_redo()">Redo</button>
 				<button type="button" class="btn btn-primary mainnav" id="btn_actretry" onclick="btn_retry()">Retry</button>
 				<button type="button" class="btn btn-primary bg_green mainnav" id="btn_addmedia" onclick="add_media_btn_menu()">Add File</button>
@@ -25073,7 +25068,7 @@ Current version indicated by LITEVER below.
 				<div class="flex hidden" id="actionmenu2">
 					<div id="actionmenuitems2" class="borderbox flex-push-right" style="margin-bottom: 2px;">
 						<button type="button" class="btn btn-primary mainnav" id="btn_actmem2" onclick="btn_memory()">Context</button>
-						<button type="button" class="btn btn-primary mainnav" id="btn_actundo2" onpointerdown="btn_back_longpress_start()" onpointerleave="btn_back_longpress_end()" onpointerup="btn_back_longpress_end()" onclick="btn_back()">Back</button>
+						<button type="button" class="btn btn-primary mainnav" id="btn_actundo2" onpointerdown="btn_back_longpress_start()" onpointerleave="btn_back_longpress_end()" onpointerup="btn_back_longpress_end()" onclick="btn_back()">Undo</button>
 						<button type="button" class="btn btn-primary mainnav" id="btn_actredo2" onpointerdown="btn_redo_longpress_start()" onpointerleave="btn_redo_longpress_end()" onpointerup="btn_redo_longpress_end()" onclick="btn_redo()">Redo</button>
 						<button type="button" class="btn btn-primary mainnav" id="btn_actretry2" onclick="btn_retry()">Retry</button>
 						<button type="button" class="btn btn-primary bg_green mainnav" id="btn_addmedia2" onclick="add_media_btn_menu()">Add File</button>
@@ -25597,7 +25592,7 @@ Current version indicated by LITEVER below.
 
 					<div class="settingitem">
 						<div class="settinglabel">
-							<div class="justifyleft settingsmall">Context Size <span class="helpicon">?<span class="helptext">Maximum number of context tokens submitted to the AI. Must exceed max output tokens. Can be further increased by editing the textbox. Older models stop at 2048, newer ones can do 4096 or greater.</span></span></div>
+							<div class="justifyleft settingsmall">Context Size <span class="helpicon">?<span class="helptext">Maximum number of context tokens submitted to the AI. Must exceed max output tokens. Can be further increased by editing the textbox. This value determines how much history text the AI remembers.</span></span></div>
 							<input title="Context Size" inputmode="numeric" class="justifyright flex-push-right settingsmall widerinput" id="max_context_length" oninput="
 							document.getElementById('max_context_length_slide').value = this.value;">
 						</div>
@@ -25616,15 +25611,15 @@ Current version indicated by LITEVER below.
 					<div class="settingitem">
 						<div class="settinglabel">
 							<div class="justifyleft settingsmall">Max Output <span class="helpicon">?<span
-										class="helptext">Number of tokens the AI should generate. Higher numbers will take longer to generate.</span></span></div>
+										class="helptext">Maximum number of tokens the AI should generate. Higher numbers will take longer to generate. AI can stop before the limit.</span></span></div>
 							<input title="Max Output" inputmode="numeric" class="justifyright flex-push-right settingsmall" id="max_length" oninput="
 							document.getElementById('max_length_slide').value = this.value;">
 						</div>
 						<div><input title="Max Output Slider" type="range" min="32" max="16384" step="32"	id="max_length_slide" oninput="
-						   document.getElementById('max_length').value = this.value;"></div>
+							document.getElementById('max_length').value = this.value;"></div>
 						<div class="settingminmax">
 							<div class="justifyleft">16</div>
-							<div class="justifyright" id="max_length_slide_label">8192</div>
+							<div class="justifyright" id="max_length_slide_label">1024</div>
 						</div>
 						<div id="auto_genamt_panel" class="settinglabel">
 							<div class="justifyleft settingsmall" title="Automatically lowers settings if incompatible with existing workers">Auto-Adjust Limits </div>

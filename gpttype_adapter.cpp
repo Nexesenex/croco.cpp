@@ -114,6 +114,7 @@ static std::vector<int> last_media_mem; //for storing dummy tokens that will be 
 static std::string media_composite_image_signature = ""; //for identifying when the llava images change, we need to invalidate the cache
 static int current_media_identifier = MEDIA_TOKEN_IDENTIFIER_A;
 static int vision_max_res = 2048;
+static bool use_mrope = false;
 
 static kcpp_params * kcpp_data = nullptr;
 static int max_context_limit_at_load = 0;
@@ -785,7 +786,7 @@ static speculative_draft_result speculative_decoding_eval_chunk(llama_context * 
 
     std::vector<int> real_embd = drafted_ids;
     real_embd.pop_back();
-    bool use_mrope = (file_format==FileFormat::GGUF_GENERIC && file_format_meta.model_architecture == GGUFArch::ARCH_QWEN2VL);
+
     kcpp_embd_batch batch2 = kcpp_embd_batch(real_embd, actual_npast, use_mrope, true);
     auto draftok = (llama_decode(main_ctx, batch2.batch)==0); //actual eval for big model
     if(!draftok)
@@ -1893,7 +1894,6 @@ static void load_grammar(const std::string & gammarstr)
 
 static bool kcpp_eval_image(llama_context * ctx_llama, float * img_embd, int num_img_tokens, int n_batch, int * n_past) {
     int n_embd  = llama_n_embd(llama_get_model(ctx_llama));
-    bool use_mrope = (file_format==FileFormat::GGUF_GENERIC && file_format_meta.model_architecture == GGUFArch::ARCH_QWEN2VL);
 
     for (int i = 0; i < num_img_tokens; i += n_batch) {
         int n_eval = num_img_tokens - i;
@@ -2134,6 +2134,7 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
     guidance_ctx = nullptr;
     audio_multimodal_supported = false;
     vision_multimodal_supported = false;
+    use_mrope = false;
 
     auto clamped_max_context_length = inputs.max_context_length;
 
@@ -2532,6 +2533,7 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
         {
             printf("\nMRope is used, context shift will be disabled!\n");
             kcpp_data->use_contextshift = false;
+            use_mrope = true;
         }
 
         if(overwriteRope)
@@ -3576,8 +3578,25 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
             media_object lv;
             lv.b64data = item;
             lv.is_audio = true;
-            TokenizeString("<audio>", lv.chunk_start_seq, file_format, false);
-            TokenizeString("</audio>\n\n", lv.chunk_end_seq, file_format, false);
+            std::string aud_start = "<audio>";
+            std::string aud_end = "</audio>\n\n";
+            if(clp_ctx_a)
+            {
+                int ptype = clip_get_projector_type_ext(clp_ctx_a);
+                if(ptype==14) //qwen omni
+                {
+                    aud_start = "<|audio_bos|>";
+                    aud_end = "<|audio_eos|>\n";
+                }
+                else if(ptype==16) //voxtral
+                {
+                    aud_start = "[INST][BEGIN_AUDIO]";
+                    aud_end = "[/INST]\n";
+                }
+            }
+
+            TokenizeString(aud_start, lv.chunk_start_seq, file_format, false);
+            TokenizeString(aud_end, lv.chunk_end_seq, file_format, false);
             media_objects.push_back(lv);
             new_media_composite += item;
         }
@@ -3757,7 +3776,6 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
     int32_t nctx = kcpp_data->n_ctx;
 
     TokenizeString(kcpp_data->prompt, embd_inp, file_format, add_bos_token);
-    bool use_mrope = (file_format == FileFormat::GGUF_GENERIC && file_format_meta.model_architecture == GGUFArch::ARCH_QWEN2VL);
     TokenizeString("\nAttached Media:\n", media_intro, file_format, false);
 
     if(media_composite_image_signature=="")
