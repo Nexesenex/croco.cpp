@@ -45,6 +45,8 @@ option(LLAMA_CUBLAS                          "llama: use CUDA"                  
 option(LLAMA_CUDA_F16                        "llama: use 16 bit floats for dmmv CUDA kernels"   OFF)
 set(LLAMA_CUDA_PEER_MAX_BATCH_SIZE "128" CACHE STRING
                                              "llama: max. batch size for using peer access")
+set(GGML_SCHED_MAX_COPIES   "1" CACHE STRING "llama: max input copies for pipeline parallelism")
+set(LLAMA_SCHED_MAX_COPIES  "1" CACHE STRING "llama: max input copies for pipeline parallelism")								 
 
 option(LLAMA_HIPBLAS                         "llama: use hipBLAS"                               OFF)
 
