@@ -435,7 +435,12 @@ extern "C" {
         GGML_TYPE_MXFP4   = 39, // MXFP4 (1 block)
         GGML_TYPE_NVFP4   = 40, // NVFP4 (4 blocks, E4M3 scale)
         GGML_TYPE_Q1_0    = 41,
-        GGML_TYPE_COUNT   = 42,
+
+        // GGML_TYPE_COUNT   = 42,
+        //
+        GGML_TYPE_Q6_0    = 133,
+
+        GGML_TYPE_COUNT   = 135,
     };
 
     // precision
@@ -479,6 +484,12 @@ extern "C" {
         GGML_FTYPE_MOSTLY_MXFP4   = 25, // except 1d tensors
         GGML_FTYPE_MOSTLY_NVFP4   = 26, // except 1d tensors
         GGML_FTYPE_MOSTLY_Q1_0    = 27, // except 1d tensors
+
+        // GGML_FTYPE_MOSTLY_Q4_0_4_4 = 26, // except 1d tensors
+        // GGML_FTYPE_MOSTLY_Q4_0_4_8 = 27, // except 1d tensors
+        // GGML_FTYPE_MOSTLY_Q4_0_8_8 = 28, // except 1d tensors
+        //
+        GGML_FTYPE_MOSTLY_Q6_0    = 127, // except 1d tensors
     };
 
     // available tensor operations:
