@@ -499,6 +499,7 @@ static void llama_model_quantize_impl(const std::string & fname_inp, const std::
         case LLAMA_FTYPE_MOSTLY_Q4_1: default_type = GGML_TYPE_Q4_1; break;
         case LLAMA_FTYPE_MOSTLY_Q5_0: default_type = GGML_TYPE_Q5_0; break;
         case LLAMA_FTYPE_MOSTLY_Q5_1: default_type = GGML_TYPE_Q5_1; break;
+        case LLAMA_FTYPE_MOSTLY_Q6_0: default_type = GGML_TYPE_Q6_0; break;
         case LLAMA_FTYPE_MOSTLY_Q8_0: default_type = GGML_TYPE_Q8_0; break;
         case LLAMA_FTYPE_MOSTLY_F16:  default_type = GGML_TYPE_F16;  break;
         case LLAMA_FTYPE_MOSTLY_BF16: default_type = GGML_TYPE_BF16; break;
@@ -900,7 +901,7 @@ static void llama_model_quantize_impl(const std::string & fname_inp, const std::
                             case GGML_TYPE_Q3_K:
                             case GGML_TYPE_IQ4_XS: new_type = GGML_TYPE_IQ4_NL; break;
                             case GGML_TYPE_Q4_K:   new_type = GGML_TYPE_Q5_0;   break;
-                            case GGML_TYPE_Q5_K:   new_type = GGML_TYPE_Q5_1;   break;
+                            case GGML_TYPE_Q5_K:   new_type = GGML_TYPE_Q6_0;   break;
                             case GGML_TYPE_Q6_K:   new_type = GGML_TYPE_Q8_0;   break;
                             default:
                                 printf("\nUnsupported tensor size encountered! Will use %s for %s\n",ggml_type_name(tensor->type),name.c_str()) ;
