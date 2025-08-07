@@ -1602,11 +1602,6 @@ def autoset_gpu_layers(ctxsize, sdquanted, blasbatchsize, quantkv_var, flashatte
         print(f"FIRST_STEP : Initial layer limit: {layerlimit_intermed} ; Model size: {fsize/1024/1024:.3f} MiB ; context size: {ctxsize} tokens")
         print(f"GPUs global reserved VRAM: {reservedmem/1024/1024} MiB (Toral occupied VRAM + Total overhead) ; GPUs total usable VRAM: {mem/1024/1024} MiB")    
 
-        if mem <= fsize/2:
-            exitcounter = 999
-            print(f" Model size: {fsize/1024/1024:.3f} MiB ; Available VRAM: {mem} MiB.")
-            exit_with_error(2,"There's not enough available VRAM to make a reasonably performing offload. Exiting.")
-
         if fsize > (10*1024*1024): #dont bother with models < 10mb
             cs = ctxsize
             # mem = gpumem
