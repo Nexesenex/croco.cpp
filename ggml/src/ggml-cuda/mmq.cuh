@@ -304,6 +304,14 @@ static constexpr __device__ int mmq_get_granularity_device(const int /* mmq_x */
 }
 #endif // NEW_MMA_AVAILABLE
 
+static int mmq_get_nwarps_host(const int /*cc*/, const int warp_size) {
+    return 256/warp_size;
+}
+
+static constexpr __device__ int mmq_get_nwarps_device() {
+    return 256/ggml_cuda_get_physical_warp_size();
+}
+
 // ------------------------------------------------------------
 
 template <int mmq_y, int nwarps, bool need_check> static __device__ __forceinline__ void load_tiles_q4_0(
@@ -4141,6 +4149,10 @@ static void launch_mul_mat_q(ggml_backend_cuda_context & ctx, const mmq_args & a
     const int id = ggml_cuda_get_device();
     const int cc = ggml_cuda_info().devices[id].cc;
     const int nsm = ggml_cuda_info().devices[id].nsm;
+
+    const int warp_size = ggml_cuda_info().devices[id].warp_size;
+    const int nwarps = mmq_get_nwarps_host(cc, warp_size);
+
     const int mmq_y = get_mmq_y_host(cc);
 
     const dim3 block_dims(WARP_SIZE, MMQ_NWARPS, 1);
@@ -4197,6 +4209,9 @@ void mul_mat_q_case(ggml_backend_cuda_context & ctx, const mmq_args & args, cuda
     const int nsm   = ggml_cuda_info().devices[id].nsm;
     const int cc    = ggml_cuda_info().devices[id].cc;
     const int smpbo = ggml_cuda_info().devices[id].smpbo;
+
+    const int warp_size = ggml_cuda_info().devices[id].warp_size;
+    const int nwarps    = mmq_get_nwarps_host(cc, warp_size);
 
     const int mmq_x_max = get_mmq_x_max_host(cc);
     const int mmq_y = get_mmq_y_host(cc);
