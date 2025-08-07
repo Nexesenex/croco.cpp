@@ -3869,7 +3869,7 @@ ws ::= | " " | "\n" [ \t]{0,20}
                                 attachedaudid += 1
                                 messages_string += f"\n(Attached Audio {attachedaudid})\n"
                 # If last message, add any tools calls after message content and before message end token if any
-                if (message['role'] == "user" or message['role'] == "tool") and message_index == len(messages_array):
+                if message_index == len(messages_array):
                     used_tool_json = determine_tool_json_to_use(genparams, messages_string, assistant_message_start, (message['role'] == "tool"))
 
                     if used_tool_json:
