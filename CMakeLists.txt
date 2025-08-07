@@ -55,6 +55,12 @@ option(LLAMA_OPENMP                          "llama: use OpenMP"                
 
 # Llama_Default for basic CPU dll made with CMake.
 option(LLAMA_DEFAULT                         "llama: use CPU?"                                  OFF)
+# Croco.Cpp Specifics
+option(LLAMA_CUDA_FA_ALL_QUANTS              "llama: compile 18 quants for FlashAttention"      OFF)
+option(GGML_CUDA_USE_GRAPHS                  "Use Cuda Graphs to increase a bit performancess"  OFF)
+option(LLAMA_CUDA_ENABLE_UNIFIED_MEMORY      "llama: enable to avoid OOM in Full Offload"       OFF)
+set   (GGML_CUDA_COMPRESSION_MODE "size" CACHE STRING
+                                            "ggml: cuda link binary compression mode; requires cuda 12.8+")
 
 #
 # Compile flags
@@ -96,6 +102,7 @@ set(GGML_V2_LEGACY_CUDA_SOURCES otherarch/ggml_v2-cuda-legacy.cu otherarch/ggml_
 
 
 if (LLAMA_CUBLAS)
+
     cmake_minimum_required(VERSION 3.17)
 
     find_package(CUDAToolkit)
@@ -108,6 +115,17 @@ if (LLAMA_CUBLAS)
         add_compile_definitions(GGML_USE_CUDA)
         add_compile_definitions(SD_USE_CUDA)
 
+        file(GLOB   GGML_HEADERS_CUDA "*.cuh")
+        list(APPEND GGML_HEADERS_CUDA "../../include/ggml-cuda.h")
+		
+		if (CUDAToolkit_VERSION VERSION_GREATER_EQUAL "12.8")
+			# Options are:
+			# - none (not recommended)
+			# - speed (nvcc's default)
+			# - balance
+			# - size
+			list(APPEND CUDA_FLAGS -compress-mode=${GGML_CUDA_COMPRESSION_MODE})
+		endif()
         if (LLAMA_CUDA_F16 OR LLAMA_CUDA_DMMV_F16)
             add_compile_definitions(GGML_CUDA_F16)
         endif()
@@ -233,6 +251,8 @@ if (LLAMA_CUBLAS)
         set(LLAMA_EXTRA_LIBS ${LLAMA_EXTRA_LIBS} CUDA::cuda_driver)
 
     if (NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+        # 35 == Lowest CUDA 11 standard for Kepler
+        # 37 == Highest CUDA 11 standard for Kepler
         # 50 == lowest CUDA 12 standard
         # 60 == f16 CUDA intrinsics
         # 61 == integer CUDA intrinsics
