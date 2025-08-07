@@ -64,6 +64,21 @@ static __device__ __forceinline__ void dequantize_q5_1(const void * vx, const in
     v.y = (v.y * dm.x) + dm.y;
 }
 
+static __device__ __forceinline__ void dequantize_q6_0(const void * vx, const int64_t ib, const int iqs, float2 & v){
+    const block_q6_0 * x = (const block_q6_0 *) vx;
+
+    const float d = x[ib].d;
+
+    uint8_t qh = x[ib].qh[iqs % (QK6_0 / 4)];
+    const int h = (qh >> 4*(iqs/(QK6_0/4))) & 0x03;
+
+    v.x = ((x[ib].qs[iqs] & 0xf) | ((h << 4) & 0x30));
+    v.y = ((x[ib].qs[iqs + QK6_0/2] & 0xf) | ((h << 2) & 0x30));
+
+    v.x = (v.x - 32.0f) * d;
+    v.y = (v.y - 32.0f) * d;
+}
+
 static __device__ __forceinline__ void dequantize_q8_0(const void * vx, const int64_t ib, const int iqs, float2 & v){
     const block_q8_0 * x = (const block_q8_0 *) vx;
 
