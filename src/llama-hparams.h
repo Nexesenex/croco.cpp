@@ -9,10 +9,9 @@
 #define LLAMA_MAX_EXPERTS 384  // Kimi-K2
 
 enum llama_expert_gating_func_type {
-    LLAMA_EXPERT_GATING_FUNC_TYPE_NONE           = 0,
-    LLAMA_EXPERT_GATING_FUNC_TYPE_SOFTMAX        = 1,
-    LLAMA_EXPERT_GATING_FUNC_TYPE_SIGMOID        = 2,
-    LLAMA_EXPERT_GATING_FUNC_TYPE_SOFTMAX_WEIGHT = 3, // applied to the router weights instead of the logits
+    LLAMA_EXPERT_GATING_FUNC_TYPE_NONE    = 0,
+    LLAMA_EXPERT_GATING_FUNC_TYPE_SOFTMAX = 1,
+    LLAMA_EXPERT_GATING_FUNC_TYPE_SIGMOID = 2,
 };
 
 enum llama_swa_type {

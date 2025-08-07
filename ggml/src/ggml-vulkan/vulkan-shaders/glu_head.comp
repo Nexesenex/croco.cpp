@@ -14,6 +14,4 @@ layout (push_constant) uniform parameter
     uint ne00;
     uint ne20;
     uint mode;
-    float alpha;
-    float limit;
 } p;

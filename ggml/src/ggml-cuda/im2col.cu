@@ -1,5 +1,7 @@
 #include "im2col.cuh"
 
+#define MIN(a, b) (a) < (b) ? (a) : (b)
+
 #define MAX_GRIDDIM_Z 65535
 
 template <typename T>
@@ -36,9 +38,6 @@ static  __global__ void im2col_kernel(
             dst[offset_dst] = x[offset_src + iih * IW + iiw];
         }
     }
-
-    GGML_UNUSED(IC);
-    GGML_UNUSED(KH);
 }
 
 // im2col: [N, IC, IH, IW] => [N, OH, OW, IC*KH*KW]
