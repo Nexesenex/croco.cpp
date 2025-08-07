@@ -1,7 +1,7 @@
 VSVersionInfo(
     ffi=FixedFileInfo(
-      filevers=(1, 97020, 0, 0),
-      prodvers=(1, 97020, 0, 0),
+      filevers=(1, 97060, 0, 0),
+      prodvers=(1, 97060, 0, 0),
       mask=0x3f,
       flags=0x0,
       OS=0x4,
@@ -21,7 +21,7 @@ VSVersionInfo(
                         StringStruct(u'LegalCopyright', u'Croco.CppIsFreeAndOpenSource-AGPLv3'),
                         StringStruct(u'OriginalFilename', u'Croco.Cpp.exe'),
                         StringStruct(u'ProductName', u'Croco.Cpp'),
-                        StringStruct(u'ProductVersion', u'1.97020.0.0'),	
+                        StringStruct(u'ProductVersion', u'1.97060.0.0'),	
                     ]
                 )
             ]
