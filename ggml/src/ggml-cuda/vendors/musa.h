@@ -137,5 +137,4 @@
 #define cudaStreamEndCapture musaStreamEndCapture
 #define cudaOccupancyMaxActiveBlocksPerMultiprocessor musaOccupancyMaxActiveBlocksPerMultiprocessor
 
-typedef __mt_bfloat16 nv_bfloat16;
-typedef __mt_bfloat162 nv_bfloat162;
+typedef mt_bfloat16 nv_bfloat16;
