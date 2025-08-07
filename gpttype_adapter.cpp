@@ -647,7 +647,7 @@ static void speculative_decoding_setup(std::string spec_model_filename, const ll
 		(draft_quant_k==22?GGML_TYPE_Q4_1:
 		(draft_quant_k==21?GGML_TYPE_Q5_0:
 		(draft_quant_k==20?GGML_TYPE_Q5_1:
-		(draft_quant_k==19?GGML_TYPE_Q6_0:
+		(draft_quant_k==19?GGML_TYPE_Q5_1:
 		(draft_quant_k==18?GGML_TYPE_Q8_0:
 		(draft_quant_k==17?GGML_TYPE_BF16:
 		(draft_quant_k==16?GGML_TYPE_IQ4_NL:
@@ -656,9 +656,9 @@ static void speculative_decoding_setup(std::string spec_model_filename, const ll
 		(draft_quant_k==13?GGML_TYPE_Q5_1:
 		(draft_quant_k==12?GGML_TYPE_Q5_1:
 		(draft_quant_k==11?GGML_TYPE_Q5_1:
-		(draft_quant_k==10?GGML_TYPE_Q6_0:
-		(draft_quant_k==9?GGML_TYPE_Q6_0:
-		(draft_quant_k==8?GGML_TYPE_Q6_0:
+		(draft_quant_k==10?GGML_TYPE_Q5_1:
+		(draft_quant_k==9?GGML_TYPE_Q5_1:
+		(draft_quant_k==8?GGML_TYPE_Q5_1:
 		(draft_quant_k==7?GGML_TYPE_Q8_0:
 		(draft_quant_k==6?GGML_TYPE_Q8_0:
 		(draft_quant_k==5?GGML_TYPE_Q8_0:
@@ -684,11 +684,11 @@ static void speculative_decoding_setup(std::string spec_model_filename, const ll
 		(draft_quant_v==11?GGML_TYPE_Q5_1:
 		(draft_quant_v==10?GGML_TYPE_IQ4_NL:
 		(draft_quant_v==9?GGML_TYPE_Q5_0:
-		(draft_quant_v==8?GGML_TYPE_Q6_0:
+		(draft_quant_v==8?GGML_TYPE_Q5_1:
 		(draft_quant_v==7?GGML_TYPE_IQ4_NL:
 		(draft_quant_v==6?GGML_TYPE_Q5_0:
-		(draft_quant_v==5?GGML_TYPE_Q6_0:
-		(draft_quant_v==4?GGML_TYPE_Q6_0:
+		(draft_quant_v==5?GGML_TYPE_Q5_1:
+		(draft_quant_v==4?GGML_TYPE_Q5_1:
 		(draft_quant_v==3?GGML_TYPE_Q8_0:
 		(draft_quant_v==2?GGML_TYPE_Q4_0:
 		(draft_quant_v==1?GGML_TYPE_Q8_0:
@@ -2593,7 +2593,7 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
 		(inputs.quant_k==22?GGML_TYPE_Q4_1:
 		(inputs.quant_k==21?GGML_TYPE_Q5_0:
 		(inputs.quant_k==20?GGML_TYPE_Q5_1:
-		(inputs.quant_k==19?GGML_TYPE_Q6_0:
+		(inputs.quant_k==19?GGML_TYPE_Q5_1:
 		(inputs.quant_k==18?GGML_TYPE_Q8_0:
 		(inputs.quant_k==17?GGML_TYPE_BF16:
 		(inputs.quant_k==16?GGML_TYPE_IQ4_NL:
@@ -2602,9 +2602,9 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
 		(inputs.quant_k==13?GGML_TYPE_Q5_1:
 		(inputs.quant_k==12?GGML_TYPE_Q5_1:
 		(inputs.quant_k==11?GGML_TYPE_Q5_1:
-		(inputs.quant_k==10?GGML_TYPE_Q6_0:
-		(inputs.quant_k==9?GGML_TYPE_Q6_0:
-		(inputs.quant_k==8?GGML_TYPE_Q6_0:
+		(inputs.quant_k==10?GGML_TYPE_Q5_1:
+		(inputs.quant_k==9?GGML_TYPE_Q5_1:
+		(inputs.quant_k==8?GGML_TYPE_Q5_1:
 		(inputs.quant_k==7?GGML_TYPE_Q8_0:
 		(inputs.quant_k==6?GGML_TYPE_Q8_0:
 		(inputs.quant_k==5?GGML_TYPE_Q8_0:
@@ -2630,11 +2630,11 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
 		(inputs.quant_v==11?GGML_TYPE_Q5_1:
 		(inputs.quant_v==10?GGML_TYPE_IQ4_NL:
 		(inputs.quant_v==9?GGML_TYPE_Q5_0:
-		(inputs.quant_v==8?GGML_TYPE_Q6_0:
+		(inputs.quant_v==8?GGML_TYPE_Q5_1:
 		(inputs.quant_v==7?GGML_TYPE_IQ4_NL:
 		(inputs.quant_v==6?GGML_TYPE_Q5_0:
-		(inputs.quant_v==5?GGML_TYPE_Q6_0:
-		(inputs.quant_v==4?GGML_TYPE_Q6_0:
+		(inputs.quant_v==5?GGML_TYPE_Q5_1:
+		(inputs.quant_v==4?GGML_TYPE_Q5_1:
 		(inputs.quant_v==3?GGML_TYPE_Q8_0:
 		(inputs.quant_v==2?GGML_TYPE_Q4_0:
 		(inputs.quant_v==1?GGML_TYPE_Q8_0:
