@@ -66,6 +66,7 @@ struct load_model_inputs
 
     const float norm_rms_eps = -1.0f;
 
+    const int moecpu = 0;
     const bool no_bos_token = false;
     const bool load_guidance = false;
     const char * override_kv = nullptr;

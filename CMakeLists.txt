@@ -116,6 +116,7 @@ add_compile_definitions(LOG_DISABLE_LOGS)
 add_compile_definitions(GGML_USE_CPU)
 add_compile_definitions(GGML_USE_CPU_AARCH64)
 add_compile_definitions(NOMINMAX)
+add_compile_definitions(_REGEX_MAX_STACK_COUNT=5000)
 
 if (GGML_HIP_FORCE_ROCWMMA_FATTN_GFX12)
     add_compile_definitions(GGML_HIP_ROCWMMA_FATTN_GFX12)

@@ -2487,6 +2487,24 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
         //     std::string forced = "per_layer_token_embd.weight=CPU"; //this tensor on gpu is problematic on unsloth q4_0
         //     tensoroverrides = (tensoroverrides=="" ? forced: (forced+","+tensoroverrides));
         // }
+        if(ggml_backend_dev_count()>1 && inputs.moecpu>0)
+        {
+            std::string toadd = "";
+            for (int i = 0; i < inputs.moecpu; ++i) {
+                std::string tmp = string_format("blk\\.%d\\.ffn_(up|down|gate)_exps=CPU", i);
+                if(i>0)
+                {
+                    tmp = "," + tmp;
+                }
+                toadd += tmp;
+            }
+            if (tensoroverrides == "") {
+                tensoroverrides = toadd;
+            } else {
+                tensoroverrides += "," + toadd;
+            }
+            printf("Overriding %d MoE layers to CPU...\n",inputs.moecpu);
+        }
         if(tensoroverrides!="" && ggml_backend_dev_count()>1)
         {
             printf("Handling Override Tensors for backends: ");
@@ -4087,8 +4105,8 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
         std::string outstr = "";
         // printf("\n[Debug: Dump Forwarded Input Tokens]\n");
         // outstr += get_tok_vec_str(embd_inp);
-        outstr += "\n\n[Debug: n_past="+std::to_string(n_past)+" Context Size = " + std::to_string(current_context_tokens.size()) + "]\n";
-        outstr += get_tok_vec_str(current_context_tokens);
+        outstr += "[Debug: n_past="+std::to_string(n_past)+" Context Size = " + std::to_string(current_context_tokens.size()) + "]";
+        //outstr += get_tok_vec_str(current_context_tokens);
         printf("%s\n\n", RemoveBell(outstr).c_str());
     }
 

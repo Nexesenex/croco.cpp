@@ -219,7 +219,10 @@ class load_model_inputs(ctypes.Structure):
                 ("rope_freq_scale", ctypes.c_float),
                 ("rope_freq_base", ctypes.c_float),
                 ("moe_experts", ctypes.c_int),
+
                 ("norm_rms_eps", ctypes.c_float),
+
+                ("moecpu", ctypes.c_int),
                 ("no_bos_token", ctypes.c_bool),
                 ("load_guidance", ctypes.c_bool),
                 ("override_kv", ctypes.c_char_p),
@@ -2207,6 +2210,7 @@ def load_model(model_filename):
     inputs.load_guidance = args.enableguidance
     inputs.override_kv = args.overridekv.encode("UTF-8") if args.overridekv else "".encode("UTF-8")
     inputs.override_tensors = args.overridetensors.encode("UTF-8") if args.overridetensors else "".encode("UTF-8")
+    inputs.moecpu = (200 if args.moecpu > 200 else args.moecpu)
     inputs.check_slowness = (not args.highpriority and os.name == 'nt' and 'Intel' in platform.processor())
     inputs.highpriority = args.highpriority
     inputs.swa_support = args.useswa
@@ -3648,6 +3652,8 @@ def determine_tool_json_to_use(genparams, curr_ctx, assistant_message_start, is_
     chosen_tool = genparams.get('tool_choice', "auto")
     # first handle auto mode, determine whether a tool is needed
     used_tool_json = None
+    if not curr_ctx:
+        return None
     if tools_array and len(tools_array) > 0 and chosen_tool is not None and chosen_tool!="none":
         tools_string = json.dumps(tools_array, indent=0)
         should_use_tools = True
@@ -3712,7 +3718,6 @@ def determine_tool_json_to_use(genparams, curr_ctx, assistant_message_start, is_
 
     return used_tool_json
 
-
 def transform_genparams(genparams, api_format):
     global chatcompl_adapter, maxctx
 
@@ -3762,7 +3767,31 @@ ws ::= | " " | "\n" [ \t]{0,20}
         genparams["max_length"] = int(genparams.get('max', args.defaultgenamt))
 
     elif api_format==2:
-        pass
+        #tool calls only possible if forced, or if ending with assistant tag
+        adapter_obj = {} if chatcompl_adapter is None else chatcompl_adapter
+        assistant_message_start = adapter_obj.get("assistant_start", "\n### Response:\n")
+        used_tool_json = determine_tool_json_to_use(genparams, genparams.get('prompt', ""), assistant_message_start, True)
+        if used_tool_json and not genparams.get('grammar', ""):
+            toolparamjson = None
+            toolname = None
+            # Set temperature lower automatically if function calling, cannot exceed 0.5
+            genparams["temperature"] = (1.0 if genparams.get("temperature", 0.5) > 1.0 else genparams.get("temperature", 0.5))
+            genparams["using_openai_tools"] = True
+            # Set grammar to llamacpp example grammar to force json response (see https://github.com/ggerganov/llama.cpp/blob/master/grammars/json_arr.gbnf)
+            genparams["grammar"] = jsongrammar
+            try:
+                toolname = used_tool_json.get('function').get('name')
+                toolparamjson = used_tool_json.get('function').get('parameters')
+                bettergrammarjson = {"type":"array","items":{"type":"object","properties":{"id":{"type":"string","enum":["call_001"]},"type":{"type":"string","enum":["function"]},"function":{"type":"object","properties":{"name":{"type":"string"},"arguments":{}},"required":["name","arguments"],"additionalProperties":False}},"required":["id","type","function"],"additionalProperties":False}}
+                bettergrammarjson["items"]["properties"]["function"]["properties"]["arguments"] = toolparamjson
+                decoded = convert_json_to_gbnf(bettergrammarjson)
+                if decoded:
+                    genparams["grammar"] = decoded
+            except Exception:
+                pass
+            tool_json_formatting_instruction = f"\nPlease use the provided schema to fill the parameters to create a function call for {toolname}, in the following format: " + json.dumps([{"id": "call_001", "type": "function", "function": {"name": f"{toolname}", "arguments": {"first property key": "first property value", "second property key": "second property value"}}}], indent=0)
+            genparams["prompt"] += f"\n\nJSON Schema:\n{used_tool_json}\n\n{tool_json_formatting_instruction}{assistant_message_start}"
+
 
     elif api_format==3 or api_format==4 or api_format==7:
         default_adapter = {} if chatcompl_adapter is None else chatcompl_adapter
@@ -3984,8 +4013,8 @@ ws ::= | " " | "\n" [ \t]{0,20}
                 prompt = prompt.replace("{{[INPUT_END]}}", user_message_end)
                 prompt = prompt.replace("{{[OUTPUT_END]}}", assistant_message_end)
                 prompt = prompt.replace("{{[SYSTEM_END]}}", system_message_end)
-                memory = memory.replace("{{[INPUT]}}", assistant_message_end + user_message_start)
-                memory = memory.replace("{{[OUTPUT]}}", user_message_end + assistant_message_start)
+                memory = memory.replace("{{[INPUT]}}", user_message_start)
+                memory = memory.replace("{{[OUTPUT]}}", assistant_message_start)
                 memory = memory.replace("{{[SYSTEM]}}", system_message_start)
                 memory = memory.replace("{{[INPUT_END]}}", user_message_end)
                 memory = memory.replace("{{[OUTPUT_END]}}", assistant_message_end)
@@ -4005,13 +4034,13 @@ ws ::= | " " | "\n" [ \t]{0,20}
                 memory = memory.replace("{{[SYSTEM_END]}}", "")
         for i in range(len(stop_sequence)):
             if stop_sequence[i] == "{{[INPUT]}}":
-                stop_sequence[i] = user_message_start
+                stop_sequence[i] = user_message_start.strip()
             elif stop_sequence[i] == "{{[OUTPUT]}}":
-                stop_sequence[i] = assistant_message_start
+                stop_sequence[i] = assistant_message_start.strip()
             elif stop_sequence[i] == "{{[INPUT_END]}}":
-                stop_sequence[i] = (user_message_end if user_message_end.strip()!="" else "")
+                stop_sequence[i] = (user_message_end.strip() if user_message_end.strip()!="" else "")
             elif stop_sequence[i] == "{{[OUTPUT_END]}}":
-                stop_sequence[i] = (assistant_message_end if assistant_message_end.strip()!="" else "")
+                stop_sequence[i] = (assistant_message_end.strip() if assistant_message_end.strip()!="" else "")
         stop_sequence = list(filter(None, stop_sequence))
         genparams["prompt"] = prompt
         genparams["memory"] = memory
@@ -6427,6 +6456,7 @@ def show_gui():
 
     normrmseps_var = ctk.StringVar(value=str(-1.0))
 
+    moecpu_var = ctk.StringVar(value=str(0))
     defaultgenamt_var = ctk.StringVar(value=str(512))
     nobostoken_var = ctk.IntVar(value=0)
     override_kv_var = ctk.StringVar(value="")
@@ -7148,12 +7178,13 @@ def show_gui():
 
     makecheckbox(tokens_tab, "Enable Guidance", enableguidance_var, 22,padx=600, tooltiptxt="Enables the use of Classifier-Free-Guidance, which allows the use of negative prompts. Has performance and memory impact.")
     makelabelentry(tokens_tab, "MoE Experts:", moeexperts_var, row=45, padx=150, singleline=True, width=50, tooltip="Override number of MoE experts.")
-    makelabelentry(tokens_tab, "Override KV:", override_kv_var, row=47, padx=150, singleline=True, width=250, tooltip="Advanced option to override model metadata by key, same as in llama.cpp. Mainly for debugging, not intended for general use. Types: int, float, bool, str")
-    makelabelentry(tokens_tab, "Override Tensors:", override_tensors_var, row=49, padx=120, singleline=True, width=150, tooltip="Advanced option to override tensor backend selection, same as in llama.cpp.")
-    makelabelentry(tokens_tab, "Norm RMS Epsilon:", normrmseps_var, row=51, padx=150, singleline=True, width=100, tooltip="Override Norm RMS Epsilon value to use for the model.\nUseful for <2bpw quants mainly.\nExample of format: 1.95e-05")
+    makelabelentry(tokens_tab, "MoE CPU Layers:", moecpu_var, row=47, padx=320, singleline=True, tooltip="Keep Mixture of Experts (MoE) weights of the first N layers in the CPU.", labelpadx=210)
+    makelabelentry(tokens_tab, "Override KV:", override_kv_var, row=49, padx=150, singleline=True, width=250, tooltip="Advanced option to override model metadata by key, same as in llama.cpp. Mainly for debugging, not intended for general use. Types: int, float, bool, str")
+    makelabelentry(tokens_tab, "Override Tensors:", override_tensors_var, row=51, padx=120, singleline=True, width=150, tooltip="Advanced option to override tensor backend selection, same as in llama.cpp.")
+    makelabelentry(tokens_tab, "Norm RMS Epsilon:", normrmseps_var, row=53, padx=150, singleline=True, width=100, tooltip="Override Norm RMS Epsilon value to use for the model.\nUseful for <2bpw quants mainly.\nExample of format: 1.95e-05")
 
     # load model
-    makefileentry(tokens_tab, "Model:", "Select GGML or GGML Model File", model_var, 53, 576, singlerow=True, onchoosefile=on_picked_model_file, filetypes=[("GGML bin or GGUF", ("*.bin","*.gguf"))] ,tooltiptxt="Select a GGUF or GGML model file on disk to be loaded.")
+    makefileentry(tokens_tab, "Model:", "Select GGML or GGML Model File", model_var, 55, 576, singlerow=True, onchoosefile=on_picked_model_file, filetypes=[("GGML bin or GGUF", ("*.bin","*.gguf"))] ,tooltiptxt="Select a GGUF or GGML model file on disk to be loaded.")
     model_var.trace_add("write", gui_changed_modelfile)
 
     # Model Tab
@@ -7485,6 +7516,7 @@ def show_gui():
 
         args.normrmseps = float(normrmseps_var.get()) if normrmseps_var.get()!="" else -1.0
 
+        args.moecpu = int(moecpu_var.get()) if moecpu_var.get()!="" else 0
         args.defaultgenamt = int(defaultgenamt_var.get()) if defaultgenamt_var.get()!="" else 512
         args.nobostoken = (nobostoken_var.get()==1)
         args.enableguidance = (enableguidance_var.get()==1)
@@ -7706,6 +7738,8 @@ def show_gui():
         if "normrmseps" in dict and dict["normrmseps"]:
             normrmseps_var.set(dict["normrmseps"])
 
+        if "moecpu" in dict and dict["moecpu"]:
+            moecpu_var.set(dict["moecpu"])
         if "defaultgenamt" in dict and dict["defaultgenamt"]:
             defaultgenamt_var.set(dict["defaultgenamt"])
 
@@ -7849,9 +7883,6 @@ def show_gui():
             import_vars(dict)
         pass
 
-    def display_help():
-        LaunchWebbrowser("https://github.com/LostRuins/koboldcpp/wiki","Cannot launch help in browser.")
-
     def display_help_models():
         LaunchWebbrowser("https://github.com/LostRuins/koboldcpp/wiki#what-models-does-koboldcpp-support-what-architectures-are-supported","Cannot launch help in browser.")
 
@@ -7871,7 +7902,7 @@ def show_gui():
     ctk.CTkButton(tabs , text = "Update", fg_color="#9900cc", hover_color="#aa11dd", command = display_updates, width=90, height = 35 ).grid(row=1,column=0, stick="sw", padx= 5, pady=5)
     ctk.CTkButton(tabs , text = "Save Config", fg_color="#084a66", hover_color="#085a88", command = save_config_gui, width=60, height = 35 ).grid(row=1,column=1, stick="sw", padx= 5, pady=5)
     ctk.CTkButton(tabs , text = "Load Config", fg_color="#084a66", hover_color="#085a88", command = load_config_gui, width=60, height = 35 ).grid(row=1,column=1, stick="sw", padx= 92, pady=5)
-    ctk.CTkButton(tabs , text = "Help (Find Models)", fg_color="#992222", hover_color="#bb3333", command = display_help, width=100, height = 35 ).grid(row=1,column=1, stick="sw", padx= 180, pady=5)
+    ctk.CTkButton(tabs , text = "Help (Find Models)", fg_color="#992222", hover_color="#bb3333", command = display_help_models, width=100, height = 35 ).grid(row=1,column=1, stick="sw", padx= 180, pady=5)
 
     # start a thread that tries to get actual gpu names and layer counts
     gpuinfo_thread = threading.Thread(target=auto_set_backend_gui)
@@ -7905,7 +7936,7 @@ def show_gui():
             print("")
             time.sleep(0.5)
             if using_gui_launcher:
-                givehelp = show_gui_yesnobox("No Model Loaded","No text or image model file was selected. Cannot continue.\n\nDo you want help finding a GGUF model?")
+                givehelp = show_gui_yesnobox("No Model Loaded","No text or image model file was selected. Need a model to continue.\n\nDo you want help finding a GGUF model?")
                 if givehelp == 'yes':
                     display_help_models()
             else:
@@ -9758,6 +9789,7 @@ if __name__ == '__main__':
     advparser.add_argument("--poslayeroffset", help="Removes or adds a layer to the GPU layers autoloader calculation in case of OOM or under-exploitation.", type=check_range(int,0,10), default=0)
     advparser.add_argument("--neglayeroffset", help="Removes or adds a layer to the GPU layers autoloader calculation in case of OOM or under-exploitation.", type=check_range(int,0,10), default=0)
 
+    advparser.add_argument("--moecpu", metavar=('[layers affected]'), help="Keep the Mixture of Experts (MoE) weights of the first N layers in the CPU. If no value is provided, applies to all layers.", nargs='?', const=999, type=int, default=0)
     advparser.add_argument("--defaultgenamt", help="How many tokens to generate by default, if not specified. Must be smaller than context size. Usually, your frontend GUI will override this.", type=check_range(int,64,8192), default=512)
     advparser.add_argument("--nobostoken", help="Prevents BOS token from being added at the start of any prompt. Usually NOT recommended for most models.", action='store_true')
     advparser.add_argument("--enableguidance", help="Enables the use of Classifier-Free-Guidance, which allows the use of negative prompts. Has performance and memory impact.", action='store_true')
