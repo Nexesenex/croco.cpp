@@ -122,7 +122,14 @@ enum sd_type_t {
     SD_TYPE_MXFP4 = 39,  // MXFP4 (1 block)
     SD_TYPE_NVFP4 = 40,  // NVFP4 (4 blocks, E4M3 scale)
     SD_TYPE_Q1_0 = 41,
-    SD_TYPE_COUNT = 42,
+
+    SD_TYPE_Q6_0   = 133,
+	
+    // SD_TYPE_COUNT = 42,
+
+    // SD_TYPE_COUNT,
+
+    SD_TYPE_COUNT   = 135,
 };
 
 enum sd_log_level_t {
