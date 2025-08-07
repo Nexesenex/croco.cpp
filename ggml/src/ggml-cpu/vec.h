@@ -1206,41 +1206,6 @@ static void ggml_vec_softcap_f32(const int n, float * x, float s_before, float s
     }
 }
 
-static float ggml_vec_softcap_max_f32(const int n, float * x, float s_before, float s_after) {
-    int i = 0;
-    float max = -INFINITY;
-#if defined(__AVX512F__) && defined(__AVX512DQ__)
-    __m512 vs_before = _mm512_set1_ps(2.f*s_before);
-    __m512 vs_after  = _mm512_set1_ps(s_after);
-    __m512 vmax = _mm512_set1_ps(-INFINITY);
-    for (; i + 15 < n; i += 16) {
-        __m512 y = ggml_v_softcap(_mm512_loadu_ps(x + i), vs_before, vs_after);
-        _mm512_storeu_ps(x + i, y);
-        vmax = _mm512_max_ps(vmax, y);
-    }
-    max = _mm512_reduce_max_ps(vmax);
-#elif defined(__AVX2__) && defined(__FMA__)
-    for (; i + 7 < n; i += 8) {
-        _mm256_storeu_ps(x + i, ggml_v_softcap(_mm256_loadu_ps(x + i), s_before, s_after));
-    }
-#elif defined(__SSE2__)
-    for (; i + 3 < n; i += 4) {
-        _mm_storeu_ps(x + i, ggml_v_softcap(_mm_loadu_ps(x + i), s_before, s_after));
-    }
-#elif defined(__ARM_NEON) && defined(__aarch64__)
-    float32x4_t vs_before = vdupq_n_f32(s_before);
-    float32x4_t vs_after  = vdupq_n_f32(s_after);
-    for (; i + 3 < n; i += 4) {
-        vst1q_f32(x + i, ggml_v_softcap(vld1q_f32(x + i), vs_before, vs_after));
-    }
-#endif
-    for (; i < n; ++i) {
-        x[i] = s_after*tanhf(x[i]*s_before);
-        max = MAX(max, x[i]);
-    }
-    return max;
-}
-
 //
 // On my AVX512 (Ryzen-7950X) and AVX2 (Ryzen-5975WX) computing gelu directly
 // via SIMD instructions is faster than the fp16-based lookup table.

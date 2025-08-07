@@ -46,7 +46,6 @@ static bool ggml_op_can_inplace(enum ggml_op op) {
         case GGML_OP_SOFT_MAX:
         case GGML_OP_SOFT_MAX_BACK:
         case GGML_OP_SOFTCAP:	
-        case GGML_OP_SOFT_CAP_MAX:
             return true;
 
         default:

@@ -1903,7 +1903,6 @@ static const char * GGML_OP_NAME[GGML_OP_COUNT] = {
     "ARGSORT",
     "LEAKY_RELU",
     "SOFTCAP",
-    "SOFT_CAP_MAX",
 
     "FLASH_ATTN_EXT",
     "FLASH_ATTN_BACK",
@@ -1932,7 +1931,7 @@ static const char * GGML_OP_NAME[GGML_OP_COUNT] = {
     "GLU",
 };
 
-static_assert(GGML_OP_COUNT == 90, "GGML_OP_COUNT != 90");
+static_assert(GGML_OP_COUNT == 89, "GGML_OP_COUNT != 89");
 
 static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
     "none",
@@ -2007,7 +2006,6 @@ static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
     "argsort(x)",
     "leaky_relu(x)",
     "k2*tanh(k1*x)",
-    "soft_max(k2*tanh(k1*x))",
 
     "flash_attn_ext(x)",
     "flash_attn_back(x)",
@@ -2036,7 +2034,7 @@ static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
     "glu(x)",
 };
 
-static_assert(GGML_OP_COUNT == 90, "GGML_OP_COUNT != 90");
+static_assert(GGML_OP_COUNT == 89, "GGML_OP_COUNT != 89");
 
 static_assert(GGML_OP_POOL_COUNT == 2, "GGML_OP_POOL_COUNT != 2");
 
@@ -4228,73 +4226,6 @@ struct ggml_tensor * ggml_softcap_inplace(
         float                s_before,
         float                s_after) {
     return ggml_softcap_impl(ctx, a, s_before, s_after, true);
-}
-
-// ggml_softcap_max
-
-static struct ggml_tensor * ggml_softcap_max_impl(
-            struct ggml_context * ctx,
-            struct ggml_tensor  * a,
-            struct ggml_tensor  * mask,
-            float                 scale,
-            float                 max_bias,
-            float                 s_before,
-            float                 s_after,
-            bool                  inplace) {
-    GGML_ASSERT(ggml_is_contiguous(a));
-    GGML_ASSERT(ggml_is_padded_1d(a));
-
-    if (mask) {
-        GGML_ASSERT(mask->type == GGML_TYPE_F16 || mask->type == GGML_TYPE_F32);
-        GGML_ASSERT(ggml_is_contiguous(mask));
-        GGML_ASSERT(ggml_is_matrix(mask));
-        GGML_ASSERT(mask->ne[0] == a->ne[0]);
-        GGML_ASSERT(mask->ne[1] >= a->ne[1]);
-    }
-
-    if (max_bias > 0.0f) {
-        GGML_ASSERT(mask);
-    }
-
-    // bool is_node = false;
-
-    // if (a->grad) {
-        // is_node = true;
-    // }
-
-    struct ggml_tensor * result = inplace ? ggml_view_tensor(ctx, a) : ggml_dup_tensor(ctx, a);
-
-    float params[4] = {scale, max_bias, s_before, s_after};
-    ggml_set_op_params(result, params, sizeof(params));
-
-    result->op   = GGML_OP_SOFT_CAP_MAX;
-    // result->grad = is_node ? ggml_dup_tensor(ctx, result) : NULL;
-    result->src[0] = a;
-    result->src[1] = mask;
-
-    return result;
-}
-
-struct ggml_tensor * ggml_softcap_max(
-            struct ggml_context * ctx,
-            struct ggml_tensor  * a,
-            struct ggml_tensor  * mask,
-            float                 scale,
-            float                 max_bias,
-            float                 s_before,
-            float                 s_after) {
-    return ggml_softcap_max_impl(ctx, a, mask, scale, max_bias, s_before, s_after, false);
-}
-
-struct ggml_tensor * ggml_softcap_max_inplace(
-            struct ggml_context * ctx,
-            struct ggml_tensor  * a,
-            struct ggml_tensor  * mask,
-            float                 scale,
-            float                 max_bias,
-            float                 s_before,
-            float                 s_after) {
-    return ggml_softcap_max_impl(ctx, a, mask, scale, max_bias, s_before, s_after, true);
 }
 
 // ggml_set
