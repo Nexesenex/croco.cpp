@@ -10644,10 +10644,9 @@ struct llm_build_gemma2_iswa : public llm_graph_context {
         cur = build_lora_mm(model.output, cur);
 
         // final logit soft-capping
-        cur = ggml_softcap(ctx0, cur, 1.0f / hparams.f_final_logit_softcapping, hparams.f_final_logit_softcapping);
-        //cur = ggml_scale(ctx0, cur, 1.0f / hparams.f_final_logit_softcapping);
-        //cur = ggml_tanh(ctx0, cur);
-        //cur = ggml_scale(ctx0, cur, hparams.f_final_logit_softcapping);
+        cur = ggml_scale(ctx0, cur, 1.0f / hparams.f_final_logit_softcapping);
+        cur = ggml_tanh(ctx0, cur);
+        cur = ggml_scale(ctx0, cur, hparams.f_final_logit_softcapping);
 
         cb(cur, "result_output", -1);
         res->t_logits = cur;

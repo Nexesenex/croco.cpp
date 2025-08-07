@@ -771,15 +771,6 @@ inline static float32x4_t ggml_v_tanh(float32x4_t x) {
     //return vdivq_f32(vsubq_f32(exp_two_x, one), vaddq_f32(exp_two_x, one));
 }
 
-inline static float32x4_t ggml_v_softcap(float32x4_t x, float32x4_t s_before, float32x4_t s_after) {
-    return vmulq_f32(s_after, ggml_v_tanh(vmulq_f32(x, s_before)));
-    //const float32x4_t one = vdupq_n_f32(1.0f);
-    //const float32x4_t two_x = vmulq_f32(x, s_before);
-    //const float32x4_t exp_two_x = ggml_v_expf(two_x);
-    //const float32x4_t th = vdivq_f32(vsubq_f32(exp_two_x, one), vaddq_f32(exp_two_x, one));
-    //return vmulq_f32(th, s_after);
-}
-
 // Slower than lookup on my M2-Max
 inline static float32x4_t ggml_v_gelu(float32x4_t x, float32x4_t c1, float32x4_t c2) {
     const float32x4_t one = vdupq_n_f32(1.0f);
@@ -843,13 +834,6 @@ inline static __m512 ggml_v_tanh(__m512 x) {
     const __mmask16 mask = _mm512_cmp_ps_mask(x, _mm512_set1_ps(10.f), _CMP_GT_OQ);
     const __m512 res = _mm512_div_ps(_mm512_sub_ps(exp_two_x, one), _mm512_add_ps(exp_two_x, one));
     return _mm512_mask_blend_ps(mask, res, one);
-}
-
-inline static __m512 ggml_v_softcap(__m512 x, __m512 s_before, __m512 s_after) {
-    const __m512 one = _mm512_set1_ps(1.0f);
-    const __m512 exp_two_x = ggml_v_expf(_mm512_mul_ps(x, s_before));
-    const __m512 th = _mm512_div_ps(_mm512_sub_ps(exp_two_x, one), _mm512_add_ps(exp_two_x, one));
-    return _mm512_mul_ps(th, s_after);
 }
 
 inline static __m512 ggml_v_gelu(__m512 x, __m512 c1, __m512 c2) {
@@ -927,14 +911,6 @@ inline static __m256 ggml_v_tanh(__m256 x) {
     return _mm256_or_ps(_mm256_and_ps(mask, one), _mm256_andnot_ps(mask, res));
 }
 
-inline static __m256 ggml_v_softcap(__m256 x, float s_before, float s_after) {
-    return _mm256_mul_ps(_mm256_set1_ps(s_after), ggml_v_tanh(_mm256_mul_ps(x, _mm256_set1_ps(s_before))));
-    //const __m256 one = _mm256_set1_ps(1.0f);
-    //const __m256 exp_two_x = ggml_v_expf(_mm256_mul_ps(x, _mm256_set1_ps(2.f*s_before)));
-    //const __m256 th = _mm256_div_ps(_mm256_sub_ps(exp_two_x, one), _mm256_add_ps(exp_two_x, one));
-    //return _mm256_mul_ps(th, _mm256_set1_ps(s_after));
-}
-
 inline static __m256 ggml_v_gelu(__m256 x, __m256 c1, __m256 c2) {
     const __m256 one = _mm256_set1_ps(1.0f);
     const __m256 mask = _mm256_cmp_ps(x, _mm256_set1_ps(10.f), _CMP_GT_OQ);
@@ -1003,13 +979,6 @@ inline static __m128 ggml_v_tanh(__m128 x) {
     const __m128 one = _mm_set1_ps(1.0f);
     const __m128 exp_two_x = ggml_v_expf(_mm_mul_ps(x, _mm_set1_ps(2.f)));
     return _mm_div_ps(_mm_sub_ps(exp_two_x, one), _mm_add_ps(exp_two_x, one));
-}
-
-inline static __m128 ggml_v_softcap(__m128 x, float s_before, float s_after) {
-    const __m128 one = _mm_set1_ps(1.0f);
-    const __m128 exp_two_x = ggml_v_expf(_mm_mul_ps(x, _mm_set1_ps(2.f*s_before)));
-    const __m128 th = _mm_div_ps(_mm_sub_ps(exp_two_x, one), _mm_add_ps(exp_two_x, one));
-    return _mm_mul_ps(th, _mm_set1_ps(s_after));
 }
 
 #endif // __ARM_NEON / __AVX2__ / __SSE2__
@@ -1137,72 +1106,6 @@ static void ggml_vec_tanh_f32(const int n, float * y, const float * x) {
 #endif
     for (; i < n; ++i) {
         y[i] = tanhf(x[i]);
-    }
-}
-
-static void ggml_vec_cpy_softcap_f32(const int n, const float * x, float * y, float s_before, float s_after) {
-    int i = 0;
-#if defined(__AVX512F__) && defined(__AVX512DQ__)
-    __m512 vs_before = _mm512_set1_ps(2.f*s_before);
-    __m512 vs_after  = _mm512_set1_ps(s_after);
-    for (; i + 15 < n; i += 16) {
-        _mm512_storeu_ps(y + i, ggml_v_softcap(_mm512_loadu_ps(x + i), vs_before, vs_after));
-    }
-#elif defined(__AVX2__) && defined(__FMA__)
-    for (; i + 7 < n; i += 8) {
-        _mm256_storeu_ps(y + i, ggml_v_softcap(_mm256_loadu_ps(x + i), s_before, s_after));
-    }
-#elif defined(__SSE2__)
-    for (; i + 3 < n; i += 4) {
-        _mm_storeu_ps(y + i, ggml_v_softcap(_mm_loadu_ps(x + i), s_before, s_after));
-    }
-#elif defined(__ARM_NEON) && defined(__aarch64__)
-    float32x4_t vs_before = vdupq_n_f32(s_before);
-    float32x4_t vs_after  = vdupq_n_f32(s_after);
-    for (; i + 3 < n; i += 4) {
-        vst1q_f32(y + i, ggml_v_softcap(vld1q_f32(x + i), vs_before, vs_after));
-    }
-#endif
-    for (; i < n; ++i) {
-        y[i] = s_after*tanhf(x[i]*s_before);
-    }
-}
-
-static void ggml_vec_softcap_f32(const int n, float * x, float s_before, float s_after) {
-    int i = 0;
-#if defined(__AVX512F__) && defined(__AVX512DQ__)
-    __m512 vs_before = _mm512_set1_ps(2.f*s_before);
-    __m512 vs_after  = _mm512_set1_ps(s_after);
-    //for (; i + 63 < n; i += 64) {
-    //    __m512 x1 = _mm512_loadu_ps(x + i);
-    //    __m512 x2 = _mm512_loadu_ps(x + i + 16);
-    //    __m512 x3 = _mm512_loadu_ps(x + i + 32);
-    //    __m512 x4 = _mm512_loadu_ps(x + i + 48);
-    //    _mm512_storeu_ps(x + i +  0, ggml_v_softcap(x1, vs_before, vs_after));
-    //    _mm512_storeu_ps(x + i + 16, ggml_v_softcap(x2, vs_before, vs_after));
-    //    _mm512_storeu_ps(x + i + 32, ggml_v_softcap(x3, vs_before, vs_after));
-    //    _mm512_storeu_ps(x + i + 48, ggml_v_softcap(x4, vs_before, vs_after));
-    //}
-    for (; i + 15 < n; i += 16) {
-        _mm512_storeu_ps(x + i, ggml_v_softcap(_mm512_loadu_ps(x + i), vs_before, vs_after));
-    }
-#elif defined(__AVX2__) && defined(__FMA__)
-    for (; i + 7 < n; i += 8) {
-        _mm256_storeu_ps(x + i, ggml_v_softcap(_mm256_loadu_ps(x + i), s_before, s_after));
-    }
-#elif defined(__SSE2__)
-    for (; i + 3 < n; i += 4) {
-        _mm_storeu_ps(x + i, ggml_v_softcap(_mm_loadu_ps(x + i), s_before, s_after));
-    }
-#elif defined(__ARM_NEON) && defined(__aarch64__)
-    float32x4_t vs_before = vdupq_n_f32(s_before);
-    float32x4_t vs_after  = vdupq_n_f32(s_after);
-    for (; i + 3 < n; i += 4) {
-        vst1q_f32(x + i, ggml_v_softcap(vld1q_f32(x + i), vs_before, vs_after));
-    }
-#endif
-    for (; i < n; ++i) {
-        x[i] = s_after*tanhf(x[i]*s_before);
     }
 }
 
