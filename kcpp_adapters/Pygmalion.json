@@ -1,0 +1,8 @@
+{
+  "system_start": "<|system|>",
+  "system_end": "\n",
+  "user_start": "<|user|>",
+  "user_end": "\n",
+  "assistant_start": "<|model|>",
+  "assistant_end": "<|user|>\n"
+}
