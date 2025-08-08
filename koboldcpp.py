@@ -60,12 +60,12 @@ net_save_slots = 12
 savestate_limit = 3 #3 savestate slots
 default_vae_tile_threshold = 768
 
-# abuse prevention
-stop_token_max = 256
-ban_token_max = 768
-logit_bias_max = 512
-dry_seq_break_max = 128
-extra_images_max = 4
+# abuse prevention (double of official KCPP)
+stop_token_max = 512
+ban_token_max = 1536
+logit_bias_max = 1024
+dry_seq_break_max = 256
+extra_images_max = 8
 
 # global vars
 KcppVersion = "1.97.2"
