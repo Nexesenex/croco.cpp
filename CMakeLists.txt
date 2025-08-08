@@ -40,27 +40,50 @@ if (NOT MSVC)
     option(LLAMA_F16C               "llama: enable F16C"                                    ON)
 endif()
 
+option(LLAMA_USE_SYSTEM_GGML "Use system libggml"                                           OFF)
+
+if (EMSCRIPTEN)
+    set(BUILD_SHARED_LIBS_DEFAULT OFF)
+
+    option(LLAMA_WASM_SINGLE_FILE "llama: embed WASM inside the generated llama.js" ON)
+else()
+    if (MINGW)
+        set(BUILD_SHARED_LIBS_DEFAULT OFF)
+    else()
+        set(BUILD_SHARED_LIBS_DEFAULT ON)
+    endif()
+endif()
+
+# option(BUILD_SHARED_LIBS "build shared libraries" ${BUILD_SHARED_LIBS_DEFAULT})
+
+if (WIN32)
+    set(LLAMA_WIN_VER "0x602" CACHE STRING "llama: Windows Version")
+endif()
+
 # 3rd party libs
 option(LLAMA_CUBLAS                          "llama: use CUDA"                                ON)
 option(LLAMA_CUDA_F16                        "llama: use 16 bit floats for dmmv CUDA kernels"   OFF)
 set(LLAMA_CUDA_PEER_MAX_BATCH_SIZE "128" CACHE STRING
-                                             "llama: max. batch size for using peer access")
-set(GGML_SCHED_MAX_COPIES   "1" CACHE STRING "llama: max input copies for pipeline parallelism")
-set(LLAMA_SCHED_MAX_COPIES  "1" CACHE STRING "llama: max input copies for pipeline parallelism")								 
+                                             "llama: max. batch size for using peer access")								 
 
 option(LLAMA_HIPBLAS                         "llama: use hipBLAS"                               OFF)
 
 # Other
 option(LLAMA_OPENMP                          "llama: use OpenMP"                                OFF)
 
-# Llama_Default for basic CPU dll made with CMake.
-option(LLAMA_DEFAULT                         "llama: use CPU?"                                  OFF)
+# Llama_Default for basic Konoldcpp_default.dll made with CMake.
+option(LLAMA_DEFAULT                         "llama: use CPU"                                  OFF)
+
 # Croco.Cpp Specifics
 option(LLAMA_CUDA_FA_ALL_QUANTS              "llama: compile 18 quants for FlashAttention"      OFF)
 option(GGML_CUDA_USE_GRAPHS                  "Use Cuda Graphs to increase a bit performancess"  OFF)
+set(GGML_SCHED_MAX_COPIES   "1" CACHE STRING "llama: max input copies for pipeline parallelism")
+set(LLAMA_SCHED_MAX_COPIES  "1" CACHE STRING "llama: max input copies for pipeline parallelism")			
 option(LLAMA_CUDA_ENABLE_UNIFIED_MEMORY      "llama: enable to avoid OOM in Full Offload"       OFF)
+option(GGML_CCACHE                          "ggml: use ccache if available"                     OFF)
 set   (GGML_CUDA_COMPRESSION_MODE "size" CACHE STRING
                                             "ggml: cuda link binary compression mode; requires cuda 12.8+")
+set_property(CACHE GGML_CUDA_COMPRESSION_MODE PROPERTY STRINGS "none;speed;balance;size")
 
 #
 # Compile flags
@@ -100,6 +123,26 @@ set(GGML_V3_CUDA_SOURCES otherarch/ggml_v3-cuda.cu otherarch/ggml_v3-cuda.h)
 set(GGML_V2_CUDA_SOURCES otherarch/ggml_v2-cuda.cu otherarch/ggml_v2-cuda.h)
 set(GGML_V2_LEGACY_CUDA_SOURCES otherarch/ggml_v2-cuda-legacy.cu otherarch/ggml_v2-cuda-legacy.h)
 
+# Ccache
+
+if (GGML_CCACHE)
+    find_program(GGML_CCACHE_FOUND ccache)
+    find_program(GGML_SCCACHE_FOUND sccache)
+
+    if (GGML_CCACHE_FOUND OR GGML_SCCACHE_FOUND)
+        if(GGML_CCACHE_FOUND)
+            set(GGML_CCACHE_VARIANT ccache)
+        else()
+            set(GGML_CCACHE_VARIANT sccache)
+        endif()
+        # TODO: should not be set globally
+        set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${GGML_CCACHE_VARIANT}")
+        set(ENV{CCACHE_SLOPPINESS} time_macros)
+        message(STATUS "${GGML_CCACHE_VARIANT} found, compilation results will be cached. Disable with GGML_CCACHE=OFF.")
+    else()
+        message(STATUS "Warning: ccache not found - consider installing it for faster compilation or disable this warning with GGML_CCACHE=OFF")
+    endif ()
+endif()
 
 if (LLAMA_CUBLAS)
 
@@ -625,7 +668,8 @@ endif()
 
 if (MINGW)
     # Target Windows 8 for PrefetchVirtualMemory
-    add_compile_definitions(_WIN32_WINNT=0x602)
+    add_compile_definitions(_WIN32_WINNT=${LLAMA_WIN_VER})
+	# add_compile_definitions(_WIN32_WINNT=0x602)
 endif()
 
 #
