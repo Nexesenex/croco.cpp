@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #-*- coding: utf-8 -*-
 
-# KoboldCpp/Croco.Cpp is an easy-to-use AI text-generation software for GGML models.
+# Croco.Cpp, fork of KoboldCpp integrating most of Esobold and some improvements coming from IK_Llama.cpp, is an easy-to-use AI text-generation software for GGML models.
 # It's a single self contained distributable from Concedo, that builds off llama.cpp,
 # and adds a versatile Kobold API endpoint, additional format support,
 # backward compatibility, as well as a fancy UI with persistent stories,
@@ -68,7 +68,12 @@ dry_seq_break_max = 256
 extra_images_max = 8
 
 # global vars
-KcppVersion = "1.98"
+KcppVersion = "1.98000"
+LcppVersion = "b6122"
+IKLcppVersion = "Q6_0"
+EsoboldVersion = "RMv1.15.9m"
+CudaSpecifics = "Cu128_Ar86_SMC2_DmmvX32Y1"
+ReleaseDate = "2025/08/10"
 showdebug = True
 kcpp_instance = None #global running instance
 global_memory = {"tunnel_url": "", "restart_target":"", "input_to_exit":False, "load_complete":False, "restart_model": "", "currentConfig": None, "modelOverride": None, "currentModel": None}
@@ -5467,7 +5472,7 @@ def show_gui():
     ctk.set_appearance_mode("dark")
     root = ctk.CTk()
     root.geometry(str(windowwidth) + "x" + str(windowheight))
-    root.title(f"KoboldCpp/Croco.Cpp v{KcppVersion}")
+    root.title(f"A fork of KoboldCpp, for enthusiasts and power-users : Croco.Cpp v{KcppVersion}")
 
     gtooltip_box = None
     gtooltip_label = None
@@ -7694,7 +7699,12 @@ def main(launch_args, default_args):
     temp_hide_print = (args.model_param and (args.prompt and not args.cli) and not args.benchmark and not (args.debugmode >= 1))
 
     if not temp_hide_print:
-        print(f"***\nWelcome to KoboldCpp/Croco.Cpp - Version {KcppVersion}")
+       print(f"***\nWelcome to Croco.Cpp, fork of KoboldCpp - Version {KcppVersion}, including Esobold {EsoboldVersion}.") # just update version manually
+       print(f"***\nBased on LlamaCpp version {LcppVersion} and IK_Llama.cpp version {IKLcppVersion}") # just update LlamaCPP version manually
+       print(f"***\nRelease date: {ReleaseDate}") # just update date manually
+       print(f"***\nCuda mode compiled, if any: {CudaSpecifics}") # just update Cuda options used in CMake manually
+       print("***")    
+        # print("Python version: " + sys.version)
     if args.debugmode != 1:
         showdebug = False #not shared with child process!
     if args.debugmode >= 1:
@@ -8704,7 +8714,7 @@ if __name__ == '__main__':
             return f
         return range_checker
 
-    parser = argparse.ArgumentParser(description=f'KoboldCpp/Croco.Cpp Server - Version {KcppVersion}')
+    parser = argparse.ArgumentParser(description=f'KoboldCpp/Croco.Cpp Server - Version {KcppVersion}-{LcppVersion}-{IKLcppVersion}-{EsoboldVersion}')
     modelgroup = parser.add_mutually_exclusive_group() #we want to be backwards compatible with the unnamed positional args
     modelgroup.add_argument("--model", metavar=('[filenames]'), help="Model file to load. Accepts multiple values if they are URLs.", type=str, nargs='+', default=[])
     modelgroup.add_argument("model_param", help="Model file to load (positional)", nargs="?")
