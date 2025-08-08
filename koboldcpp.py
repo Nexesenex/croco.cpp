@@ -8076,11 +8076,11 @@ def show_gui():
     "6* - K q8_0 - V q5_0 (7BPW) - FA.",
     "7 - K q8_0 - V iq4_nl (6.5BPW) - FA. Reliable, except on Gemma 2 FA.",
     "8* - K q6_0 - V q6_0 (6.5BPW) - FA. Reliable, except on Gemma 2 FA.",
-    "9 - K q6_0 - V q5_0 (6BPW) - FA?. Best game in FA town. Doesn't work on Gemma 2 FA.",
+    "9 - K q6_0 - V q5_0 (6BPW) - FA. Best game in FA town. Faulty on some models.",
     "10* - K q6_0 - V iq4_nl (5.5BPW) - FA. Faulty on some models. (Gemma 2 FA. Qwen 2.5 1.5b?)",
     "11 - K q5_1 - V q5_1 (6BPW) - FA. Very reliable, recommanded all rounder.",
-    "12 - K q5_1 - V q5_0 (5.75BPW) - FA. Possibly faulty on some models. (Qwen 2.5 1.5b?)",
-    "13* - K q5_1 - V iq4_nl (5.25BPW) - FA.",
+    "12 - K q5_1 - V q5_0 (5.75BPW) - FA. Faulty on some models.",
+    "13* - K q5_1 - V iq4_nl (5.25BPW) - FA. Faulty on some models.",
     "14 - K q5_0 - V q5_0 (5.5BPW) - FA. Possibly faulty on some models. (Qwen 2.5 1.5b?)",
     "15 - K q5_0 - V iq4_nl (5BPW) - FA. Reliable, except on Qwen?",
     "16 - K iq4_nl - V iq4_nl (4.5BPW) - FA. Reliable.",
@@ -10692,12 +10692,12 @@ def main(launch_args, default_args):
     #prevents quantkv 1-16 from being used without flash attn, and 18-24 to be used without.
     if args.quantkv and args.quantkv ==0:
         print("KV f16 cache can work in both FA and no-FA mode.")
-    if args.quantkv and args.quantkv >0 and args.quantkv <17 and not args.flashattention:
-        exit_with_error(1, "Error: Using --quantkv 1 to 16, are FA modes and require --flashattention.")
-    if args.quantkv and args.quantkv ==17 and args.flashattention:
-        print("KV bf16 cache (experimental for Cuda, not tested on other backends) can work only in no-FA mode.")
-    if args.quantkv and args.quantkv >17 and args.quantkv <25 and args.flashattention:
-        exit_with_error(1, "Error: The --quantkv 18 <-> 24 (quantum cache K, and V F16) are non-FA modes.")
+    if args.quantkv and args.quantkv >0 and args.quantkv <17 and args.noflashattention:
+        print("Error: Using --quantkv 1 to 16, are FA modes and require --flashattention. Switching to FA.")
+    if args.quantkv and args.quantkv ==17 and not args.noflashattention:
+        print("KV bf16 cache (experimental for Cuda, not tested on other backends) may or may not work in no-FA mode.")
+    if args.quantkv and args.quantkv >=18 and args.quantkv <=24 and not args.noflashattention:
+        print("Error: The --quantkv 18 <-> 24 (quantum cache K, and V F16) are non-FA modes. Switching to NoFA")
 
     # if args.failsafe: #failsafe implies noavx2
         # args.noavx2 = True
@@ -11889,18 +11889,19 @@ def kcpp_main_process(launch_args, g_memory=None, gui_launcher=False):
         else:
             save_to_file = (args.benchmark and args.benchmark!="stdout" and args.benchmark!="")
             benchmaxctx = maxctx
-            if maxctx > 16384 : benchmaxctx = maxctx - 412
-            elif maxctx > 32768 : benchmaxctx = maxctx - 924
-            elif maxctx > 65536 : benchmaxctx = maxctx - 1948
-            elif maxctx > 131072 : benchmaxctx = maxctx - 3996
-            elif maxctx > 262144 : benchmaxctx = maxctx - 8092
-            elif maxctx > 524288 : benchmaxctx = maxctx - 16284
-            elif maxctx > 1048576 : benchmaxctx = maxctx - 32668
-            elif maxctx > 2097152 : benchmaxctx = maxctx - 65436
+            if maxctx > 8388608 : benchmaxctx = maxctx - 262044
             elif maxctx > 4194304 : benchmaxctx = maxctx - 130972
-            elif maxctx > 8388608 : benchmaxctx = maxctx - 262044
+            elif maxctx > 2097152 : benchmaxctx = maxctx - 65436
+            elif maxctx > 1048576 : benchmaxctx = maxctx - 32668
+            elif maxctx > 524288 : benchmaxctx = maxctx - 16284
+            elif maxctx > 262144 : benchmaxctx = maxctx - 8092
+            elif maxctx > 131072 : benchmaxctx = maxctx - 3996
+            elif maxctx > 65536 : benchmaxctx = maxctx - 1948
+            elif maxctx > 32768 : benchmaxctx = maxctx - 924
+            elif maxctx > 16384 : benchmaxctx = maxctx - 412
             else : benchmaxctx = maxctx - 156
-            benchlen = args.genlimit if args.genlimit > 0 else 100
+            benchtg = args.genlimit if args.genlimit > 0 else 100
+            benchpp = (benchmaxctx - benchtg)
             benchtemp = 0.1
             benchtopk = 1
             benchreppen = 1
@@ -11915,8 +11916,8 @@ def kcpp_main_process(launch_args, g_memory=None, gui_launcher=False):
                 if not args.benchmark:
                     benchbaneos = False
             if args.benchmark:
-                if os.path.exists(args.benchmark) and os.path.getsize(args.benchmark) > 1000000:
-                    print("\nWarning: The benchmark CSV output file you selected exceeds 1MB. This is probably not what you want, did you select the wrong CSV file?\nFor safety, benchmark output will not be saved.")
+                if os.path.exists(args.benchmark) and os.path.getsize(args.benchmark) > 13000000:
+                    print("\nWarning: The benchmark CSV output file you selected exceeds 13MB. This is probably not what you want, did you select the wrong CSV file?\nFor safety, benchmark output will not be saved.")
                     save_to_file = False
                 if save_to_file:
                     print(f"\nRunning benchmark (Save to File: {args.benchmark})...")
@@ -11928,7 +11929,7 @@ def kcpp_main_process(launch_args, g_memory=None, gui_launcher=False):
                         benchprompt += benchprompt
             genp = {
                 "prompt":benchprompt,
-                "max_length":benchlen,
+                "max_length":benchtg,
                 "max_context_length":benchmaxctx,
                 "temperature":benchtemp,
                 "top_k":benchtopk,
@@ -11941,34 +11942,54 @@ def kcpp_main_process(launch_args, g_memory=None, gui_launcher=False):
                 restore_stdout()
                 print(result)
             if args.benchmark:
-                result = (result[:8] if len(result)>8 else "") if not args.prompt else result
-                t_pp = float(handle.get_last_process_time())*float(benchmaxctx-benchlen)*0.001
-                t_gen = float(handle.get_last_eval_time())*float(benchlen)*0.001
-                s_pp = float(benchmaxctx-benchlen)/t_pp
-                s_gen = float(benchlen)/t_gen
+                result = (result[:4] if len(result)>4 else "") if not args.prompt else result
+                resultok = ((result==" 1 1") or (result=="1 1 "))
+                t_pp = float(handle.get_last_process_time())*float(benchpp)*0.001
+                t_gen = float(handle.get_last_eval_time())*float(benchtg)*0.001
+                s_pp = float(benchpp)/t_pp
+                s_gen = float(benchtg)/t_gen
                 datetimestamp = datetime.now(timezone.utc)
-                benchflagstr = f"NoAVX2={args.noavx2} Threads={args.threads} HighPriority={args.highpriority} Cuda_Args={args.usecuda} Tensor_Split={args.tensor_split} BlasThreads={args.blasthreads} BlasBatchSize={args.blasbatchsize} FlashAttention={not args.noflashattention} KvCache={args.quantkv}"
-                print(f"\nBenchmark Completed - v{KcppVersion} Results:\n======")
+
+                # benchflagstr = f"NoAVX2={args.noavx2} Threads={args.threads} HighPriority={args.highpriority} Cuda_Args={args.usecuda} Tensor_Split={args.tensor_split} BlasThreads={args.blasthreads} BlasBatchSize={args.blasbatchsize} FlashAttention={not args.noflashattention} KvCache={args.quantkv}"
+                # print(f"\nBenchmark Completed - v{KcppVersion} Results:\n======")
+
+                print(f"\nBenchmark Completed - Croco.Cpp v{KcppVersion} ; LlamaCPP {LcppVersion} ; IK_Llama.cpp {IKLcppVersion} ;\nIf Cuda mode: {CudaSpecifics} ; Release date: {ReleaseDate} ; Results:\n======")
+                benchflagstr = f"NoAVX2={args.noavx2} Threads={args.threads} HighPriority={args.highpriority} NoBlas={args.noblas} Cuda_Args={args.usecuda} Offloaded layers={args.gpulayers} Tensor_Split={args.tensor_split} BlasThreads={args.blasthreads} BlasBatchSize={args.blasbatchsize} NoFlashAttention={args.noflashattention} KvCache={args.quantkv}"
                 print(f"Flags: {benchflagstr}")
                 print(f"Timestamp: {datetimestamp}")
                 print(f"Backend: {libname}")
                 print(f"Layers: {args.gpulayers if not args.autofit else 'Autofit'}")
                 print(f"Model: {benchmodel}")
-                print(f"MaxCtx: {benchmaxctx}")
-                print(f"GenAmount: {benchlen}\n-----")
+                print(f"NoAVX2: {args.noavx2}")
+                print(f"NoBlas: {args.noblas}")
+                print(f"NoMmap: {args.nommap}")
+                print(f"HighPriority: {args.highpriority}")
+                print(f"NoFlashAttention: {args.noflashattention}")
+                print(f"Threads: {args.threads}")
+                print(f"Cuda_Args: {args.usecuda}")
+                print(f"Layers: {args.gpulayers}")
+                print(f"Tensor_Split: {args.tensor_split}")
+                print(f"BlasThreads: {args.blasthreads}")
+                print(f"Blas_nBatchSize: {args.blasbatchsize}")
+                print(f"KV_cache: {args.quantkv}")
+                print(f"MaxCtx: {maxctx}\n-----")
+                print(f"PPnum: {benchpp}")
                 print(f"ProcessingTime: {t_pp:.3f}s")
                 print(f"ProcessingSpeed: {s_pp:.2f}T/s")
+                print(f"TGnum: {benchtg}")
                 print(f"GenerationTime: {t_gen:.3f}s")
                 print(f"GenerationSpeed: {s_gen:.2f}T/s")
+                print(f"BenchmarkCtx: {benchmaxctx}")
                 print(f"TotalTime: {(t_pp+t_gen):.3f}s")
-                print(f"Output: {result}\n-----")
+                print(f"Output: {result}")
+                print(f"Coherent: {resultok}")
                 if save_to_file:
                     try:
                         with open(args.benchmark, "a") as file:
                             file.seek(0, 2)
                             if file.tell() == 0: #empty file
-                                file.write("Timestamp,Backend,Layers,Model,MaxCtx,GenAmount,ProcessingTime,ProcessingSpeed,GenerationTime,GenerationSpeed,TotalTime,Output,Flags")
-                            file.write(f"\n{datetimestamp},{libname},{args.gpulayers},{benchmodel},{benchmaxctx},{benchlen},{t_pp:.2f},{s_pp:.2f},{t_gen:.2f},{s_gen:.2f},{(t_pp+t_gen):.2f},{result},\"{benchflagstr}\"")
+                                file.write("Datime,KCPPF,Lcpp,IKLcpp,Backend,CudaSpecifics,Model,NoAvx2,NoBlas,NoMmap,HighP,NoFA,Thrd,Layers,BlasThrd,BBSizeN,KVC,PPNum,PPTime,PPSpeed,TGNum,TGTime,TGSpeed,BenchCtx,TotalTime,Coher,Tensor1,Split2,Cublas1,Argument2,Argument3,Argument4")
+                            file.write(f"\n{ReleaseDate},{KcppVersion},{LcppVersion},{IKLcppVersion},{libname},{CudaSpecifics},{benchmodel},{args.noavx2},{args.noblas},{args.nommap},{args.highpriority},{args.noflashattention},{args.threads},{args.gpulayers},{args.blasthreads},{args.blasbatchsize},{args.quantkv},{benchpp},{t_pp:.3f},{s_pp:.2f},{benchtg},{t_gen:.3f},{s_gen:.2f},{benchmaxctx},{(t_pp+t_gen):.3f},{resultok},{args.tensor_split},,{args.usecuda},,,")
                     except Exception as e:
                         print(f"Error writing benchmark to file: {e}")
                 if global_memory and using_gui_launcher and not save_to_file:
