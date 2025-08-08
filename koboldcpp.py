@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #-*- coding: utf-8 -*-
 
-# Croco.Cpp, fork of KoboldCpp integrating most of Esobold and some improvements coming from IK_Llama.cpp, is an easy-to-use AI text-generation software for GGML models.
+# EsoCroK.Cpp, fork of KoboldCpp integrating most of Esobold and some improvements coming from IK_Llama.cpp, is an easy-to-use AI text-generation software for GGML models.
 # It's a single self contained distributable from Concedo, that builds off llama.cpp,
 # and adds a versatile Kobold API endpoint, additional format support,
 # backward compatibility, as well as a fancy UI with persistent stories,
@@ -732,7 +732,7 @@ def old_cpu_check(): #return -1 for pass, 0 if has avx2, 1 if has avx, 2 if has 
 def unpack_to_dir(destpath = ""):
     srcpath = os.path.abspath(os.path.dirname(__file__))
     cliunpack = False if destpath == "" else True
-    print("Attempt to unpack KoboldCpp/Croco.Cpp into directory...")
+    print("Attempt to unpack KoboldCpp/EsoCroK.Cpp into directory...")
 
     if not cliunpack:
         from tkinter import messagebox
@@ -746,9 +746,9 @@ def unpack_to_dir(destpath = ""):
     if os.path.isdir(srcpath) and os.path.isdir(destpath) and not os.listdir(destpath):
         try:
             if cliunpack:
-                print(f"KoboldCpp/Croco.Cpp will be extracted to {destpath}\nThis process may take several seconds to complete.")
+                print(f"KoboldCpp/EsoCroK.Cpp will be extracted to {destpath}\nThis process may take several seconds to complete.")
             else:
-                messagebox.showinfo("Unpack Starting", f"KoboldCpp/Croco.Cpp will be extracted to {destpath}\nThis process may take several seconds to complete.")
+                messagebox.showinfo("Unpack Starting", f"KoboldCpp/EsoCroK.Cpp will be extracted to {destpath}\nThis process may take several seconds to complete.")
             pyds_dir = os.path.join(destpath, 'pyds')
             using_pyinstaller_6 = False
             try:
@@ -780,9 +780,9 @@ def unpack_to_dir(destpath = ""):
                 else:
                     shutil.copy2(s, d2)
             if cliunpack:
-                print(f"KoboldCpp/Croco.Cpp successfully extracted to {destpath}")
+                print(f"KoboldCpp/EsoCroK.Cpp successfully extracted to {destpath}")
             else:
-                messagebox.showinfo("KoboldCpp/Croco.Cpp Unpack Success", f"KoboldCpp/Croco.Cpp successfully extracted to {destpath}")
+                messagebox.showinfo("KoboldCpp/EsoCroK.Cpp Unpack Success", f"KoboldCpp/EsoCroK.Cpp successfully extracted to {destpath}")
         except Exception as e:
             if cliunpack:
                 print(f"An error occurred while unpacking: {e}")
@@ -1122,7 +1122,7 @@ def autoset_gpu_layers(ctxsize, sdquanted, bbs, qkv_level): #shitty algo to dete
         usedmem = MaxMemory[0]-MaxFreeMemory[0]
         if showusedmemwarning and usedmem > (2.5*1024*1024*1024):
             showusedmemwarning = False
-            print(f"Note: KoboldCpp/Croco.Cpp has detected that a significant amount of GPU VRAM ({usedmem/1024/1024} MB) is currently used by another application.\nFor best results, you may wish to close that application and then restart KoboldCpp.\n***")
+            print(f"Note: KoboldCpp/EsoCroK.Cpp has detected that a significant amount of GPU VRAM ({usedmem/1024/1024} MB) is currently used by another application.\nFor best results, you may wish to close that application and then restart KoboldCpp.\n***")
     reservedmem = max(1.25*1024*1024*1024,(0.5*1024*1024*1024 + usedmem)) # determine vram overhead
     try:
         if not modelfile_extracted_meta:
@@ -3988,10 +3988,10 @@ class KcppServerRequestHandler(http.server.SimpleHTTPRequestHandler):
 <html lang="en"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>KoboldCpp/Croco.Cpp NoScript Mode</title></head><body>
-<h2>KoboldCpp/Croco.Cpp NoScript Mode</h2>
+<title>KoboldCpp/EsoCroK.Cpp NoScript Mode</title></head><body>
+<h2>KoboldCpp/EsoCroK.Cpp NoScript Mode</h2>
 <div>
-<p>KoboldCpp/Croco.Cpp can be used without Javascript enabled, however this is not recommended.
+<p>KoboldCpp/EsoCroK.Cpp can be used without Javascript enabled, however this is not recommended.
 <br>If you have Javascript, please use <a href="/">KoboldAI Lite WebUI</a> instead.</p><hr>
 <form action="/noscript">
 {bodycontent}
@@ -4040,9 +4040,9 @@ Change Mode<br>
                     with open(os.path.join(basepath, "klite.embd"), mode='rb') as f:
                         embedded_kailite = f.read()
                         # patch it with extra stuff
-                        patches = [{"find":"Sorry, KoboldAI Lite requires Javascript to function.","replace":"Sorry, KoboldAI Lite requires Javascript to function.<br>You can use <a class=\"color_blueurl\" href=\"/noscript\">KoboldCpp/Croco.Cpp NoScript mode</a> instead."},
+                        patches = [{"find":"Sorry, KoboldAI Lite requires Javascript to function.","replace":"Sorry, KoboldAI Lite requires Javascript to function.<br>You can use <a class=\"color_blueurl\" href=\"/noscript\">KoboldCpp/EsoCroK.Cpp NoScript mode</a> instead."},
                                 {"find":"var localflag = urlParams.get('local');","replace":"var localflag = true;"},
-                                {"find":"<p id=\"tempgtloadtxt\">Loading...</p>","replace":"<p id=\"tempgtloadtxt\">Loading...<br>(If load fails, try <a class=\"color_blueurl\" href=\"/noscript\">KoboldCpp/Croco.Cpp NoScript mode</a> instead.)</p>"}]
+                                {"find":"<p id=\"tempgtloadtxt\">Loading...</p>","replace":"<p id=\"tempgtloadtxt\">Loading...<br>(If load fails, try <a class=\"color_blueurl\" href=\"/noscript\">KoboldCpp/EsoCroK.Cpp NoScript mode</a> instead.)</p>"}]
                         embedded_kailite = embedded_kailite.decode("UTF-8","ignore")
                         for p in patches:
                             embedded_kailite = embedded_kailite.replace(p["find"], p["replace"])
@@ -4266,20 +4266,20 @@ Change Mode<br>
         elif self.path=="/api" or self.path=="/docs" or self.path.startswith(('/api/?json=','/api?json=','/docs/?json=','/docs?json=')):
             content_type = 'text/html'
             if embedded_kcpp_docs is None:
-                response_body = ("KoboldCpp/Croco.Cpp API is running!\n\nAPI usage reference can be found at the wiki: https://github.com/LostRuins/koboldcpp/wiki").encode()
+                response_body = ("KoboldCpp/EsoCroK.Cpp API is running!\n\nAPI usage reference can be found at the wiki: https://github.com/LostRuins/koboldcpp/wiki").encode()
             else:
                 response_body = embedded_kcpp_docs
 
         elif self.path.startswith(("/sdui")):
             content_type = 'text/html'
             if embedded_kcpp_sdui is None:
-                response_body = ("KoboldCpp/Croco.Cpp API is running, but KCPP SDUI is not loaded").encode()
+                response_body = ("KoboldCpp/EsoCroK.Cpp API is running, but KCPP SDUI is not loaded").encode()
             else:
                 response_body = embedded_kcpp_sdui
 
         elif self.path=="/v1":
             content_type = 'text/html'
-            response_body = ("KoboldCpp/Croco.Cpp OpenAI compatible endpoint is running!<br>For usage reference, see <a href='https://platform.openai.com/docs/api-reference'>https://platform.openai.com/docs/api-reference</a><br>For other endpoints, see <a href='/api'>KoboldCpp/Croco.Cpp API Documentation</a>").encode()
+            response_body = ("KoboldCpp/EsoCroK.Cpp OpenAI compatible endpoint is running!<br>For usage reference, see <a href='https://platform.openai.com/docs/api-reference'>https://platform.openai.com/docs/api-reference</a><br>For other endpoints, see <a href='/api'>KoboldCpp/EsoCroK.Cpp API Documentation</a>").encode()
 
         elif self.path=="/api/extra/preloadstory":
             if preloaded_story is None:
@@ -4320,7 +4320,7 @@ Change Mode<br>
         if response_body is None:
             self.send_response(404)
             self.end_headers(content_type='text/html')
-            rp = 'Error: KoboldCpp/Croco.Cpp HTTP Server is running, but this endpoint does not exist. Please check the URL.'
+            rp = 'Error: KoboldCpp/EsoCroK.Cpp HTTP Server is running, but this endpoint does not exist. Please check the URL.'
             self.wfile.write(rp.encode())
         else:
             self.send_response(200)
@@ -5452,7 +5452,7 @@ def show_gui():
     ctk.set_appearance_mode("dark")
     root = ctk.CTk()
     root.geometry(str(windowwidth) + "x" + str(windowheight))
-    root.title(f"A fork of KoboldCpp, for enthusiasts and power-users : Croco.Cpp v{KcppVersion}")
+    root.title(f"A fork of KoboldCpp, for enthusiasts and power-users : EsoCroK.Cpp v{KcppVersion}")
 
     gtooltip_box = None
     gtooltip_label = None
@@ -6274,8 +6274,8 @@ def show_gui():
         "Use MMAP": [usemmap, "Use mmap to load models if enabled, model will not be unloadable"],
         "Use mlock": [usemlock, "Enables mlock, preventing the RAM used to load the model from being paged out."],
         "Debug Mode": [debugmode, "Enables debug mode, with extra info printed to the terminal."],
-        "Keep Foreground": [keepforeground, "Bring KoboldCpp/Croco.Cpp to the foreground every time there is a new generation."],
-        "CLI Terminal Only": [terminalonly, "Does not launch KoboldCpp/Croco.Cpp HTTP server. Instead, enables KoboldCpp/Croco.Cpp from the command line, accepting interactive console input and displaying responses to the terminal."]
+        "Keep Foreground": [keepforeground, "Bring KoboldCpp/EsoCroK.Cpp to the foreground every time there is a new generation."],
+        "CLI Terminal Only": [terminalonly, "Does not launch KoboldCpp/EsoCroK.Cpp HTTP server. Instead, enables KoboldCpp/EsoCroK.Cpp from the command line, accepting interactive console input and displaying responses to the terminal."]
     }
 
     for idx, (name, properties) in enumerate(hardware_boxes.items()):
@@ -6347,7 +6347,7 @@ def show_gui():
     makecheckbox(model_tab, "GPU", embeddings_gpu_var, 15, 0,padx=390,tooltiptxt="Uses the GPU for TTS.")
     embeddings_gpu_var.trace_add("write", gui_changed_modelfile)
     makefileentry(model_tab, "Preload Story:", "Select Preloaded Story File", preloadstory_var, 17,width=280,singlerow=True,tooltiptxt="Select an optional KoboldAI JSON savefile \nto be served on launch to any client.")
-    makefileentry(model_tab, "SaveData File:", "Select or Create New SaveData Database File", savedatafile_var, 19,width=280,filetypes=[("KoboldCpp/Croco.Cpp SaveDB", "*.jsondb")],singlerow=True,dialog_type=1,tooltiptxt="Selecting a file will allow data to be loaded and saved persistently to this KoboldCpp/Croco.Cpp server remotely. File is created if it does not exist.")
+    makefileentry(model_tab, "SaveData File:", "Select or Create New SaveData Database File", savedatafile_var, 19,width=280,filetypes=[("KoboldCpp/EsoCroK.Cpp SaveDB", "*.jsondb")],singlerow=True,dialog_type=1,tooltiptxt="Selecting a file will allow data to be loaded and saved persistently to this KoboldCpp/EsoCroK.Cpp server remotely. File is created if it does not exist.")
     makefileentry(model_tab, "ChatCompletions Adapter:", "Select ChatCompletions Adapter File", chatcompletionsadapter_var, 24, width=250, filetypes=[("JSON Adapter", "*.json")], tooltiptxt="Select an optional ChatCompletions Adapter JSON file to force custom instruct tags.")
     def pickpremadetemplate():
         initialDir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'kcpp_adapters')
@@ -6469,7 +6469,7 @@ def show_gui():
     makefileentry(admin_tab, "Model Directory:", "Select directory containing .gguf text model files to allow overriding configs with", admin_text_model_dir_var, 7, width=280, dialog_type=2, tooltiptxt="Specify a directory to look for .gguf text model files in, which can be used to swap models within a config.")
     makefileentry(admin_tab, "Data Directory:", "Select directory which will be used to store user data if desired", admin_data_dir_var, 9, width=280, dialog_type=2, tooltiptxt="Specify a directory to store user data in.")
     makecheckbox(admin_tab, "Allow Model Download From HuggingFace", admin_allow_hf_var, 11, 0,tooltiptxt="Allows model downloading from HuggingFace within the Lite UI.")
-    makecheckbox(admin_tab, "SingleInstance Mode", singleinstance_var, 13, 0,tooltiptxt="Allows this server to be shut down by another KoboldCpp/Croco.Cpp instance with singleinstance starting on the same port.")
+    makecheckbox(admin_tab, "SingleInstance Mode", singleinstance_var, 13, 0,tooltiptxt="Allows this server to be shut down by another KoboldCpp/EsoCroK.Cpp instance with singleinstance starting on the same port.")
 
     def kcpp_export_template():
         nonlocal kcpp_exporting_template
@@ -6477,7 +6477,7 @@ def show_gui():
         export_vars()
         kcpp_exporting_template = False
         savdict = json.loads(json.dumps(args.__dict__))
-        file_type = [("KoboldCpp/Croco.Cpp LaunchTemplate", "*.kcppt")]
+        file_type = [("KoboldCpp/EsoCroK.Cpp LaunchTemplate", "*.kcppt")]
         #remove blacklisted fields
         savdict = convert_args_to_template(savdict)
         filename = zentk_asksaveasfilename(filetypes=file_type, defaultextension=".kcppt")
@@ -6493,14 +6493,14 @@ def show_gui():
 
     # extra tab
     extra_tab = tabcontent["Extra"]
-    makelabel(extra_tab, "Extract KoboldCpp/Croco.Cpp Files", 3, 0,tooltiptxt="Unpack KoboldCpp/Croco.Cpp to a local directory to modify its files. You can also launch via koboldcpp.py for faster startup.")
-    ctk.CTkButton(extra_tab , text = "Unpack KoboldCpp/Croco.Cpp To Folder", command = unpack_to_dir ).grid(row=3,column=0, stick="w", padx= 170, pady=2)
-    makelabel(extra_tab, "Export as .kcppt template", 4, 0,tooltiptxt="Creates a KoboldCpp/Croco.Cpp launch template for others to use.\nEmbeds JSON files directly into exported file when saving.\nWhen loaded, forces the backend to be automatically determined.\nWarning! Not recommended for beginners!")
+    makelabel(extra_tab, "Extract KoboldCpp/EsoCroK.Cpp Files", 3, 0,tooltiptxt="Unpack KoboldCpp/EsoCroK.Cpp to a local directory to modify its files. You can also launch via koboldcpp.py for faster startup.")
+    ctk.CTkButton(extra_tab , text = "Unpack KoboldCpp/EsoCroK.Cpp To Folder", command = unpack_to_dir ).grid(row=3,column=0, stick="w", padx= 170, pady=2)
+    makelabel(extra_tab, "Export as .kcppt template", 4, 0,tooltiptxt="Creates a KoboldCpp/EsoCroK.Cpp launch template for others to use.\nEmbeds JSON files directly into exported file when saving.\nWhen loaded, forces the backend to be automatically determined.\nWarning! Not recommended for beginners!")
     ctk.CTkButton(extra_tab , text = "Generate LaunchTemplate", command = kcpp_export_template ).grid(row=4,column=0, stick="w", padx= 170, pady=2)
     makelabel(extra_tab, "Analyze GGUF Metadata", 6, 0,tooltiptxt="Reads the metadata, weight types and tensor names in any GGUF file.")
     ctk.CTkButton(extra_tab , text = "Analyze GGUF", command = analyze_gguf_model_wrapper ).grid(row=6,column=0, stick="w", padx= 170, pady=2)
     if os.name == 'nt':
-        makelabel(extra_tab, "File Extensions Handler", 10, 0,tooltiptxt="Makes KoboldCpp/Croco.Cpp the default handler for .kcpps, .kcppt, .ggml and .gguf files.")
+        makelabel(extra_tab, "File Extensions Handler", 10, 0,tooltiptxt="Makes KoboldCpp/EsoCroK.Cpp the default handler for .kcpps, .kcppt, .ggml and .gguf files.")
         ctk.CTkButton(extra_tab , text = "Register", width=90, command = register_koboldcpp ).grid(row=10,column=0, stick="w", padx= 170, pady=2)
         ctk.CTkButton(extra_tab , text = "Unregister", width=90, command = unregister_koboldcpp ).grid(row=10,column=0, stick="w", padx= 264, pady=2)
     if sys.platform == "linux":
@@ -6950,7 +6950,7 @@ def show_gui():
         kcpp_exporting_template = False
         export_vars()
         savdict = json.loads(json.dumps(args.__dict__))
-        file_type = [("KoboldCpp/Croco.Cpp Settings", "*.kcpps")]
+        file_type = [("KoboldCpp/EsoCroK.Cpp Settings", "*.kcpps")]
         filename = zentk_asksaveasfilename(filetypes=file_type, defaultextension=".kcpps")
         if not filename:
             return
@@ -6963,7 +6963,7 @@ def show_gui():
         pass
 
     def load_config_gui(): #this is used to populate the GUI with a config file, whereas load_config_cli simply overwrites cli args
-        file_type = [("KoboldCpp/Croco.Cpp Settings", "*.kcpps *.kcppt")]
+        file_type = [("KoboldCpp/EsoCroK.Cpp Settings", "*.kcpps *.kcppt")]
         global runmode_untouched, zenity_permitted
         filename = zentk_askopenfilename(filetypes=file_type, defaultextension=".kcppt", initialdir=None, title="Select kcpps or kcppt settings config file")
         if not filename or filename=="":
@@ -7291,7 +7291,7 @@ def convert_invalid_args(args):
     return args
 
 def setuptunnel(global_memory, has_sd):
-    # This script will help setup a cloudflared tunnel for accessing KoboldCpp/Croco.Cpp over the internet
+    # This script will help setup a cloudflared tunnel for accessing KoboldCpp/EsoCroK.Cpp over the internet
     # It should work out of the box on both linux and windows
     try:
         import subprocess
@@ -7610,7 +7610,7 @@ def register_koboldcpp():
         if getattr(sys, 'frozen', False):
             exe_path = sys.executable
         if os.name == 'nt' and exe_path!="":
-            confirmyes = show_gui_yesnobox("Confirm Add File Extensions","Do you want to register KoboldCpp/Croco.Cpp as the default file associations for .gguf, .kcpps, .kcppt and .ggml files?",icon="question")
+            confirmyes = show_gui_yesnobox("Confirm Add File Extensions","Do you want to register KoboldCpp/EsoCroK.Cpp as the default file associations for .gguf, .kcpps, .kcppt and .ggml files?",icon="question")
             if confirmyes == 'yes':
                 import winreg
                 print(f"Registering file associations to {exe_path}")
@@ -7626,7 +7626,7 @@ def register_koboldcpp():
                 for key_path, value_name, value_data in entries:
                     with winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path) as key:
                         winreg.SetValueEx(key, value_name, 0, winreg.REG_SZ, value_data)
-                print("KoboldCpp/Croco.Cpp file associations registered successfully.")
+                print("KoboldCpp/EsoCroK.Cpp file associations registered successfully.")
         else:
             show_gui_msgbox("Cannot Set File Association","File Associations only available for Windows standalone executables.")
     except Exception as e:
@@ -7635,7 +7635,7 @@ def register_koboldcpp():
 def unregister_koboldcpp():
     try:
         if os.name == 'nt':
-            confirmyes = show_gui_yesnobox("Confirm Remove File Extensions","Do you want to unregister KoboldCpp/Croco.Cpp as the default file associations for .gguf, .kcpps, .kcppt and .ggml files?",icon="question")
+            confirmyes = show_gui_yesnobox("Confirm Remove File Extensions","Do you want to unregister KoboldCpp/EsoCroK.Cpp as the default file associations for .gguf, .kcpps, .kcppt and .ggml files?",icon="question")
             if confirmyes == 'yes':
                 import winreg
                 keys_to_delete = [
@@ -7656,7 +7656,7 @@ def unregister_koboldcpp():
                         winreg.DeleteKey(winreg.HKEY_CURRENT_USER, key_path)
                     except Exception:
                         print(f"Failed to delete registry key: {key_path}")
-                print("KoboldCpp/Croco.Cpp file associations unregistered.")
+                print("KoboldCpp/EsoCroK.Cpp file associations unregistered.")
         else:
             show_gui_msgbox("Cannot Set File Association","File Associations only available for Windows standalone executables.")
     except Exception as e:
@@ -7679,7 +7679,7 @@ def main(launch_args, default_args):
     temp_hide_print = (args.model_param and (args.prompt and not args.cli) and not args.benchmark and not (args.debugmode >= 1))
 
     if not temp_hide_print:
-       print(f"***\nWelcome to Croco.Cpp, fork of KoboldCpp - Version {KcppVersion}, including Esobold {EsoboldVersion}.") # just update version manually
+       print(f"***\nWelcome to EsoCroK.Cpp, fork of KoboldCpp - Version {KcppVersion}, including Esobold {EsoboldVersion}.") # just update version manually
        print(f"***\nBased on LlamaCpp version {LcppVersion} and IK_Llama.cpp version {IKLcppVersion}") # just update LlamaCPP version manually
        print(f"***\nRelease date: {ReleaseDate}") # just update date manually
        print(f"***\nCuda mode compiled, if any: {CudaSpecifics}") # just update Cuda options used in CMake manually
@@ -7694,7 +7694,7 @@ def main(launch_args, default_args):
     # assign title to terminal on windows
     try:
         if os.name == 'nt':
-            windowtitle = f"KoboldCpp/Croco.Cpp {KcppVersion} Terminal"
+            windowtitle = f"KoboldCpp/EsoCroK.Cpp {KcppVersion} Terminal"
             os.system(f'title {windowtitle}')
     except Exception:
         pass
@@ -8418,9 +8418,9 @@ def kcpp_main_process(launch_args, g_memory=None, gui_launcher=False):
         with open(os.path.join(basepath, "klite.embd"), mode='rb') as f:
             embedded_kailite = f.read()
             # patch it with extra stuff
-            patches = [{"find":"Sorry, KoboldAI Lite requires Javascript to function.","replace":"Sorry, KoboldAI Lite requires Javascript to function.<br>You can use <a class=\"color_blueurl\" href=\"/noscript\">KoboldCpp/Croco.Cpp NoScript mode</a> instead."},
+            patches = [{"find":"Sorry, KoboldAI Lite requires Javascript to function.","replace":"Sorry, KoboldAI Lite requires Javascript to function.<br>You can use <a class=\"color_blueurl\" href=\"/noscript\">KoboldCpp/EsoCroK.Cpp NoScript mode</a> instead."},
                        {"find":"var localflag = urlParams.get('local');","replace":"var localflag = true;"},
-                       {"find":"<p id=\"tempgtloadtxt\">Loading...</p>","replace":"<p id=\"tempgtloadtxt\">Loading...<br>(If load fails, try <a class=\"color_blueurl\" href=\"/noscript\">KoboldCpp/Croco.Cpp NoScript mode</a> instead, or adding /noscript at this url.)</p>"}]
+                       {"find":"<p id=\"tempgtloadtxt\">Loading...</p>","replace":"<p id=\"tempgtloadtxt\">Loading...<br>(If load fails, try <a class=\"color_blueurl\" href=\"/noscript\">KoboldCpp/EsoCroK.Cpp NoScript mode</a> instead, or adding /noscript at this url.)</p>"}]
             embedded_kailite = embedded_kailite.decode("UTF-8","ignore")
             for p in patches:
                 embedded_kailite = embedded_kailite.replace(p["find"], p["replace"])
@@ -8435,7 +8435,7 @@ def kcpp_main_process(launch_args, g_memory=None, gui_launcher=False):
             embedded_kcpp_docs = f.read()
             print("Embedded API docs loaded.")
     except Exception:
-        print("Could not find Embedded KoboldCpp/Croco.Cpp API docs.")
+        print("Could not find Embedded KoboldCpp/EsoCroK.Cpp API docs.")
 
     try:
         basepath = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
@@ -8533,7 +8533,7 @@ def kcpp_main_process(launch_args, g_memory=None, gui_launcher=False):
 
     if not start_server:
         if args.cli:
-            print("\n===\nNow running KoboldCpp/Croco.Cpp in Interactive Terminal Chat mode.\nType /quit or /exit to end session.\n")
+            print("\n===\nNow running KoboldCpp/EsoCroK.Cpp in Interactive Terminal Chat mode.\nType /quit or /exit to end session.\n")
             lastturns = []
             if args.prompt and args.prompt!="":
                 lastturns.append({"role":"system","content":args.prompt})
@@ -8622,7 +8622,7 @@ def kcpp_main_process(launch_args, g_memory=None, gui_launcher=False):
                 s_gen = float(benchtg)/t_gen
                 datetimestamp = datetime.now(timezone.utc)
                 # benchflagstr = f"NoAVX2={args.noavx2} Threads={args.threads} HighPriority={args.highpriority} Cuda_Args={args.usecuda} Tensor_Split={args.tensor_split} BlasThreads={args.blasthreads} BlasBatchSize={args.blasbatchsize} FlashAttention={args.flashattention} KvCache={args.quantkv}"
-                print(f"\nBenchmark Completed - Croco.Cpp v{KcppVersion} ; LlamaCPP {LcppVersion} ; IK_Llama.cpp {IKLcppVersion} ;\nIf Cuda mode: {CudaSpecifics} ; Release date: {ReleaseDate} ; Results:\n======")
+                print(f"\nBenchmark Completed - EsoCroK.Cpp v{KcppVersion} ; LlamaCPP {LcppVersion} ; IK_Llama.cpp {IKLcppVersion} ;\nIf Cuda mode: {CudaSpecifics} ; Release date: {ReleaseDate} ; Results:\n======")
                 benchflagstr = f"NoAVX2={args.noavx2} Threads={args.threads} HighPriority={args.highpriority} NoBlas={args.noblas} Cuda_Args={args.usecuda} Offloaded layers={args.gpulayers} Tensor_Split={args.tensor_split} BlasThreads={args.blasthreads} BlasBatchSize={args.blasbatchsize} FlashAttention={args.flashattention} KvCache={args.quantkv}"
                 print(f"Flags: {benchflagstr}")
                 print(f"Timestamp: {datetimestamp}")
@@ -8692,7 +8692,7 @@ if __name__ == '__main__':
             return f
         return range_checker
 
-    parser = argparse.ArgumentParser(description=f'KoboldCpp/Croco.Cpp Server - Version {KcppVersion}-{LcppVersion}-{IKLcppVersion}-{EsoboldVersion}')
+    parser = argparse.ArgumentParser(description=f'KoboldCpp/EsoCroK.Cpp Server - Version {KcppVersion}-{LcppVersion}-{IKLcppVersion}-{EsoboldVersion}')
     modelgroup = parser.add_mutually_exclusive_group() #we want to be backwards compatible with the unnamed positional args
     modelgroup.add_argument("--model", metavar=('[filenames]'), help="Model file to load. Accepts multiple values if they are URLs.", type=str, nargs='+', default=[])
     modelgroup.add_argument("model_param", help="Model file to load (positional)", nargs="?")
@@ -8735,7 +8735,7 @@ if __name__ == '__main__':
     advparser.add_argument("--onready", help="An optional shell command to execute after the model has been loaded.", metavar=('[shell command]'), type=str, default="",nargs=1)
     advparser.add_argument("--benchmark", help="Do not start server, instead run benchmarks. If filename is provided, appends results to provided file.", metavar=('[filename]'), nargs='?', const="stdout", type=str, default=None)
     advparser.add_argument("--prompt", metavar=('[prompt]'), help="Passing a prompt string triggers a direct inference, loading the model, outputs the response to stdout and exits. Can be used alone or with benchmark.", type=str, default="")
-    advparser.add_argument("--cli", help="Does not launch KoboldCpp/Croco.Cpp HTTP server. Instead, enables KoboldCpp/Croco.Cpp from the command line, accepting interactive console input and displaying responses to the terminal.", action='store_true')
+    advparser.add_argument("--cli", help="Does not launch KoboldCpp/EsoCroK.Cpp HTTP server. Instead, enables KoboldCpp/EsoCroK.Cpp from the command line, accepting interactive console input and displaying responses to the terminal.", action='store_true')
     advparser.add_argument("--promptlimit", help="Sets the maximum number of generated tokens, usable only with --prompt or --benchmark",metavar=('[token limit]'), type=int, default=100)
     advparser.add_argument("--multiuser", help="Runs in multiuser mode, which queues incoming requests instead of blocking them.", metavar=('limit'), nargs='?', const=1, type=int, default=1)
     advparser.add_argument("--multiplayer", help="Hosts a shared multiplayer session that others can join.", action='store_true')
@@ -8768,7 +8768,7 @@ if __name__ == '__main__':
 
     advparser.add_argument("--forceversion", help="If the model file format detection fails (e.g. rogue modified model) you can set this to override the detected format (enter desired version, e.g. 401 for GPTNeoX-Type2).",metavar=('[version]'), type=int, default=0)
     advparser.add_argument("--smartcontext", help="Reserving a portion of context to try processing less frequently. Outdated. Not recommended.", action='store_true')
-    advparser.add_argument("--unpack", help="Extracts the file contents of the KoboldCpp/Croco.Cpp binary into a target directory.", metavar=('destination'), type=str, default="")
+    advparser.add_argument("--unpack", help="Extracts the file contents of the KoboldCpp/EsoCroK.Cpp binary into a target directory.", metavar=('destination'), type=str, default="")
     advparser.add_argument("--exportconfig", help="Exports the current selected arguments as a .kcpps settings file", metavar=('[filename]'), type=str, default="")
     advparser.add_argument("--exporttemplate", help="Exports the current selected arguments as a .kcppt template file", metavar=('[filename]'), type=str, default="")
     advparser.add_argument("--nomodel", help="Allows you to launch the GUI alone, without selecting any model.", action='store_true')
@@ -8784,7 +8784,7 @@ if __name__ == '__main__':
     compatgroup2 = parser.add_mutually_exclusive_group()
     compatgroup2.add_argument("--showgui", help="Always show the GUI instead of launching the model right away when loading settings from a .kcpps file.", action='store_true')
     compatgroup2.add_argument("--skiplauncher", help="Doesn't display or use the GUI launcher. Overrides showgui.", action='store_true')
-    advparser.add_argument("--singleinstance", help="Allows this KoboldCpp/Croco.Cpp instance to be shut down by any new instance requesting the same port, preventing duplicate servers from clashing on a port.", action='store_true')
+    advparser.add_argument("--singleinstance", help="Allows this KoboldCpp/EsoCroK.Cpp instance to be shut down by any new instance requesting the same port, preventing duplicate servers from clashing on a port.", action='store_true')
 
     hordeparsergroup = parser.add_argument_group('Horde Worker Commands')
     hordeparsergroup.add_argument("--hordemodelname", metavar=('[name]'), help="Sets your AI Horde display model name.", default="")
