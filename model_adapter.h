@@ -51,11 +51,34 @@ enum FileFormat
 
 };
 
+/* enum GGUFArch
+{
+    ARCH_DEFAULT = 0, //used for llama3 and other generic gguf
+    ARCH_FALCON = 1,
+    ARCH_PHI = 2,
+    ARCH_MAMBALIKE = 3,
+    ARCH_SOLAR = 4,
+    ARCH_QWEN2 = 5,
+    ARCH_RWKV = 6,
+    ARCH_QWEN2VL = 7,
+    ARCH_GEMMA3 = 8,
+    ARCH_GLM4 = 9,
+    ARCH_GEMMA3N = 10,
+    ARCH_GPTOSS = 11,
+    ARCH_DEEPSEEK2 = 12,
+    ARCH_JAMBA = 13,
+
+    // ARCH_MISTRAL_LLAMA_1_AND_2 = 50,
+
+}; */
+
 struct FileFormatExtraMeta
 {
     int n_ctx_train = 2048;
     int fileversion = 0;
     llm_arch model_architecture = llm_arch::LLM_ARCH_UNKNOWN;
+
+    // int32_t n_tensors;
     int n_expert_count = 0;
     std::string model_architecture_str = "";
     bool explicitly_no_bos = false; //only true if key exists AND is false
