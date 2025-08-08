@@ -65,6 +65,10 @@ enum GGUFArch
     ARCH_GEMMA3N = 10,
     ARCH_GPTOSS = 11,
     ARCH_DEEPSEEK2 = 12,
+    ARCH_JAMBA = 13,
+
+    // ARCH_MISTRAL_LLAMA_1_AND_2 = 50,
+
 };
 
 struct FileFormatExtraMeta
@@ -72,6 +76,8 @@ struct FileFormatExtraMeta
     int n_ctx_train = 2048;
     int fileversion = 0;
     GGUFArch model_architecture = GGUFArch::ARCH_DEFAULT;
+
+    // int32_t n_tensors;
     int n_expert_count = 0;
     std::string model_architecture_str = "";
     bool explicitly_no_bos = false; //only true if key exists AND is false
