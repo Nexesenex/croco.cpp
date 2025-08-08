@@ -66,12 +66,12 @@ overridekv_max = 4
 default_autofit_padding = 1024
 lora_filenames_max = 4
 
-# abuse prevention
-stop_token_max = 256
-ban_token_max = 768
-logit_bias_max = 512
-dry_seq_break_max = 128
-extra_images_max = 4 # for kontext/qwen img
+# abuse prevention (double of official KCPP)
+stop_token_max = 512
+ban_token_max = 1536
+logit_bias_max = 1024
+dry_seq_break_max = 256
+extra_images_max = 8 # for kontext/qwen img
 
 # global vars
 KcppVersion = "1.108.2"
