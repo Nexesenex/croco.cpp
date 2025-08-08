@@ -1060,14 +1060,19 @@ static void on_no_fattn_vec_case(const int D) {
     } else if (D == 128) {
         fprintf(stderr, "Unsupported KV type combination for head_size 128.\n");
         fprintf(stderr, "Supported combinations:\n");
-        fprintf(stderr, "  - K == q4_0,   V == q4_0,   4.5 BPV\n");
-        fprintf(stderr, "  - K == iq4_nl, V == iq4_nl, 4.5 BPV\n");
-        fprintf(stderr, "  - K == q6_0,   V == q5_0,   6.0 BPV\n");
-        fprintf(stderr, "  - K == q8_0,   V == iq4_nl, 6.5 BPV\n");
-        fprintf(stderr, "  - K == q8_0,   V == q6_0,   7.5 BPV\n");
-        fprintf(stderr, "  - K == q8_0,   V == q8_0,   8.5 BPV\n");
-        fprintf(stderr, "  - K == f16,    V == f16,   16.0 BPV\n");
-        fprintf(stderr, "Compile with GGML_CUDA_FA_ALL_QUANTS for all combinations of q4_0, q4_1, iq4_nl, q5_0, q5_1, q8_0, and f16.\n");
+        fprintf(stderr, "  - K == q4_0,   V == q4_0,   4.5 BPV\n"); //now obsolete, left as a legacy failsafe.
+        fprintf(stderr, "  - K == iq4_nl, V == iq4_nl, 4.5 BPV\n"); //replaces KV q4_0, 1-3% perplexity drop.
+        fprintf(stderr, "  - K == q5_0,   V == iq4_nl, 5.0 BPV\n"); //best performance oriented compromise, and recommanded for speculative model.
+        fprintf(stderr, "  - K == q5_1,   V == q5_0,   5.5 BPV\n"); //pre K q6_0 most balanced compromise, left as a failsafe.
+        fprintf(stderr, "  - K == q6_0,   V == iq4_nl, 5.5 BPV\n"); //replaces KV q5_1-q5_0, 0.1-0.3 perplexity drop.
+        fprintf(stderr, "  - K == q6_0,   V == q5_0,   6.0 BPV\n"); //almost equals KV q8_0/q5_0, almost..
+        fprintf(stderr, "  - K == q8_0,   V == iq4_nl, 6.5 BPV\n"); //IK's favorite.
+        fprintf(stderr, "  - K == q8_0,   V == q5_0,   7.0 BPV\n"); //qualitative compromise.
+        fprintf(stderr, "  - K == q8_0,   V == q6_0,   7.5 BPV\n"); //should be optimal, but KV 8/5 or even 6/5 match it.
+        fprintf(stderr, "  - K == q8_0,   V == q8_0,   8.5 BPV\n"); //the classic, can't go wrong with this one.
+        fprintf(stderr, "  - K == f16,    V == q8_0,   12.25 BPV\n"); //uncompromizing quality, non quantized K (the most sensitive to quantization).
+        fprintf(stderr, "  - K == f16,    V == f16,    16.0 BPV\n"); //non-quantized KV cache.
+        fprintf(stderr, "Compile with GGML_CUDA_FA_ALL_QUANTS for all combinations of q4_0, q4_1, iq4_nl, q5_0, q5_1, q6_0, q8_0, and f16.\n");
         GGML_ABORT("fatal error");
     } else {
         fprintf(stderr, "Unsupported KV type combination for head_size %d.\n", D);
