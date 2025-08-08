@@ -55,7 +55,7 @@ struct load_model_inputs
     const int kcpp_main_gpu = -1;
     const char * vulkan_info = nullptr;
     const int blasbatchsize = 128;
-    const int forceversion = 0;
+    const int forceversion = 0; // croco 6
     const bool autofit = false;
     const int autofit_tax_mb = 0;
     const int gpulayers = 0;
