@@ -16,11 +16,11 @@ VSVersionInfo(
                     u'040904b0',
                     [
                         StringStruct(u'CompanyName', u'KoboldAI'),
-                        StringStruct(u'FileDescription', u'KoboldCpp'),
-                        StringStruct(u'InternalName', u'KoboldCpp'),
+                        StringStruct(u'FileDescription', u'Croco.Cpp'),
+                        StringStruct(u'InternalName', u'Croco.Cpp'),
                         StringStruct(u'LegalCopyright', u'AGPLv3'),
                         StringStruct(u'OriginalFilename', u'koboldcpp.exe'),
-                        StringStruct(u'ProductName', u'koboldcpp'),
+                        StringStruct(u'ProductName', u'croco.cpp'),
                         StringStruct(u'ProductVersion', u'MYVER_MAJOR.MYVER_MINOR.0.0'),
                     ]
                 )
