@@ -1,0 +1,8 @@
+{
+"system_start": "",
+"system_end": "\n",
+"user_start": "<start_of_turn>user\n",
+"user_end": "<end_of_turn>\n",
+"assistant_start": "<start_of_turn>model\n",
+"assistant_end": "<end_of_turn>\n"
+}
