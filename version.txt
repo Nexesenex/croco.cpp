@@ -1,7 +1,7 @@
 VSVersionInfo(
     ffi=FixedFileInfo(
-      filevers=(0, 0, 0, 0),
-      prodvers=(0, 0, 0, 0),
+      filevers=(1, 98000, 0, 0),
+      prodvers=(1, 98000, 0, 0),
       mask=0x3f,
       flags=0x0,
       OS=0x4,
@@ -16,12 +16,12 @@ VSVersionInfo(
                     u'040904b0',
                     [
                         StringStruct(u'CompanyName', u'KoboldAI'),
-                        StringStruct(u'FileDescription', u'KoboldCpp'),
-                        StringStruct(u'InternalName', u'KoboldCpp'),
+                        StringStruct(u'FileDescription', u'Croco.Cpp'),
+                        StringStruct(u'InternalName', u'Croco.Cpp'),
                         StringStruct(u'LegalCopyright', u'AGPLv3'),
                         StringStruct(u'OriginalFilename', u'koboldcpp.exe'),
-                        StringStruct(u'ProductName', u'koboldcpp'),
-                        StringStruct(u'ProductVersion', u'0.0.0.0'),
+                        StringStruct(u'ProductName', u'croco.cpp'),
+                        StringStruct(u'ProductVersion', u'1.98000.0.0'),
                     ]
                 )
             ]
