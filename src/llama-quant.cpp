@@ -379,14 +379,19 @@ static ggml_type tensor_type_fallback(quantize_state_impl & qs, const ggml_tenso
             case GGML_TYPE_IQ2_S:
             case GGML_TYPE_IQ3_XXS:
             case GGML_TYPE_IQ3_S:   // types on the right: block size 32
+            case GGML_TYPE_IQ2_K:
+            case GGML_TYPE_IQ3_K:
+            case GGML_TYPE_IQ4_K:
+            case GGML_TYPE_Q4_K:
             case GGML_TYPE_IQ4_XS:  return_type = GGML_TYPE_IQ4_NL; break;
             case GGML_TYPE_Q2_K:
             case GGML_TYPE_Q3_K:
             case GGML_TYPE_TQ1_0:
             case GGML_TYPE_TQ2_0:   return_type = GGML_TYPE_Q4_0;   break;
-            case GGML_TYPE_Q4_K:    return_type = GGML_TYPE_Q5_0;   break;
-            case GGML_TYPE_Q5_K:    return_type = GGML_TYPE_Q6_0;   break;
-            case GGML_TYPE_Q6_K:    return_type = GGML_TYPE_Q8_0;   break;
+            case GGML_TYPE_IQ5_K:
+            case GGML_TYPE_Q5_K:    return_type = GGML_TYPE_Q5_0;   break;
+	        case GGML_TYPE_IQ6_K:
+            case GGML_TYPE_Q6_K:    return_type = GGML_TYPE_Q6_0;   break;
             default:
                 const std::string name = ggml_get_name(t);
                 printf("\nUnsupported tensor size encountered! Will use %s for %s\n",ggml_type_name(t->type),name.c_str()) ;
@@ -832,7 +837,58 @@ ggml_type llama_ftype_get_default_type(llama_ftype ftype) {
         case LLAMA_FTYPE_MOSTLY_IQ3_S:
         case LLAMA_FTYPE_MOSTLY_IQ3_M:   return GGML_TYPE_IQ3_S;
 
+        // IQ_K-first-gen
+        case LLAMA_FTYPE_MOSTLY_IQ2_K:   return GGML_TYPE_IQ2_K;   break;
+        case LLAMA_FTYPE_MOSTLY_IQ3_K:   return GGML_TYPE_IQ3_K;   break;
+        case LLAMA_FTYPE_MOSTLY_IQ4_K:   return GGML_TYPE_IQ4_K;   break;
+        case LLAMA_FTYPE_MOSTLY_IQ5_K:   return GGML_TYPE_IQ5_K;   break;
+        case LLAMA_FTYPE_MOSTLY_IQ6_K:   return GGML_TYPE_IQ6_K;   break;
+
         default: return GGML_TYPE_COUNT;
+
+        // IQ_K-new-quants
+        // case LLAMA_FTYPE_MOSTLY_Q2_K_R4:    return GGML_TYPE_Q2_K_R4;    break;
+        // case LLAMA_FTYPE_MOSTLY_Q3_K_R4:    return GGML_TYPE_Q3_K_R4;    break;
+        // case LLAMA_FTYPE_MOSTLY_Q4_K_R4:    return GGML_TYPE_Q4_K_R4;    break;
+        // case LLAMA_FTYPE_MOSTLY_Q5_K_R4:    return GGML_TYPE_Q5_K_R4;    break;
+        // case LLAMA_FTYPE_MOSTLY_Q6_K_R4:    return GGML_TYPE_Q6_K_R4;    break;
+        // case LLAMA_FTYPE_MOSTLY_Q8_K_R8:    return GGML_TYPE_Q8_K_R8;    break;
+        // case LLAMA_FTYPE_MOSTLY_Q8_KV_R8:   return GGML_TYPE_Q8_KV_R8;   break;
+        // case LLAMA_FTYPE_MOSTLY_IQ2_XXS_R4: return GGML_TYPE_IQ2_XXS_R4; break;
+        // case LLAMA_FTYPE_MOSTLY_IQ2_XS_R4:  return GGML_TYPE_IQ2_XS_R4;  break;
+        // case LLAMA_FTYPE_MOSTLY_IQ2_KS:     return GGML_TYPE_IQ2_KS;     break;
+        // case LLAMA_FTYPE_MOSTLY_IQ1_KT:     return GGML_TYPE_IQ1_KT;     break;
+        // case LLAMA_FTYPE_MOSTLY_IQ2_KT:     return GGML_TYPE_IQ2_KT;     break;
+        // case LLAMA_FTYPE_MOSTLY_IQ2_M_R4:   return GGML_TYPE_IQ2_S_R4;   break;
+        // case LLAMA_FTYPE_MOSTLY_IQ3_KT:     return GGML_TYPE_IQ3_KT;     break;
+        // case LLAMA_FTYPE_MOSTLY_IQ4_KT:     return GGML_TYPE_IQ4_KT;     break;
+        // case LLAMA_FTYPE_MOSTLY_IQ3_XXS_R4: return GGML_TYPE_IQ3_XXS_R4; break;
+        // case LLAMA_FTYPE_MOSTLY_IQ1_S_R4:   return GGML_TYPE_IQ1_S_R4;   break;
+        // case LLAMA_FTYPE_MOSTLY_IQ1_M_R4:   return GGML_TYPE_IQ1_M_R4;   break;
+        // case LLAMA_FTYPE_MOSTLY_IQ1_BN:     return GGML_TYPE_IQ1_BN;     break;
+        // case LLAMA_FTYPE_MOSTLY_IQ2_BN:     return GGML_TYPE_IQ2_BN;     break;
+        // case LLAMA_FTYPE_MOSTLY_IQ2_BN_R4:  return GGML_TYPE_IQ2_BN_R4;  break;
+        // case LLAMA_FTYPE_MOSTLY_IQ4_NL_R4:  return GGML_TYPE_IQ4_NL_R4;  break;
+        // case LLAMA_FTYPE_MOSTLY_IQ4_XS_R8:  return GGML_TYPE_IQ4_XS_R8;  break;
+        // case LLAMA_FTYPE_MOSTLY_Q4_0_R8:    return GGML_TYPE_Q4_0_R8;    break;
+        // case LLAMA_FTYPE_MOSTLY_Q5_0_R4:    return GGML_TYPE_Q5_0_R4;    break;
+        // case LLAMA_FTYPE_MOSTLY_Q6_0_R4:    return GGML_TYPE_Q6_0_R4;    break;
+        // case LLAMA_FTYPE_MOSTLY_Q8_0_R8:    return GGML_TYPE_Q8_0_R8;    break;
+        // case LLAMA_FTYPE_MOSTLY_IQ4_KS:     return GGML_TYPE_IQ4_KS;     break;
+        // case LLAMA_FTYPE_MOSTLY_IQ4_KS_R4:  return GGML_TYPE_IQ4_KS_R4;  break;
+        // case LLAMA_FTYPE_MOSTLY_IQ5_KS_R4:  return GGML_TYPE_IQ5_KS_R4;  break;
+        // case LLAMA_FTYPE_MOSTLY_IQ4_KSS:    return GGML_TYPE_IQ4_KSS;    break;
+        // case LLAMA_FTYPE_MOSTLY_IQ5_KS:     return GGML_TYPE_IQ5_KS;     break;
+        // case LLAMA_FTYPE_MOSTLY_IQ2_K_R4:   return GGML_TYPE_IQ2_K_R4;   break;
+        // case LLAMA_FTYPE_MOSTLY_IQ3_KS:     return GGML_TYPE_IQ3_KS;     break;
+        // case LLAMA_FTYPE_MOSTLY_IQ2_KL:     return GGML_TYPE_IQ2_KL;     break;
+        // case LLAMA_FTYPE_MOSTLY_IQ3_K_R4:   return GGML_TYPE_IQ3_K_R4;   break;
+        // case LLAMA_FTYPE_MOSTLY_IQ3_KL:     return GGML_TYPE_IQ3_K;      break;
+        // case LLAMA_FTYPE_MOSTLY_IQ4_K_R4:   return GGML_TYPE_IQ4_K_R4;   break;
+        // case LLAMA_FTYPE_MOSTLY_IQ5_K_R4:   return GGML_TYPE_IQ5_K_R4;   break;
+        // case LLAMA_FTYPE_MOSTLY_IQ3_S_R4:   return GGML_TYPE_IQ3_S_R4;   break;
+
+        default: throw std::runtime_error(format("invalid output file type %d\n", ftype));
     }
 }
 
