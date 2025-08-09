@@ -1,6 +1,8 @@
 #include "mmq.cuh"
 #include "quantize.cuh"
 
+#include "iqk_cuda_common.h"
+
 #include <vector>
 
 static void ggml_cuda_mul_mat_q_switch_type(ggml_backend_cuda_context & ctx, const mmq_args & args, cudaStream_t stream) {
