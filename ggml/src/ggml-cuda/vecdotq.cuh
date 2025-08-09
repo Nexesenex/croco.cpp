@@ -1241,7 +1241,7 @@ __device__ __forceinline__ int int_from_table(const uint8_t * a8, const uint8_t 
 #define VDR_IQ2_K_Q8_1_MMVQ 4
 #define VDR_IQ2_K_Q8_1_MMQ  4
 
-__device__ __forceinline__ float vec_dot_iq2_k_q8_1(
+static __device__ __forceinline__ float vec_dot_iq2_k_q8_1(
     const void * __restrict__ vbq, const block_q8_1 * __restrict__ bq8_1, const int & kbx, const int & iqs) {
 
     // iqs is 0, 4, 8, 12, 16, 20, 24, 28
@@ -1301,7 +1301,7 @@ __device__ __forceinline__ float vec_dot_iq2_k_q8_1(
 #define VDR_IQ3_K_Q8_1_MMVQ 4
 #define VDR_IQ3_K_Q8_1_MMQ  4
 
-__device__ __forceinline__ float vec_dot_iq3_k_q8_1(
+static __device__ __forceinline__ float vec_dot_iq3_k_q8_1(
     const void * __restrict__ vbq, const block_q8_1 * __restrict__ bq8_1, const int & kbx, const int & iiqs) {
     const block_iq3_k * bq3 = (const block_iq3_k *) vbq + kbx;
 
@@ -1369,7 +1369,7 @@ __device__ __forceinline__ float vec_dot_iq3_k_q8_1(
 #define VDR_IQ4_K_Q8_1_MMVQ 4
 #define VDR_IQ4_K_Q8_1_MMQ  4
 
-__device__ __forceinline__ float vec_dot_iq4_k_q8_1(
+static __device__ __forceinline__ float vec_dot_iq4_k_q8_1(
     const void * __restrict__ vbq, const block_q8_1 * __restrict__ bq8_1, const int & kbx, const int & iqs) {
 
     const block_iq4_k * bq4 = (const block_iq4_k *) vbq + kbx;
@@ -1399,7 +1399,7 @@ __device__ __forceinline__ float vec_dot_iq4_k_q8_1(
 #define VDR_IQ5_K_Q8_1_MMVQ 4
 #define VDR_IQ5_K_Q8_1_MMQ  4
 
-__device__ __forceinline__ float vec_dot_iq5_k_q8_1(
+static __device__ __forceinline__ float vec_dot_iq5_k_q8_1(
     const void * __restrict__ vbq, const block_q8_1 * __restrict__ bq8_1, const int & kbx, const int & iqs) {
 
     const block_iq5_k * bq5 = (const block_iq5_k *) vbq + kbx;
@@ -1437,7 +1437,7 @@ __device__ __forceinline__ float vec_dot_iq5_k_q8_1(
 #define VDR_IQ6_K_Q8_1_MMVQ 4
 #define VDR_IQ6_K_Q8_1_MMQ  4
 
-__device__ __forceinline__ float vec_dot_iq6_k_q8_1(
+static __device__ __forceinline__ float vec_dot_iq6_k_q8_1(
     const void * __restrict__ vbq, const block_q8_1 * __restrict__ bq8_1, const int & kbx, const int & iqs) {
 
     const block_iq6_k * bq6 = (const block_iq6_k *) vbq + kbx;

@@ -876,7 +876,7 @@ static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
         .to_float                 = (ggml_to_float_t) dequantize_row_tq2_0,
         .from_float_ref           = (ggml_from_float_t) quantize_row_tq2_0_ref,
     },
-    [GGML_TYPE_IQ2_K] = {
+    /* [GGML_TYPE_IQ2_K] = {
         .type_name                = "iq2_k",
         .blck_size                = QK_K,
         .type_size                = sizeof(block_iq2_k),
@@ -901,7 +901,7 @@ static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
         // .vec_dot_type             = GGML_TYPE_Q8_K,
         // .nrows                    = 1,
         // .row_meta_size            = 0,
-    },
+    }, */
     [GGML_TYPE_IQ4_K] = {
         .type_name                = "iq4_k",
         .blck_size                = QK_K,
@@ -1425,8 +1425,8 @@ enum ggml_type ggml_ftype_to_ggml_type(enum ggml_ftype ftype) {
         case GGML_FTYPE_MOSTLY_IQ4_XS:        wtype = GGML_TYPE_IQ4_XS;   break;
         case GGML_FTYPE_MOSTLY_IQ3_S:         wtype = GGML_TYPE_IQ3_S;    break;
         case GGML_FTYPE_MOSTLY_IQ2_S:         wtype = GGML_TYPE_IQ2_S;    break;
-        case GGML_FTYPE_MOSTLY_IQ2_K:         wtype = GGML_TYPE_IQ2_K;  break;
-        case GGML_FTYPE_MOSTLY_IQ3_K:         wtype = GGML_TYPE_IQ3_K;  break;
+        // case GGML_FTYPE_MOSTLY_IQ2_K:         wtype = GGML_TYPE_IQ2_K;  break;
+        // case GGML_FTYPE_MOSTLY_IQ3_K:         wtype = GGML_TYPE_IQ3_K;  break;
         case GGML_FTYPE_MOSTLY_IQ4_K:         wtype = GGML_TYPE_IQ4_K;  break;
         case GGML_FTYPE_MOSTLY_IQ5_K:         wtype = GGML_TYPE_IQ5_K;  break;
         case GGML_FTYPE_MOSTLY_IQ6_K:         wtype = GGML_TYPE_IQ6_K;  break;
