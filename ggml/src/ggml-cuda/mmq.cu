@@ -1,6 +1,8 @@
 #include "mmq.cuh"
 #include "quantize.cuh"
 
+#include "iqk_cuda_common.h"
+
 #include <vector>
 
 // To reduce shared memory use, store "it" and "iex_used" with 22/10 bits each.
