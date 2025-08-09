@@ -437,9 +437,70 @@ extern "C" {
 
         // GGML_TYPE_COUNT   = 41,
         //
+        GGML_TYPE_I2_S    = 86,
+        //
+        // GGML_TYPE_Q8_0_X4 = 97,
+        // GGML_TYPE_Q8_1_X4 = 98,
+        // GGML_TYPE_Q8_2_X4 = 99,
         GGML_TYPE_Q6_0    = 133,
+        // GGML_TYPE_IQ1_BN  = 134,
+        // GGML_TYPE_IQ2_BN  = 135,
+        // GGML_TYPE_Q8_K64  = 136,
+        GGML_TYPE_IQ2_K   = 137,
+        GGML_TYPE_IQ3_K   = 138,
+        GGML_TYPE_IQ4_K   = 139,
+        GGML_TYPE_IQ5_K   = 140,
+        GGML_TYPE_IQ6_K   = 141,
+        // depricated: GGML_TYPE_IQ2_TN  = 142,
+        // depricated: GGML_TYPE_IQ1_TN  = 143,
+        // GGML_TYPE_IQ4_KS  = 144,
+        // GGML_TYPE_IQ2_KS  = 145,
+        // GGML_TYPE_IQ4_KSS = 146,
+        // GGML_TYPE_Q8_K16  = 147,
+        // GGML_TYPE_Q8_K32  = 148,
+        // GGML_TYPE_Q8_KR8  = 149,
+        // GGML_TYPE_Q8_K128 = 150,
+        // GGML_TYPE_Q8_KV   = 151,
+        // GGML_TYPE_IQ5_KS  = 152,
+        // GGML_TYPE_IQ2_KT  = 153,
+        // GGML_TYPE_IQ3_KT  = 154,
+        // GGML_TYPE_IQ4_KT  = 155,
+        // GGML_TYPE_IQ3_KS  = 156,
+        // GGML_TYPE_IQ2_KL  = 157,
+        // GGML_TYPE_IQ1_KT  = 158,
 
-        GGML_TYPE_COUNT   = 135,
+        // GGML_TYPE_IQ3_KS_V1  = 196,
+
+        // GGML_TYPE_Q4_0_R8   = 202,
+        // GGML_TYPE_Q5_0_R4   = 206,
+        // GGML_TYPE_Q8_0_R8   = 208,
+        // GGML_TYPE_Q2_K_R4   = 210,
+        // GGML_TYPE_Q3_K_R4   = 211,
+        // GGML_TYPE_Q4_K_R4   = 212,
+        // GGML_TYPE_Q5_K_R4   = 213,
+        // GGML_TYPE_Q6_K_R4   = 214,
+        // GGML_TYPE_IQ2_XXS_R4= 216,
+        // GGML_TYPE_IQ2_XS_R4 = 217,
+        // GGML_TYPE_IQ3_XXS_R4= 218,
+        // GGML_TYPE_IQ1_S_R4  = 219,
+        // GGML_TYPE_IQ4_NL_R4 = 220,
+        // GGML_TYPE_IQ3_S_R4  = 221,
+        // GGML_TYPE_IQ2_S_R4  = 222,
+        // GGML_TYPE_IQ4_XS_R8 = 223,
+        // GGML_TYPE_IQ1_M_R4  = 229,
+        // GGML_TYPE_BF16_R16  = 230,
+        // GGML_TYPE_Q6_0_R4   = 233,
+        // GGML_TYPE_IQ2_BN_R4 = 335,
+        // GGML_TYPE_IQ2_K_R4  = 337,
+        // GGML_TYPE_IQ3_K_R4  = 338,
+        // GGML_TYPE_IQ4_K_R4  = 339,
+        // GGML_TYPE_IQ5_K_R4  = 340,
+        // GGML_TYPE_IQ4_KS_R4 = 344,
+        // GGML_TYPE_IQ5_KS_R4 = 352,
+        // GGML_TYPE_Q8_KV_R8  = 398,
+        // GGML_TYPE_Q8_K_R8   = 399,
+
+        GGML_TYPE_COUNT = 999,
     };
 
     // precision
@@ -482,6 +543,57 @@ extern "C" {
         // GGML_FTYPE_MOSTLY_Q4_0_8_8 = 28, // except 1d tensors
         //
         GGML_FTYPE_MOSTLY_Q6_0    = 127, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ1_BN  = 128, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ2_BN  = 129, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ2_K   = 130, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ3_K   = 131, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ4_K   = 132, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ5_K   = 133, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ6_K   = 134, // except 1d tensors
+        // depricated: GGML_FTYPE_MOSTLY_IQ2_TN  = 135, // except 1d tensors
+        // depricated: GGML_FTYPE_MOSTLY_IQ1_TN  = 136, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ4_KS  = 137, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ2_KS  = 138, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ4_KSS = 139, // except 1d tensors
+        GGML_FTYPE_MOSTLY_Q8_KV   = 140, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ5_KS  = 141, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ2_KT  = 142, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ3_KT  = 143, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ4_KT  = 144, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ3_KS  = 145, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ2_KL  = 146, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ1_KT  = 147, // except 1d tensors
+
+        GGML_FTYPE_MOSTLY_IQ3_KS_V1  = 185, // except 1d tensors
+                                         //
+        GGML_FTYPE_MOSTLY_Q4_0_R8   = 202, // except 1d tensors
+        GGML_FTYPE_MOSTLY_Q8_0_R8   = 207, // except 1d tensors
+        GGML_FTYPE_MOSTLY_Q5_0_R4   = 208, // except 1d tensors
+        GGML_FTYPE_MOSTLY_Q2_K_R4   = 210, // except 1d tensors
+        GGML_FTYPE_MOSTLY_Q3_K_R4   = 211, // except 1d tensors
+        GGML_FTYPE_MOSTLY_Q4_K_R4   = 212, // except 1d tensors
+        GGML_FTYPE_MOSTLY_Q5_K_R4   = 213, // except 1d tensors
+        GGML_FTYPE_MOSTLY_Q6_K_R4   = 214, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ2_XXS_R4= 215, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ2_XS_R4 = 216, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ3_XXS_R4= 217, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ1_S_R4  = 218, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ4_NL_R4 = 219, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ3_S_R4  = 220, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ2_S_R4  = 221, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ4_XS_R8 = 222, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ1_M_R4  = 223, // except 1d tensors
+        GGML_FTYPE_MOSTLY_BF16_R16  = 224, // except 1d tensors
+        GGML_FTYPE_MOSTLY_Q6_0_R4   = 227, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ2_BN_R4 = 329, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ2_K_R4  = 330, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ3_K_R4  = 331, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ4_K_R4  = 332, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ5_K_R4  = 333, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ4_KS_R4 = 337, // except 1d tensors
+        GGML_FTYPE_MOSTLY_IQ5_KS_R4 = 341, // except 1d tensors
+        GGML_FTYPE_MOSTLY_Q8_KV_R8  = 398, // except 1d tensors
+        GGML_FTYPE_MOSTLY_Q8_K_R8   = 399, // except 1d tensors
     };
 
     // available tensor operations:
