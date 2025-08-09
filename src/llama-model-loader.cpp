@@ -707,7 +707,7 @@ llama_model_loader::llama_model_loader(
 
     // determine file type based on the number of tensors for each quantization and print meta data
     // TODO: make optional
-    if(false) //disable this log for now
+    // if(false) //disable this log for now
     {
         std::map<enum ggml_type, uint32_t> n_type;
 
@@ -1469,22 +1469,22 @@ bool llama_model_loader::load_all_data(
         auto * buft = ggml_backend_buffer_get_type(buf);
         auto * dev = ggml_backend_buft_get_device(buft);
         if (!dev) {
-            // LLAMA_LOG_DEBUG("%s: no device found for buffer type %s for async uploads\n", func,
-            //     ggml_backend_buft_name(buft));
+            LLAMA_LOG_DEBUG("%s: no device found for buffer type %s for async uploads\n", func,
+                ggml_backend_buft_name(buft));
             return nullptr;
         }
 
         if (buft != ggml_backend_dev_buffer_type(dev)) {
-            // LLAMA_LOG_DEBUG("%s: buffer type %s is not the default buffer type for device %s for async uploads\n", func,
-            //     ggml_backend_buft_name(buft), ggml_backend_dev_name(dev));
+            LLAMA_LOG_DEBUG("%s: buffer type %s is not the default buffer type for device %s for async uploads\n", func,
+                ggml_backend_buft_name(buft), ggml_backend_dev_name(dev));
             return nullptr;
         }
 
         ggml_backend_dev_props props;
         ggml_backend_dev_get_props(dev, &props);
         if (!props.caps.async || !props.caps.host_buffer || !props.caps.events) {
-            // LLAMA_LOG_DEBUG("%s: device %s does not support async, host buffers or events\n", func,
-            //     ggml_backend_dev_name(dev));
+            LLAMA_LOG_DEBUG("%s: device %s does not support async, host buffers or events\n", func,
+                ggml_backend_dev_name(dev));
             return nullptr;
         }
 
@@ -1710,7 +1710,7 @@ std::string llama_model_loader::ftype_name() const {
 
 void llama_model_loader::print_info() const {
     LLAMA_LOG_INFO("%s: file format = %s\n", __func__, llama_file_version_name(fver));
-    //LLAMA_LOG_INFO("%s: file type   = %s\n", __func__, llama_model_ftype_name(ftype).c_str());
+    LLAMA_LOG_INFO("%s: file type   = %s\n", __func__, llama_model_ftype_name(ftype).c_str());
     if (n_elements <= 0) {
         LLAMA_LOG_INFO("%s: file size   = %.2f MiB\n", __func__, n_bytes/1024.0/1024.0);
         LLAMA_LOG_INFO("%s: ERROR: n_elements is invalid, cannot compute BPW\n", __func__);
