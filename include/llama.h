@@ -160,6 +160,56 @@ extern "C" {
         LLAMA_FTYPE_MOSTLY_Q1_0          = 40, // except 1d tensors
         //
         LLAMA_FTYPE_MOSTLY_Q6_0          = 135, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_IQ1_BN        = 136, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_IQ2_BN        = 137, // except 1d tensors
+        LLAMA_FTYPE_MOSTLY_IQ2_K         = 138, // except 1d tensors
+        LLAMA_FTYPE_MOSTLY_IQ3_K         = 139, // except 1d tensors
+        LLAMA_FTYPE_MOSTLY_IQ4_K         = 140, // except 1d tensors
+        LLAMA_FTYPE_MOSTLY_IQ5_K         = 141, // except 1d tensors
+        LLAMA_FTYPE_MOSTLY_IQ6_K         = 142, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_IQ4_KS        = 145, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_IQ3_KL        = 146, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_IQ2_KS        = 147, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_IQ4_KSS       = 148, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_Q8_KV         = 149, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_IQ5_KS        = 150, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_IQ2_KT        = 151, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_IQ3_KT        = 152, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_IQ4_KT        = 153, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_IQ3_KS        = 154, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_IQ2_KL        = 155, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_IQ1_KT        = 156, // except 1d tensors
+
+        // LLAMA_FTYPE_MOSTLY_IQ3_KS_V1     = 196, // except 1d tensors
+                                                
+        // LLAMA_FTYPE_MOSTLY_Q4_0_R8       = 202, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_Q8_0_R8       = 207, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_Q5_0_R4       = 208, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_Q2_K_R4       = 210, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_Q3_K_R4       = 211, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_Q4_K_R4       = 214, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_Q5_K_R4       = 216, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_Q6_K_R4       = 218, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_IQ2_XXS_R4    = 219, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_IQ2_XS_R4     = 220, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_IQ3_XXS_R4    = 223, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_IQ1_S_R4      = 224, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_IQ4_NL_R4     = 225, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_IQ3_S_R4      = 226, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_IQ2_M_R4      = 229, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_IQ4_XS_R8     = 230, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_IQ1_M_R4      = 231, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_Q6_0_R4       = 335, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_BF16_R16      = 232, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_IQ2_BN_R4     = 337, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_IQ2_K_R4      = 338, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_IQ3_K_R4      = 339, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_IQ4_K_R4      = 340, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_IQ5_K_R4      = 341, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_IQ4_KS_R4     = 345, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_IQ5_KS_R4     = 350, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_Q8_KV_R8      = 398, // except 1d tensors
+        // LLAMA_FTYPE_MOSTLY_Q8_K_R8       = 399, // except 1d tensors
 
         LLAMA_FTYPE_GUESSED = 1024, // not specified in the model file
     };
