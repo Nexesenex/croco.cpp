@@ -5743,7 +5743,7 @@ inline int best_index_iq2nl(const int8_t * values, float x) {
     return x - values[idx] < values[idx+1] - x ? idx : idx + 1;
 }
 
-static void quantize_row_iq2_k_impl(const float * x, void * vy, int n_per_row, const float * quant_weights) {
+/* static void quantize_row_iq2_k_impl(const float * x, void * vy, int n_per_row, const float * quant_weights) {
 
     constexpr int kBlockSize = 16;
 
@@ -5901,7 +5901,7 @@ size_t quantize_iq2_k(const float * src, void * dst, int64_t nrows, int64_t n_pe
         qrow += nblock*sizeof(block_iq2_k);
     }
     return nrows * nblock * sizeof(block_iq2_k);
-}
+} */
 
 void dequantize_row_iq2_k(const block_iq2_k  * x, float * y, int64_t k) {
     assert(k % QK_K == 0);
@@ -5952,7 +5952,7 @@ inline int best_index_iq3nl(const int8_t * values, float x) {
 }
 static void quantize_row_iq3_k_impl(const float * x, void * vy, int n_per_row, const float * quant_weights) {
 
-    constexpr int ntry = 3;
+    int ntry = 3;
 
     block_iq3_k * y = (block_iq3_k *)vy;
 
