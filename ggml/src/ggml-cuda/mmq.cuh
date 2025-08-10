@@ -81,8 +81,8 @@ static mmq_q8_1_ds_layout mmq_get_q8_1_ds_layout(const ggml_type type_x) {
             return MMQ_Q8_1_DS_LAYOUT_DS4;
         case GGML_TYPE_IQ4_XS:
         case GGML_TYPE_IQ4_NL:
-        // case GGML_TYPE_IQ2_K:
-        // case GGML_TYPE_IQ3_K:
+        case GGML_TYPE_IQ2_K:
+        case GGML_TYPE_IQ3_K:
         case GGML_TYPE_IQ4_K:
         case GGML_TYPE_IQ5_K:
         case GGML_TYPE_IQ6_K:
@@ -195,8 +195,8 @@ static constexpr __host__ __device__ tile_x_sizes mmq_get_dp4a_tile_x_sizes(ggml
         case GGML_TYPE_IQ1_S:   return MMQ_DP4A_TXS_Q8_0;
         case GGML_TYPE_IQ4_XS:  return MMQ_DP4A_TXS_Q8_0;
         case GGML_TYPE_IQ4_NL:  return MMQ_DP4A_TXS_Q8_0;
-        // case GGML_TYPE_IQ2_K:   return MMQ_DP4A_TXS_Q8_0_16;
-        // case GGML_TYPE_IQ3_K:   return MMQ_DP4A_TXS_Q8_0_16;
+        case GGML_TYPE_IQ2_K:   return MMQ_DP4A_TXS_Q8_0_16;
+        case GGML_TYPE_IQ3_K:   return MMQ_DP4A_TXS_Q8_0_16;
         case GGML_TYPE_IQ4_K:   return MMQ_DP4A_TXS_Q8_0_16;
         case GGML_TYPE_IQ5_K:   return MMQ_DP4A_TXS_Q8_0_16;
         case GGML_TYPE_IQ6_K:   return MMQ_DP4A_TXS_Q8_0_16;
@@ -238,8 +238,8 @@ static constexpr __host__ __device__ int mmq_get_mma_tile_x_k(ggml_type type) {
         case GGML_TYPE_IQ1_S:   return MMQ_MMA_TILE_X_K_Q8_0;
         case GGML_TYPE_IQ4_XS:  return MMQ_MMA_TILE_X_K_Q8_0;
         case GGML_TYPE_IQ4_NL:  return MMQ_MMA_TILE_X_K_Q8_0;
-        // case GGML_TYPE_IQ2_K   : return MMQ_MMA_TILE_X_K_Q3_K;
-        // case GGML_TYPE_IQ3_K   : return MMQ_MMA_TILE_X_K_Q3_K;
+        case GGML_TYPE_IQ2_K   : return MMQ_MMA_TILE_X_K_Q3_K;
+        case GGML_TYPE_IQ3_K   : return MMQ_MMA_TILE_X_K_Q3_K;
         case GGML_TYPE_IQ4_K   : return MMQ_MMA_TILE_X_K_Q3_K;
         case GGML_TYPE_IQ5_K   : return MMQ_MMA_TILE_X_K_Q3_K;
         case GGML_TYPE_IQ6_K   : return MMQ_MMA_TILE_X_K_Q3_K;
@@ -2901,7 +2901,7 @@ template <int mmq_y, bool need_check> static __device__ __forceinline__ void loa
     }
 }
 
-/* template <int mmq_y, bool need_check> static __device__ __forceinline__ void load_tiles_iq2_k(
+template <int mmq_y, bool need_check> static __device__ __forceinline__ void load_tiles_iq2_k(
     const char * __restrict__ x, int * __restrict__ x_tile, const int kbx0, const int i_max, const int stride) {
     constexpr int nwarps = mmq_get_nwarps_device();
     constexpr int warp_size = ggml_cuda_get_physical_warp_size();
@@ -3037,7 +3037,7 @@ template <int mmq_y, bool need_check> static __device__ __forceinline__ void loa
         x_df[i*(2*MMQ_TILE_NE_K*2/QI8_0) + i/(QI8_0/4) + 2*kqsx+1] = d * ((2*(bxi->scales_l[kqsx] >>  4) + 1) * (sh & 2 ? -1 : 1));
 #endif // defined(AMD_MFMA_AVAILABLE) || defined(TURING_MMA_AVAILABLE)
     }
-} */
+}
 
 template <int mmq_y, bool need_check> static __device__ __forceinline__ void load_tiles_iq4_k(
     const char * __restrict__ x, int * __restrict__ x_tile, const int kbx0, const int i_max, const int stride) {
@@ -3516,7 +3516,7 @@ struct mmq_type_traits<mmq_x, mmq_y, need_check, GGML_TYPE_IQ4_XS> {
     static constexpr vec_dot_mmq_t    vec_dot_dp4a = vec_dot_q8_0_q8_1_dp4a<mmq_x, mmq_y>;
 };
 
-/* template <int mmq_x, int mmq_y, bool need_check>
+template <int mmq_x, int mmq_y, bool need_check>
 struct mmq_type_traits<mmq_x, mmq_y, need_check, GGML_TYPE_IQ2_K> {
     static constexpr int              vdr          = VDR_IQ2_K_Q8_1_MMQ;
     static constexpr load_tiles_mmq_t load_tiles   = load_tiles_iq2_k<mmq_y, need_check>;
@@ -3530,7 +3530,7 @@ struct mmq_type_traits<mmq_x, mmq_y, need_check, GGML_TYPE_IQ3_K> {
     static constexpr load_tiles_mmq_t load_tiles   = load_tiles_iq3_k<mmq_y, need_check>;
     static constexpr vec_dot_mmq_t    vec_dot_mma  = vec_dot_q8_0_16_q8_1_mma<mmq_x, mmq_y>;
     static constexpr vec_dot_mmq_t    vec_dot_dp4a = vec_dot_q8_0_16_q8_1_dp4a<mmq_x, mmq_y>;
-}; */
+};
 
 template <int mmq_x, int mmq_y, bool need_check>
 struct mmq_type_traits<mmq_x, mmq_y, need_check, GGML_TYPE_IQ4_K> {
@@ -4246,8 +4246,8 @@ extern DECL_MMQ_CASE(GGML_TYPE_IQ3_S);
 extern DECL_MMQ_CASE(GGML_TYPE_IQ1_S);
 extern DECL_MMQ_CASE(GGML_TYPE_IQ4_NL);
 extern DECL_MMQ_CASE(GGML_TYPE_IQ4_XS);
-// extern DECL_MMQ_CASE(GGML_TYPE_IQ2_K);
-// extern DECL_MMQ_CASE(GGML_TYPE_IQ3_K);
+extern DECL_MMQ_CASE(GGML_TYPE_IQ2_K);
+extern DECL_MMQ_CASE(GGML_TYPE_IQ3_K);
 extern DECL_MMQ_CASE(GGML_TYPE_IQ4_K);
 extern DECL_MMQ_CASE(GGML_TYPE_IQ5_K);
 extern DECL_MMQ_CASE(GGML_TYPE_IQ6_K);

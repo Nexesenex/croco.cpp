@@ -5477,7 +5477,7 @@ void quantize_row_iq2_s_ref(const float * GGML_RESTRICT x, block_iq2_s * GGML_RE
     quantize_iq2_s(x, y, 1, k, NULL);
 }
 
-/* //
+//
 // ============================================== iq2_K
 //
 
@@ -5960,7 +5960,7 @@ void dequantize_row_iq3_k(const block_iq3_k * x, float * y, int64_t k) {
         }
 
     }
-} */
+}
 
 //
 // ============================================== iq4_K
@@ -7055,14 +7055,14 @@ bool ggml_validate_row_data(enum ggml_type type, const void * data, size_t nbyte
             {
                 VALIDATE_ROW_DATA_D_F16_IMPL(block_iq4_nl, data, nb);
             } break;
-        /* case GGML_TYPE_IQ2_K:
+        case GGML_TYPE_IQ2_K:
             {
                 VALIDATE_ROW_DATA_D_F16_IMPL(block_iq2_k, data, nb);
             } break;
         case GGML_TYPE_IQ3_K:
             {
                 VALIDATE_ROW_DATA_D_F16_IMPL(block_iq3_k, data, nb);
-            } break; */
+            } break;
         case GGML_TYPE_IQ4_K:
             {
                 VALIDATE_ROW_DATA_D_F16_IMPL(block_iq4_k, data, nb);
