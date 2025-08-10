@@ -2061,6 +2061,14 @@ static void ggml_cuda_mul_mat(ggml_backend_cuda_context & ctx, const ggml_tensor
     bool use_batched_cublas_bf16 = src0->type == GGML_TYPE_BF16 && bf16_mma_hardware_available(cc);
     bool use_batched_cublas_f32  = src0->type == GGML_TYPE_F32;
 
+    if(ggml_cuda_highest_compiled_arch(cc) <= GGML_CUDA_CC_TURING)
+    {
+        //kcpp: https://github.com/ggml-org/llama.cpp/pull/14361 broke oldpc mode without this.
+        use_batched_cublas_bf16 = false;
+        use_batched_cublas_f32 = false;
+        use_batched_cublas_f16 = false;
+    }
+
     if (!split && use_mul_mat_vec_f) {
         // the custom F16 vector kernel can be used over batched cuBLAS GEMM
         // but this is only faster for GPUs without tensor cores or with a thin src0 matrix (particularly KQV in attention)

@@ -68,7 +68,7 @@ dry_seq_break_max = 128
 extra_images_max = 4
 
 # global vars
-KcppVersion = "1.97.3"
+KcppVersion = "1.98"
 showdebug = True
 kcpp_instance = None #global running instance
 global_memory = {"tunnel_url": "", "restart_target":"", "input_to_exit":False, "load_complete":False, "restart_model": "", "currentConfig": None, "modelOverride": None, "currentModel": None}
@@ -677,6 +677,14 @@ def tryparsefloat(value,fallback):
         return float(value)
     except ValueError:
         return fallback
+
+def replace_last_in_string(text: str, match: str, replacement: str) -> str:
+    if match == "":
+        return text
+    head, sep, tail = text.rpartition(match)
+    if sep == "":
+        return text  # old not found
+    return head + replacement + tail
 
 def is_incomplete_utf8_sequence(byte_seq): #note, this will only flag INCOMPLETE sequences, corrupted ones will be ignored.
     try:
@@ -3002,6 +3010,7 @@ ws ::= | " " | "\n" [ \t]{0,20}
             user_message_end = adapter_obj.get("user_end", "")
             assistant_message_start = adapter_obj.get("assistant_start", "\n### Response:\n")
             assistant_message_end = adapter_obj.get("assistant_end", "")
+            assistant_message_gen = adapter_obj.get("assistant_gen", assistant_message_start)
             tools_message_start = adapter_obj.get("tools_start", "\nTool Results:\n")
             tools_message_end = adapter_obj.get("tools_end", "")
             images_added = []
@@ -3114,7 +3123,7 @@ ws ::= | " " | "\n" [ \t]{0,20}
                 elif message['role'] == "tool":
                     messages_string += tools_message_end
 
-            messages_string += assistant_message_start
+            messages_string += assistant_message_gen
             genparams["prompt"] = messages_string
             if len(images_added)>0:
                 genparams["images"] = images_added
@@ -3135,7 +3144,8 @@ ws ::= | " " | "\n" [ \t]{0,20}
         adapter_obj = {} if chatcompl_adapter is None else chatcompl_adapter
         user_message_start = adapter_obj.get("user_start", "### Instruction:")
         assistant_message_start = adapter_obj.get("assistant_start", "### Response:")
-        genparams["prompt"] = f"{user_message_start} In one sentence, write a descriptive caption for this image.\n{assistant_message_start}"
+        assistant_message_gen = adapter_obj.get("assistant_gen", assistant_message_start)
+        genparams["prompt"] = f"{user_message_start} In one sentence, write a descriptive caption for this image.\n{assistant_message_gen}"
 
     elif api_format==6:
         detokstr = ""
@@ -3143,12 +3153,13 @@ ws ::= | " " | "\n" [ \t]{0,20}
         adapter_obj = {} if chatcompl_adapter is None else chatcompl_adapter
         user_message_start = adapter_obj.get("user_start", "\n\n### Instruction:\n")
         assistant_message_start = adapter_obj.get("assistant_start", "\n\n### Response:\n")
+        assistant_message_gen = adapter_obj.get("assistant_gen", assistant_message_start)
         try:
             detokstr = detokenize_ids(tokids)
         except Exception as e:
             utfprint("Ollama Context Error: " + str(e))
         ollamasysprompt = genparams.get('system', "")
-        ollamabodyprompt = f"{detokstr}{user_message_start}{genparams.get('prompt', '')}{assistant_message_start}"
+        ollamabodyprompt = f"{detokstr}{user_message_start}{genparams.get('prompt', '')}{assistant_message_gen}"
         ollamaopts = genparams.get('options', {})
         if genparams.get('stop',[]) is not None:
             genparams["stop_sequence"] = genparams.get('stop', [])
@@ -3187,7 +3198,13 @@ ws ::= | " " | "\n" [ \t]{0,20}
         user_message_end = adapter_obj.get("user_end", "")
         assistant_message_start = adapter_obj.get("assistant_start", "\n### Response:\n")
         assistant_message_end = adapter_obj.get("assistant_end", "")
+        assistant_message_gen = adapter_obj.get("assistant_gen", assistant_message_start)
         if isinstance(prompt, str): #needed because comfy SD uses same field name
+            if assistant_message_gen and assistant_message_gen!=assistant_message_start: #replace final output tag with unspaced (gen) version if exists
+                if prompt.rstrip().endswith("{{[OUTPUT]}}"):
+                    prompt = replace_last_in_string(prompt,"{{[OUTPUT]}}",assistant_message_gen)
+                elif assistant_message_start and prompt.rstrip().endswith(assistant_message_start):
+                    prompt = replace_last_in_string(prompt, assistant_message_start, assistant_message_gen)
             if "{{[INPUT_END]}}" in prompt or "{{[OUTPUT_END]}}" in prompt:
                 prompt = prompt.replace("{{[INPUT]}}", user_message_start)
                 prompt = prompt.replace("{{[OUTPUT]}}", assistant_message_start)
@@ -7828,6 +7845,8 @@ def kcpp_main_process(launch_args, g_memory=None, gui_launcher=False):
             ccadapter_path = os.path.abspath(args.chatcompletionsadapter)
         elif isinstance(args.chatcompletionsadapter, str) and adapt_dir:
             filename = args.chatcompletionsadapter
+            if filename.lower().strip()=="autoguess":
+                filename = "AutoGuess"
             if not filename.endswith(".json"):
                 filename += ".json"
             #strip to just the filename
@@ -8546,7 +8565,7 @@ if __name__ == '__main__':
     compatgroup.add_argument("--usecpu", help="Do not use any GPU acceleration (CPU Only)", action='store_true')
     parser.add_argument("--contextsize", help="Controls the memory allocated for maximum context size, only change if you need more RAM for big contexts. (default 8192).",metavar=('[256 to 262144]'), type=check_range(int,256,262144), default=8192)
     parser.add_argument("--gpulayers", help="Set number of layers to offload to GPU when using GPU. Requires GPU. Set to -1 to try autodetect, set to 0 to disable GPU offload.",metavar=('[GPU layers]'), nargs='?', const=1, type=int, default=-1)
-    parser.add_argument("--tensor_split", help="For CUDA and Vulkan only, ratio to split tensors across multiple GPUs, space-separated list of proportions, e.g. 7 3", metavar=('[Ratios]'), type=float, nargs='+')
+    parser.add_argument("--tensor_split", "--tensorsplit", help="For CUDA and Vulkan only, ratio to split tensors across multiple GPUs, space-separated list of proportions, e.g. 7 3", metavar=('[Ratios]'), type=float, nargs='+')
 
     #more advanced params
     advparser = parser.add_argument_group('Advanced Commands')
