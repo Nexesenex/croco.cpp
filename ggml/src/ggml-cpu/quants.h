@@ -36,10 +36,10 @@ void quantize_row_iq4_nl (const float * GGML_RESTRICT x, void * GGML_RESTRICT y,
 void quantize_row_iq4_xs (const float * GGML_RESTRICT x, void * GGML_RESTRICT y, int64_t k);
 
 // void quantize_row_iq2_k (const float * GGML_RESTRICT x, void * GGML_RESTRICT y, int64_t k);
-void quantize_row_iq3_k (const float * GGML_RESTRICT x, void * GGML_RESTRICT y, int64_t k);
-void quantize_row_iq4_k (const float * GGML_RESTRICT x, void * GGML_RESTRICT y, int64_t k);
-void quantize_row_iq5_k (const float * GGML_RESTRICT x, void * GGML_RESTRICT y, int64_t k);
-void quantize_row_iq6_k (const float * GGML_RESTRICT x, void * GGML_RESTRICT y, int64_t k);
+// void quantize_row_iq3_k (const float * GGML_RESTRICT x, void * GGML_RESTRICT y, int64_t k);
+// void quantize_row_iq4_k (const float * GGML_RESTRICT x, void * GGML_RESTRICT y, int64_t k);
+// void quantize_row_iq5_k (const float * GGML_RESTRICT x, void * GGML_RESTRICT y, int64_t k);
+// void quantize_row_iq6_k (const float * GGML_RESTRICT x, void * GGML_RESTRICT y, int64_t k);
 
 // void quantize_row_iq2_ks (const float * GGML_RESTRICT x, void * GGML_RESTRICT y, int64_t k);
 // void quantize_row_iq2_kl (const float * GGML_RESTRICT x, void * GGML_RESTRICT y, int64_t k);
