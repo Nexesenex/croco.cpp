@@ -182,6 +182,14 @@ static void usage(const char * executable) {
     printf("  --exclude-weights tensor_name: use importance matrix for this/these tensor(s)\n");
     printf("  --output-tensor-type ggml_type: use this ggml_type for the output.weight tensor\n");
     printf("  --token-embedding-type ggml_type: use this ggml_type for the token embeddings tensor\n");
+    printf("      --attn-q-type ggml_type: use this ggml_type for the attn_q.weight tensor.\n");
+    printf("      --attn-k-type ggml_type: use this ggml_type for the attn_k.weight tensor.\n");
+    printf("      --attn-v-type ggml_type: use this ggml_type for the attn_v.weight tensor.\n");
+    printf("      --attn-qkv-type ggml_type: use this ggml_type for the attn_qkv.weight tensor.\n");
+    printf("      --attn-output-type ggml_type: use this ggml_type for the attn_output.weight tensor.\n");
+    printf("      --ffn-gate-type ggml_type: use this ggml_type for the ffn_gate tensor.\n");
+    printf("      --ffn-down-type ggml_type: use this ggml_type for the ffn_down tensor.\n");
+    printf("      --ffn-up-type ggml_type: use this ggml_type for the ffn_up tensor.\n\n");
     printf("  --tensor-type TENSOR=TYPE: quantize this tensor to this ggml_type. example: --tensor-type attn_q=q8_0\n");
     printf("      Advanced option to selectively quantize tensors. May be specified multiple times.\n");
     printf("  --prune-layers L0,L1,L2...comma-separated list of layer numbers to prune from the model\n");
