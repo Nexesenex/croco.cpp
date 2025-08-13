@@ -1,3 +1,108 @@
+# Croco.Cpp (CCPP), a KoboldCPP mod, empowered by IK_Llama quants and Esobold.
+
+Branch Esocrok :
+- Llama.cpp mainline compliant branch -> No IK MulMat, not IK quants second gen or Trellis.
+
+Readme to be updated :
+
+<details>
+<summary>Unroll DISCLAIMER:</summary>
+
+Croco.Cpp is a fork/mod of KoboldCPP, already known as KoboldCPP Frankenstein, Frankenfork, or shortened in KCPP-F.
+The namechange is due to my boredom with the Frankenstein marker I myself initiated a year ago.
+As usual, the Croco.Cpp builds are NOT supported by the KoboldCPP (KCPP) team, Github, or Discord channel.
+They are for greedy-test and amusement only.
+Any potential support found them is a courtesy, not a due.
+My CCPP version number bumps as soon as the version number in the official experimental branch bumps in the following way x.xxx (ex : 1.80.1) : (KCPP)x.xxx.(CCPP)xx.
+They are not "upgrades" over the official version. And they might be bugged at time: only the official KCPP releases are to be considered correctly numbered, reliable and "fixed".
+The LllamaCPP version + the Esbold version in my CCPP versioning in the title, so everybody knows what version they deal with.
+</details>
+
+Presentation :
+
+Croco.Cpp (CCPP) is a fork/mod of the experimental branch of KoboldCPP (KCPP) enhanced with Esobold, mainly aimed at NVidia Cuda users (I'm myself using Ampere GPUs and it doesn't support the other backends as of now except a CPU failsafe for the mainline Llama.cpp quants (for now) since v1.93040.. it might also support Hipblas/ROCm, but it's not tested for a year now..), this mod having a few modifications accordingly to my own needs, among which :
+- More context steps in GUI, as well as more Blas Batch Size (supports MMVQ 1-8 for example).
+- 22 or so different modes of quantization for the context cache (F16, around 15 KV modes with Flash Attention, BF16, 7 quantum legacy K cache modes without Flash Attention for models like Gemma).
+- KV cache supports IQ4_NL and Q6_0 (except for Gemma), thanks to Ikawrakow. IQ4_NL gives 2% perplexity gain over q4_0, and q6_0 0.1-0.2% over Q5_1.
+- Configurable KV cache for the draft model in case of speculative decoding.
+- Shrunk Blas Batch size on the draft model compared to the main model BBS, due to the draft's logically smaller size and thus higher PP.
+- Supports CPU and CUDA inference for q6_0 and the IQ_K quants (first generation) made by Ikawrakow (Q6_0 legacy for irregularly shaped tensors ; IQ_2K, IQ_3K, IQ_4K, IQ_5K, IQ_6K).
+- Supports in Cuda MMQ Mode: Mainline, Q6_0, IQ2_K, IQ3_K, IQ4_K, IQ5_K, IQ6_K.
+- A few commits taken from Ikawrakow's IK_Llama.CPP for performances or quant quality.
+- 64 Stories slots instead of 10 or so in the web-interface (KLite).
+- More recent dependencies (that's nerdy, isn't it?).
+
+Recommanded settings for Commande Line Interface / GUI :
+```
+--flashattention (except for Gemma?)
+--blastbatchsize 128 (256 for Gemma)
+--usecublas mmq (for NVidia users, MMQ mode is faster)
+```
+Check the help section (koboldcpp.exe --help or python koboldcpp.py --help) for more infos.
+
+## Croco.Cpp specifics :
+
+<details>
+<summary>Unroll the 26 KV cache options (all should be considered experimental except F16, KV Q8_0, and KV Q4_0)</summary>
+
+With Flash Attention :
+- F16 -> Fullproof (the usual KV quant since the beginning of LCPP/KCPP)
+- BF16 (experimental)
+- K F16 with : V Q8_0, Q6_0 (experimental), Q5_0, iq4_nl.
+- K Q8_0 with : V Q8_0 (stable, part of the LCPP/KCPP main triplet), Q6_0 (experimental),  Q5_0 (maybe unstable), iq4_nl (maybe stable).
+- K Q6_0 with : V Q6_0, Q5_0, iq4_nl.
+- K Q5_1 with : V Q5_0, iq4_nl.
+- K Q5_0 with : V iq4_nl.
+- KV Q4_0 (quite stable, if we consider that it's part of the LCPP/KCPP main triplet)
+Works in command line, normally also via the GUI, and normally saves on .KCPPS config files.
+- KV iq4_nl (with -2% perplexity compared to Q4_0).
+
+Without Flash Attention nor MMQ (for models like Gemma) :
+- V F16 with K Q8_0, Q5_1, Q5_0, Q4_1, and Q4_0.
+- K Q6_0 and IQ4_NL to be tested, might not work.
+</details>
+
+<details>
+<summary>Unroll the options to set KV Quants (obsolete)</summary>
+
+KCPP official KV quantized modes (modes 1 and 2 require Flash Attention) :
+
+0 = 1616/F16 (16 BPW),
+1 = FA8080/KVq8_0 (8.5 BPW),
+2 = FA4040/KVq4_0 (4.5BPW),
+
+CCPP unofficial KV quantized modes (require flash attention) :
+
+    "1 - q8_0 - (8.5BPW) - FA",
+    "2 - q4_0 - (4.5BPW) - FA - possibly faulty on some models",
+    "3* - K F16 - V q8_0 (12.25BPW) - FA",
+    "4* - K F16 - V q6_0 (11.25BPW) - FA. Doesn't work on Gemma 2 FA.",   
+    "5 - K q8_0 - V q6_0 (7.5BPW) - FA. Doesn't work on Gemma 2 FA.",
+    "6* - K q8_0 - V q5_0 (7BPW) - FA",
+    "7 - K q8_0 - V iq4_nl (6.5BPW) - FA. Doesn't work on Gemma 2 FA.",
+    "8* - K q6_0 - V q6_0 (6.5BPW) - FA. Doesn't work on Gemma 2 FA.",
+    "9 - K q6_0 - V q5_0 (6BPW) - FA, best game in FA town. Doesn't work on Gemma 2 FA.",
+    "10* - K q6_0 - V iq4_nl (5.5BPW) - FA - faulty on some models (Gemma 2 FA. Qwen 2.5 1.5b?)",
+    "11 - K q5_1 - V q5_0 (5.5BPW) - FA - possibly faulty on some models (Qwen 2.5 1.5b?)",
+    "12* - K q5_1 - V iq4_nl (5.25BPW) - FA",
+    "13 - K q5_0 - V iq4_nl (5BPW) - FA - possibly faulty on some models (Qwen 2.5 1.5b?)",
+    "14 - K iq4_nl - V iq4_nl (4.5BPW) - FA",
+    "15 - BF16 (16BPW) - no FA, experimental for Cuda, not tested on other backends.",
+    "16 - K q8_0 - V F16 (12.25BPW) - NO FA, slower",
+    "17 - K q6_0 - V F16 (11.25BPW) - NO FA, slower, best game in non-FA town.",
+    "18 - K q5_1 - V F16 (11BPW) - NO FA, slower - possibly faulty on some models (Qwen 2.5 1.5b?)",
+    "19 - K q5_0 - V F16 (11.75BPW) - NO FA, slower - possibly faulty on some models (Qwen 2.5 1.5b?)",
+    "20 - K q4_1 - V F16 (10.5BPW) - NO FA, slower - possibly faulty on some models (Qwen 2.5 1.5b?)",
+    "21 - K q4-0 - V F16 (10.25BPW) - NO FA, slower - possibly faulty on some models (Qwen 2.5 1.5b?)",
+    "22 - K iq4_nl - V F16 (10.25BPW) - NO FA, slower"]
+
+choices=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22], default=0)
+</details>
+
+
+=====
+
+
 # Esobold (Esolithe's fork of KoboldCPP)
 
 ![Kobold](https://github.com/user-attachments/assets/f5cb4087-bc72-47fc-91a5-29a4d6495648)
