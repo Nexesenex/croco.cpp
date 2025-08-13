@@ -68,12 +68,12 @@ dry_seq_break_max = 256
 extra_images_max = 8
 
 # global vars
-KcppVersion = "1.98000"
-LcppVersion = "b6122"
+KcppVersion = "1.98020"
+LcppVersion = "b6150"
 IKLcppVersion = "Q6_0"
-EsoboldVersion = "RMv1.15.9m"
+EsoboldVersion = "RMv1.15.91m"
 CudaSpecifics = "Cu128_Ar86_SMC2_DmmvX32Y1"
-ReleaseDate = "2025/08/10"
+ReleaseDate = "2025/08/13"
 showdebug = True
 kcpp_instance = None #global running instance
 global_memory = {"tunnel_url": "", "restart_target":"", "input_to_exit":False, "load_complete":False, "restart_model": "", "currentConfig": None, "modelOverride": None, "currentModel": None}
