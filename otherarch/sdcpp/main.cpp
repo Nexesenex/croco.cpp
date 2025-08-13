@@ -13,15 +13,12 @@
 #include "stable-diffusion.h"
 
 #define STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_STATIC
 #include "stb_image.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#define STB_IMAGE_WRITE_STATIC
 #include "stb_image_write.h"
 
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
-#define STB_IMAGE_RESIZE_STATIC
 #include "stb_image_resize.h"
 
 #define SAFE_STR(s) ((s) ? (s) : "")
@@ -585,7 +582,7 @@ void parse_args(int argc, const char** argv, SDParams& params) {
     }
 
     if (params.n_threads <= 0) {
-        params.n_threads = get_num_physical_cores();
+        params.n_threads = sd_get_num_physical_cores();
     }
 
     if (params.mode != CONVERT && params.mode != VID_GEN && params.prompt.length() == 0) {
@@ -993,7 +990,10 @@ int main(int argc, const char* argv[]) {
             params.input_id_images_path.c_str(),
         };
 
-        results              = generate_image(sd_ctx, &img_gen_params);
+        kcpp_img_gen_params_t extra_params;
+        extra_params.photomaker_reference_count = 0;
+        extra_params.photomaker_references = nullptr;
+        results              = generate_image(sd_ctx, &img_gen_params, &extra_params);
         expected_num_results = params.batch_count;
     } else if (params.mode == VID_GEN) {
         sd_vid_gen_params_t vid_gen_params = {
@@ -1077,7 +1077,7 @@ int main(int argc, const char* argv[]) {
         std::string final_image_path = i > 0 ? dummy_name + "_" + std::to_string(i + 1) + ext : dummy_name + ext;
         if (is_jpg) {
             stbi_write_jpg(final_image_path.c_str(), results[i].width, results[i].height, results[i].channel,
-                           results[i].data, 90, get_image_params(params, params.seed + i).c_str());
+                           results[i].data, 90);
             printf("save result JPEG image to '%s'\n", final_image_path.c_str());
         } else {
             stbi_write_png(final_image_path.c_str(), results[i].width, results[i].height, results[i].channel,
