@@ -213,11 +213,15 @@ OBJS_CUDA_TEMP_INST = $(patsubst %.cu,%.o,$(wildcard ggml/src/ggml-cuda/template
 OBJS_CUDA_TEMP_INST += $(patsubst %.cu,%.o,$(wildcard ggml/src/ggml-cuda/template-instances/fattn-mma*.cu))
 OBJS_CUDA_TEMP_INST += $(patsubst %.cu,%.o,$(wildcard ggml/src/ggml-cuda/template-instances/mmq*.cu))
 OBJS_CUDA_TEMP_INST += $(patsubst %.cu,%.o,$(wildcard ggml/src/ggml-cuda/template-instances/mmf*.cu))
+
+ifdef LLAMA_CUDA_FA_ALL_QUANTS
+else
 OBJS_CUDA_TEMP_INST += \
     ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-f16.o \
     ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q4_0-q4_0.o \
     ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q8_0.o \
     ggml/src/ggml-cuda/template-instances/fattn-vec-instance-bf16-bf16.o
+endif # LLAMA_CUDA_FA_ALL_QUANTS
 
 ifdef LLAMA_CUBLAS
 CUBLAS_FLAGS = -DGGML_USE_CUDA -DSD_USE_CUDA -I/usr/local/cuda/include -I/opt/cuda/include -I$(CUDA_PATH)/targets/x86_64-linux/include
