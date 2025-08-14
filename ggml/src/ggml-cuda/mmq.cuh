@@ -3275,7 +3275,7 @@ template <int mmq_y, bool need_check> static __device__ __forceinline__ void loa
 template <int mmq_y, bool need_check> static __device__ __forceinline__ void load_tiles_iq2_k(
     const char * __restrict__ x, int * __restrict__ x_tile, const int kbx0, const int i_max, const int stride) {
     constexpr int nwarps = mmq_get_nwarps_device();
-    constexpr int warp_size = ggml_cuda_get_physical_warp_size();
+    // constexpr int warp_size = ggml_cuda_get_physical_warp_size();
 
 #if defined(AMD_MFMA_AVAILABLE) || defined(TURING_MMA_AVAILABLE) || defined(AMD_WMMA_AVAILABLE)
     int   * x_qs = (int   *)  x_tile;
@@ -3338,7 +3338,7 @@ template <int mmq_y, bool need_check> static __device__ __forceinline__ void loa
 template <int mmq_y, bool need_check> static __device__ __forceinline__ void load_tiles_iq3_k(
     const char * __restrict__ x, int * __restrict__ x_tile, const int kbx0, const int i_max, const int stride) {
     constexpr int nwarps = mmq_get_nwarps_device();
-    constexpr int warp_size = ggml_cuda_get_physical_warp_size();
+    // constexpr int warp_size = ggml_cuda_get_physical_warp_size();
 
 #if defined(AMD_MFMA_AVAILABLE) || defined(TURING_MMA_AVAILABLE) || defined(AMD_WMMA_AVAILABLE)
     int   * x_qs = (int   *)  x_tile;
@@ -3413,7 +3413,7 @@ template <int mmq_y, bool need_check> static __device__ __forceinline__ void loa
 template <int mmq_y, bool need_check> static __device__ __forceinline__ void load_tiles_iq4_k(
     const char * __restrict__ x, int * __restrict__ x_tile, const int kbx0, const int i_max, const int stride) {
     constexpr int nwarps = mmq_get_nwarps_device();
-    constexpr int warp_size = ggml_cuda_get_physical_warp_size();
+    // constexpr int warp_size = ggml_cuda_get_physical_warp_size();
 
 #if defined(AMD_MFMA_AVAILABLE) || defined(TURING_MMA_AVAILABLE) || defined(AMD_WMMA_AVAILABLE)
     int   * x_qs = (int   *)  x_tile;
@@ -3482,7 +3482,7 @@ template <int mmq_y, bool need_check> static __device__ __forceinline__ void loa
 template <int mmq_y, bool need_check> static __device__ __forceinline__ void load_tiles_iq5_k(
     const char * __restrict__ x, int * __restrict__ x_tile, const int kbx0, const int i_max, const int stride) {
     constexpr int nwarps = mmq_get_nwarps_device();
-    constexpr int warp_size = ggml_cuda_get_physical_warp_size();
+    // constexpr int warp_size = ggml_cuda_get_physical_warp_size();
 
 #if defined(AMD_MFMA_AVAILABLE) || defined(TURING_MMA_AVAILABLE) || defined(AMD_WMMA_AVAILABLE)
     int   * x_qs = (int   *)  x_tile;
@@ -3555,7 +3555,7 @@ template <int mmq_y, bool need_check> static __device__ __forceinline__ void loa
 template <int mmq_y, bool need_check> static __device__ __forceinline__ void load_tiles_iq6_k(
     const char * __restrict__ x, int * __restrict__ x_tile, const int kbx0, const int i_max, const int stride) {
     constexpr int nwarps = mmq_get_nwarps_device();
-    constexpr int warp_size = ggml_cuda_get_physical_warp_size();
+    // constexpr int warp_size = ggml_cuda_get_physical_warp_size();
 
 #if defined(AMD_MFMA_AVAILABLE) || defined(TURING_MMA_AVAILABLE) || defined(AMD_WMMA_AVAILABLE)
     int   * x_qs = (int   *)  x_tile;
