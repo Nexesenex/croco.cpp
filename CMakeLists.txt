@@ -185,13 +185,20 @@ if (LLAMA_CUBLAS)
                 ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q8_0.cu
                 ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-q8_0.cu
                 ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-q6_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-q5_1.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-q5_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-q4_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-iq4_nl.cu
                 ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q6_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q5_1.cu
                 ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q5_0.cu
                 ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q4_0.cu
                 ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-iq4_nl.cu
                 ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q6_0-q6_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q6_0-q5_1.cu
                 ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q6_0-q5_0.cu
                 ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q6_0-iq4_nl.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_1-q5_1.cu
                 ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_1-q5_0.cu
                 ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_1-iq4_nl.cu
                 ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_0-q5_0.cu
@@ -206,14 +213,9 @@ if (LLAMA_CUBLAS)
                 # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_0-q4_1.cu
                 # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_1-q4_0.cu
                 # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_1-q4_1.cu
-                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_1-q5_1.cu
                 # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q4_1.cu
-                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q5_1.cu
                 # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-f16.cu
-                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-q4_0.cu
                 # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-q4_1.cu
-                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-q5_0.cu
-                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-q5_1.cu
             add_compile_definitions(GGML_CUDA_FA_ALL_QUANTS)
             )
         else ()
