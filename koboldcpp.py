@@ -6135,6 +6135,7 @@ def show_gui():
     def toggleswa(a,b,c):
         if swa_var.get()==1:
             contextshift_var.set(0)
+            # fastforward_var.set(0)
 
     def togglefastforward(a,b,c):
         if fastforward_var.get()==0:
