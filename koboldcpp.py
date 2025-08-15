@@ -11418,6 +11418,7 @@ def show_gui():
     def toggleswa(a,b,c):
         if swa_var.get()==1:
             contextshift_var.set(0)
+            # fastforward_var.set(0)
 
     def togglesmartcache(a,b,c):
         if smartcache_var.get()==1:
