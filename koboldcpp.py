@@ -1423,60 +1423,71 @@ def load_model(model_filename):
     inputs.use_fastforward = (0 if args.nofastforward else 1)
     inputs.flash_attention = args.flashattention
 
-    if args.quantkv==0:
+    if args.quantkv>0:
+        if args.flashattention:
+            inputs.quant_k = inputs.quant_v = args.quantkv
+        else:
+            inputs.quant_k = args.quantkv
+            inputs.quant_v = 0
+            print("\nWarning: quantkv was used without flashattention! This is NOT RECOMMENDED!\nOnly K cache can be quantized, and performance can suffer.\nIn some cases, it might even use more VRAM when doing a full offload.\nYou are strongly encouraged to use flashattention if you want to use quantkv.")
+    else:
         inputs.quant_k = inputs.quant_v = 0
-    if args.quantkv>=1 and args.quantkv<=24:
-        inputs.quant_k = inputs.quant_v = args.quantkv
-        inputs.flash_attention = True
+
+    # if args.quantkv==0:
+        # inputs.quant_k = inputs.quant_v = 0
+    # if args.quantkv>=1 and args.quantkv<=24:
+        # inputs.quant_k = inputs.quant_v = args.quantkv
+        # inputs.flash_attention = True
     # if args.quantkv>=8 and args.quantkv<=10:
         # inputs.use_contextshift = 0
     # if args.quantkv==16 or args.quantkv==19 or args.quantkv==24:
         # inputs.use_contextshift = 0  
-    if args.quantkv==24:
+    # # if args.quantkv==24:
+        # # inputs.quant_k = inputs.quant_v = 0
+        # # inputs.flash_attention = False
+        # # inputs.use_contextshift = 0
+    # if args.quantkv>=25 and args.quantkv<=31:
+        # inputs.quant_k = inputs.quant_v = args.quantkv
+        # inputs.flash_attention = False
+        # print("\nWarning: quantkv was used without flashattention! This is NOT RECOMMENDED!\nOnly K cache can be quantized, and performance can suffer.\nIn some cases, it might even use more VRAM when doing a full offload.\nYou are strongly encouraged to use flashattention if you want to use quantkv.")
+    # if args.quantkv<0 or args.quantkv>31:
+
+    if args.draft_quantkv==-1:
+        inputs.draft_quant_k = inputs.draft_quant_v = args.quantkv
+    elif args.draft_quantkv>=0:
+        if args.flashattention:
+            inputs.draft_quant_k = inputs.draft_quant_v = args.quantkv
+        else:
+            inputs.draft_quant_k = args.draft_quantkv
+            inputs.draft_quant_v = 0
+            print("\nWarning: quantkv was used without flashattention! This is NOT RECOMMENDED!\nOnly K cache can be quantized, and performance can suffer.\nIn some cases, it might even use more VRAM when doing a full offload.\nYou are strongly encouraged to use flashattention if you want to use quantkv.")
+    else:
         inputs.quant_k = inputs.quant_v = 0
-        inputs.flash_attention = False
-        # inputs.use_contextshift = 0
-    if args.quantkv>=25 and args.quantkv<=31:
-        inputs.quant_k = inputs.quant_v = args.quantkv
-        inputs.flash_attention = False
-        print("\nWarning: quantkv was used without flashattention! This is NOT RECOMMENDED!\nOnly K cache can be quantized, and performance can suffer.\nIn some cases, it might even use more VRAM when doing a full offload.\nYou are strongly encouraged to use flashattention if you want to use quantkv.")
-    if args.quantkv<0 or args.quantkv>31:
 
-    # if args.quantkv>0:
-        # if args.flashattention:
-            # inputs.quant_k = inputs.quant_v = args.quantkv
-        # else:
-            # inputs.quant_k = args.quantkv
-            # inputs.quant_v = 0
-            # print("\nWarning: quantkv was used without flashattention! This is NOT RECOMMENDED!\nOnly K cache can be quantized, and performance can suffer.\nIn some cases, it might even use more VRAM when doing a full offload.\nYou are strongly encouraged to use flashattention if you want to use quantkv.")
-    # else:
-
-        inputs.quant_k = inputs.quant_v = 0
-
-    # if args.draft_quantkv==-1:
-        # inputs.draft_quant_k = inputs.draft_quant_v = args.quantkv
-    # elif args.draft_quantkv==1:
-        # inputs.draft_quant_k = inputs.draft_quant_v = 1
-    if args.draft_quantkv==0:
-        inputs.draft_quant_k = inputs.draft_quant_v = 0
-    if args.draft_quantkv>=1 and args.draft_quantkv<=24:
-        inputs.draft_quant_k = inputs.draft_quant_v = args.draft_quantkv
-        inputs.flash_attention = True
-    # elif args.draft_quantkv>0 and args.draft_quantkv<9:
-        # inputs.use_contextshift = 0
+    # # if args.draft_quantkv==-1:
+        # # inputs.draft_quant_k = inputs.draft_quant_v = args.quantkv
+    # # elif args.draft_quantkv==1:
+        # # inputs.draft_quant_k = inputs.draft_quant_v = 1
+    # if args.draft_quantkv==0:
+        # inputs.draft_quant_k = inputs.draft_quant_v = 0
+    # if args.draft_quantkv>=1 and args.draft_quantkv<=24:
+        # inputs.draft_quant_k = inputs.draft_quant_v = args.draft_quantkv
+        # inputs.flash_attention = True
+    # # elif args.draft_quantkv>0 and args.draft_quantkv<9:
+        # # inputs.use_contextshift = 0
     # if args.draft_quantkv>=8 and args.draft_quantkv<=10:
         # inputs.use_contextshift = 0
     # if args.draft_quantkv==16 or args.draft_quantkv==19 or args.draft_quantkv==24:
         # inputs.use_contextshift = 0  
-    if args.draft_quantkv==24:
-        inputs.draft_quant_k = inputs.draft_quant_v = 24
-        inputs.flash_attention = False
-        # inputs.use_contextshift = 0
-    if args.draft_quantkv>=25 and args.draft_quantkv<=31:
-        inputs.draft_quant_k = inputs.draft_quant_v = args.draft_quantkv
-        inputs.flash_attention = False
-    if args.quantkv<0 or args.quantkv>31:
-        inputs.draft_quant_k = inputs.draft_quant_v = 0
+    # # if args.draft_quantkv==24:
+        # # inputs.draft_quant_k = inputs.draft_quant_v = 24
+        # # inputs.flash_attention = False
+        # # inputs.use_contextshift = 0
+    # if args.draft_quantkv>=25 and args.draft_quantkv<=31:
+        # inputs.draft_quant_k = inputs.draft_quant_v = args.draft_quantkv
+        # inputs.flash_attention = False
+    # if args.quantkv<0 or args.quantkv>31:
+        # inputs.draft_quant_k = inputs.draft_quant_v = 0
 
     inputs.blasbatchsize = args.blasbatchsize
     inputs.forceversion = args.forceversion
