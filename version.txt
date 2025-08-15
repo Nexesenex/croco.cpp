@@ -1,7 +1,7 @@
 VSVersionInfo(
     ffi=FixedFileInfo(
-      filevers=(1, 98000, 0, 0),
-      prodvers=(1, 98000, 0, 0),
+      filevers=(1, 98035, 0, 0),
+      prodvers=(1, 98035, 0, 0),
       mask=0x3f,
       flags=0x0,
       OS=0x4,
@@ -21,7 +21,7 @@ VSVersionInfo(
                         StringStruct(u'LegalCopyright', u'AGPLv3'),
                         StringStruct(u'OriginalFilename', u'koboldcpp.exe'),
                         StringStruct(u'ProductName', u'croco.cpp'),
-                        StringStruct(u'ProductVersion', u'1.98000.0.0'),
+                        StringStruct(u'ProductVersion', u'1.98035.0.0'),
                     ]
                 )
             ]

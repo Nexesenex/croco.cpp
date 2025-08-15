@@ -69,10 +69,10 @@ dry_seq_break_max = 256
 extra_images_max = 8
 
 # global vars
-KcppVersion = "1.98000"
-LcppVersion = "b6122"
-IKLcppVersion = "Q6_0"
-EsoboldVersion = "RMv1.15.9m"
+KcppVersion = "1.98035"
+LcppVersion = "b6178"
+IKLcppVersion = "Q6_IKQ23456"
+EsoboldVersion = "RMv1.15.91m"
 CudaSpecifics = "Cu128_Ar86_SMC2_DmmvX32Y1"
 ReleaseDate = "2025/08/10"
 showdebug = True
