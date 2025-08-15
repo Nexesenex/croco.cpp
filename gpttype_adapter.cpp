@@ -2327,6 +2327,17 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
             //since fastforward is disabled, we need no swa padding, because full reprocess always happens
             kcpp_extra_swa_padding = 0;
         }
+    } else { // I created a bug preventing the previous cond to work, this Else is a patch.
+        if (inputs.use_contextshift) {
+            kcpp_data->swa_full = true;  //can't use SWA
+            printf("\nTest kcpp_data->swa_full manually validated :\nSWA Mode IS DISABLED!\nSWA Mode Cannot be used with Context Shifting!\n");
+        } else if (inputs.use_fastforward) {
+            kcpp_data->swa_full = false;  //won't use SWA
+            printf("\nTest kcpp_data->swa_full manually invalidated :\nSWA Mode is ENABLED!\nNote that using SWA Mode cannot be used with Context Shifting, and can lead to degraded recall when combined with Fast Forwarding!\n");
+        } else {
+            kcpp_data->swa_full = false;  //can use SWA
+            printf("\nTest kcpp_data->swa_full manually invalidated :\nSWA Mode IS ENABLED!\nNote that using SWA Mode cannot be used with Context Shifting\n");
+        }
     }
     debugmode = inputs.debugmode;
     draft_ctx = nullptr;
