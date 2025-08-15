@@ -1127,17 +1127,23 @@ class vk_perf_logger {
             return;
         }
         if (node->op == GGML_OP_MUL_MAT || node->op == GGML_OP_MUL_MAT_ID) {
-            const uint64_t m    = node->src[0]->ne[1];
-            const uint64_t n    = node->src[1]->ne[1];
-            const uint64_t k    = node->src[1]->ne[0];
-            std::string    name = ggml_op_name(node->op);
-            if (n == 1) {
-                name += "_VEC m=" + std::to_string(m) + " k=" + std::to_string(k);
-            } else {
-                name += " m=" + std::to_string(m) + " n=" + std::to_string(n) + " k=" + std::to_string(k);
+            const uint64_t m     = node->src[0]->ne[1];
+            const uint64_t n     = node->ne[1];
+            const uint64_t k     = node->src[1]->ne[0];
+            const uint64_t batch = node->src[1]->ne[2] * node->src[1]->ne[3];
+            std::string    name  = ggml_op_name(node->op);
+            if ((node->op == GGML_OP_MUL_MAT && n <= mul_mat_vec_max_cols) ||
+                (node->op == GGML_OP_MUL_MAT_ID && node->src[2]->ne[1] == 1)) {
+                name += "_VEC";
+            }
+            name += " ";
+            name += ggml_type_name(node->src[0]->type);
+            name += " m=" + std::to_string(m) + " n=" + std::to_string(n) + " k=" + std::to_string(k);
+            if (batch > 1) {
+                name += " batch=" + std::to_string(batch);
             }
             timings[name].push_back(time);
-            flops[name].push_back(m * n * (k + (k - 1)));
+            flops[name].push_back(m * n * (k + (k - 1)) * batch);
             return;
         }
         if (node->op == GGML_OP_CONV_2D) {
@@ -8384,7 +8390,7 @@ static void ggml_vk_rope(ggml_backend_vk_context * ctx, vk_context& subctx, cons
         (uint32_t)src0->ne[0], (uint32_t)n_dims, freq_scale, (uint32_t)src0->ne[1],
         freq_base, ext_factor, attn_factor, {corr_dims[0], corr_dims[1]}, theta_scale,
         src2 != nullptr, (uint32_t)src0->ne[2], s1, s2,
-        sections[0], sections[1], sections[2], sections[3], backprop
+        { sections[0], sections[1], sections[2], sections[3] }, backprop
     }, dryrun);
 }
 
@@ -8416,7 +8422,7 @@ static void ggml_vk_sum_rows(ggml_backend_vk_context * ctx, vk_context& subctx, 
 }
 
 static void ggml_vk_argmax(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, ggml_tensor * dst, bool dryrun = false) {
-    ggml_vk_op_f32<vk_op_push_constants>(ctx, subctx, src0, nullptr, nullptr, dst, GGML_OP_ARGMAX, { (uint32_t)src0->ne[0], 0, 0.0f, 0.0f }, dryrun);
+    ggml_vk_op_f32<vk_op_push_constants>(ctx, subctx, src0, nullptr, nullptr, dst, GGML_OP_ARGMAX, { (uint32_t)src0->ne[0], (uint32_t)src0->ne[1], 0.0f, 0.0f }, dryrun);
 }
 
 static void ggml_vk_count_equal(ggml_backend_vk_context * ctx, vk_context& subctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst, bool dryrun = false) {
@@ -9651,7 +9657,6 @@ static bool ggml_vk_build_graph(ggml_backend_vk_context * ctx, ggml_cgraph * cgr
     default:
         std::cerr << "ggml_vulkan: Error: Missing op: " << ggml_op_name(node->op) << std::endl;
         GGML_ABORT("fatal error");
-        return false;
     }
 
     vk_context compute_ctx;
@@ -10936,7 +10941,6 @@ static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggm
                 default:
                     return false;
             }
-            break;
         case GGML_OP_GLU:
             switch (ggml_get_glu_op(op)) {
                 case GGML_GLU_OP_GEGLU:
@@ -10952,7 +10956,6 @@ static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggm
                 default:
                     return false;
             }
-            break;
         case GGML_OP_MUL_MAT:
         case GGML_OP_MUL_MAT_ID:
             {
@@ -11016,7 +11019,7 @@ static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggm
                 }
 
                 return true;
-            } break;
+            }
         case GGML_OP_FLASH_ATTN_EXT:
             {
                 ggml_backend_vk_device_context * ctx = (ggml_backend_vk_device_context *)dev->context;
@@ -11106,7 +11109,7 @@ static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggm
                     default:
                         return false;
                 }
-            } break;
+            }
         case GGML_OP_SET_ROWS:
             {
                 switch (op->type) {
@@ -11123,7 +11126,7 @@ static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggm
                     default:
                         return false;
                 }
-            } break;
+            }
         case GGML_OP_CONT:
         case GGML_OP_CPY:
         case GGML_OP_DUP:
@@ -11175,7 +11178,7 @@ static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggm
                     return true;
                 }
                 return false;
-            } break;
+            }
         case GGML_OP_REPEAT:
             return ggml_type_size(op->type) == sizeof(float) && ggml_type_size(op->src[0]->type) == sizeof(float);
         case GGML_OP_REPEAT_BACK:
