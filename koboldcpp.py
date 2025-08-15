@@ -1945,8 +1945,6 @@ def load_model(model_filename):
             # inputs.quant_k = inputs.quant_v = args.quantkv
     # else:
 
-    if args.quantkv==0:
-        inputs.quant_k = inputs.quant_v = 0
     if args.quantkv>=1 and args.quantkv<=24:
         inputs.quant_k = inputs.quant_v = args.quantkv
     # if args.quantkv>=8 and args.quantkv<=10:
