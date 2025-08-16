@@ -76,8 +76,9 @@ option(LLAMA_DEFAULT                         "llama: use CPU"                   
 # Croco.Cpp Specifics
 option(LLAMA_CUDA_FA_ALL_QUANTS              "llama: compile 18 quants for FlashAttention"      OFF)
 option(GGML_CUDA_USE_GRAPHS                  "Use Cuda Graphs to increase a bit performancess"  ON)
+option(GGML_CUDA_NO_PEER_COPY                 "No peers copies to avoid a related bug"          OFF)
 set(GGML_SCHED_MAX_COPIES   "1" CACHE STRING "llama: max input copies for pipeline parallelism")
-set(LLAMA_SCHED_MAX_COPIES  "1" CACHE STRING "llama: max input copies for pipeline parallelism")			
+set(LLAMA_SCHED_MAX_COPIES  "1" CACHE STRING "llama: max input copies for pipeline parallelism")
 option(LLAMA_CUDA_ENABLE_UNIFIED_MEMORY      "llama: enable to avoid OOM in Full Offload"       OFF)
 option(GGML_CCACHE                          "ggml: use ccache if available"                     OFF)
 set   (GGML_CUDA_COMPRESSION_MODE "size" CACHE STRING
@@ -179,6 +180,10 @@ if (LLAMA_CUBLAS)
 
         if (GGML_CUDA_USE_GRAPHS)
             add_compile_definitions(GGML_CUDA_USE_GRAPHS)
+        endif()
+
+        if (GGML_CUDA_NO_PEER_COPY)
+            add_compile_definitions(GGML_CUDA_NO_PEER_COPY)
         endif()
 
         if (LLAMA_CUDA_FA_ALL_QUANTS)
