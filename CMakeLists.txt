@@ -79,6 +79,7 @@ option(GGML_CUDA_USE_GRAPHS                  "Use Cuda Graphs to increase a bit 
 option(GGML_CUDA_NO_PEER_COPY                 "No peers copies to avoid a related bug"          OFF)
 set(GGML_SCHED_MAX_COPIES   "1" CACHE STRING "llama: max input copies for pipeline parallelism")
 set(LLAMA_SCHED_MAX_COPIES  "1" CACHE STRING "llama: max input copies for pipeline parallelism")
+option(GGML_CUDA_DISABLE_TURING_MMA          "Disable New MMA on TURING"                        OFF)
 option(LLAMA_CUDA_ENABLE_UNIFIED_MEMORY      "llama: enable to avoid OOM in Full Offload"       OFF)
 option(GGML_CCACHE                          "ggml: use ccache if available"                     OFF)
 set   (GGML_CUDA_COMPRESSION_MODE "size" CACHE STRING
@@ -181,6 +182,10 @@ if (LLAMA_CUBLAS)
 
         if (GGML_CUDA_NO_PEER_COPY)
             add_compile_definitions(GGML_CUDA_NO_PEER_COPY)
+        endif()
+
+        if (GGML_CUDA_DISABLE_TURING_MMA)
+            add_compile_definitions(GGML_CUDA_DISABLE_TURING_MMA)
         endif()
 
         if (LLAMA_CUDA_FA_ALL_QUANTS)
