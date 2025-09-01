@@ -471,7 +471,7 @@ static best_fattn_kernel ggml_cuda_get_best_fattn_kernel(const int device, const
         case GGML_TYPE_Q4_0:
         case GGML_TYPE_Q8_0:
 #ifdef GGML_CUDA_FA_ALL_QUANTS
-            if (K->ne[0] != 128 && K->ne[0] != 64) {
+            if (K->ne[0] != 256 && K->ne[0] != 128 && K->ne[0] != 64) {
                 return BEST_FATTN_KERNEL_NONE;
             }
 #else
@@ -492,7 +492,7 @@ static best_fattn_kernel ggml_cuda_get_best_fattn_kernel(const int device, const
         case GGML_TYPE_Q5_1:
         case GGML_TYPE_Q4_0:
         case GGML_TYPE_Q8_0:
-            if (K->ne[0] != 128) {
+            if (K->ne[0] != 256 && K->ne[0] != 128) {
                 return BEST_FATTN_KERNEL_NONE;
             }
             break;
