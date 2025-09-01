@@ -695,6 +695,7 @@ static best_fattn_kernel ggml_cuda_get_best_fattn_kernel(const int device, const
     }
 
 /*     //kcpp: patch from previous version for my sanity. it worked before, idk it should work now.
+
     if ((Q->ne[1] <= 8 || Q->ne[0] == 256) && can_use_vector_kernel) {
         return BEST_FATTN_KERNEL_VEC; */
 
@@ -702,7 +703,7 @@ static best_fattn_kernel ggml_cuda_get_best_fattn_kernel(const int device, const
         if (prec == GGML_PREC_DEFAULT && fast_fp16_available(cc)) {
              return BEST_FATTN_KERNEL_VEC_F16;
         }
-        return BEST_FATTN_KERNEL_VEC_F32;  //kcpp: patch from previous version for my sanity. it worked before, idk it should work now.
+        return BEST_FATTN_KERNEL_VEC_F32;
     }
 
     // If there are no tensor cores available, use the generic tile kernel:
