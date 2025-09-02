@@ -417,12 +417,6 @@ static best_fattn_kernel ggml_cuda_get_best_fattn_kernel(const int device, const
     const int warp_size = ggml_cuda_info().devices[device].warp_size;
     const enum ggml_prec prec = ggml_flash_attn_ext_get_prec(KQV);
 
-    #if defined(GGML_HIP_ROCWMMA_FATTN)
-    if (GGML_CUDA_CC_IS_AMD(cc) && fp16_mma_available(cc)) { //kcpp: fix for rocwmma
-        return BEST_FATTN_KERNEL_WMMA_F16;
-    }
-    #endif // defined(GGML_HIP_ROCWMMA_FATTN)
-
     switch (K->ne[0]) {
         case  64:
         case 128:
@@ -539,8 +533,8 @@ static best_fattn_kernel ggml_cuda_get_best_fattn_kernel(const int device, const
         return BEST_FATTN_KERNEL_WMMA_F16;
     }
 
-    //kcpp: always force WMMA for Turing and Volta if above check fails, fix "FlashAttention without tensor cores only supports head sizes 64 and 128."
-    if (cc == GGML_CUDA_CC_TURING || cc == GGML_CUDA_CC_VOLTA) {
+    //kcpp: always force WMMA for older gpus, fix issues like "FlashAttention without tensor cores only supports head sizes 64 and 128."
+    if (ggml_cuda_highest_compiled_arch(cc) <= GGML_CUDA_CC_TURING || cc == GGML_CUDA_CC_TURING) {
         return BEST_FATTN_KERNEL_WMMA_F16;
     }
 
