@@ -236,7 +236,7 @@ static void set_rows_cuda(ggml_backend_cuda_context & ctx, const ggml_tensor * s
             stream
         );
     } else if (dst->type == GGML_TYPE_Q6_0) {
-        set_rows_cuda_quant<block_q6_0, QK6_0, quantize_f32_q6_0_block>(
+        set_rows_cuda_quant<idx_t, block_q6_0, QK6_0, quantize_f32_q6_0_block>(
             src0_d, src1_d, (block_q6_0*)dst->data,
             ne00, ne01, ne02, ne03,
             ne10, ne11, ne12, ne13,
