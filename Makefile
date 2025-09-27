@@ -231,6 +231,12 @@ NVCCFLAGS += -Wno-deprecated-gpu-targets \
              -gencode arch=compute_75,code=compute_75 \
              -gencode arch=compute_80,code=compute_80
 
+else ifdef LLAMA_ARCHES_CU13
+NVCCFLAGS += -Wno-deprecated-gpu-targets \
+             -gencode arch=compute_75,code=compute_75 \
+             -gencode arch=compute_80,code=compute_80 \
+             -gencode arch=compute_86,code=compute_86
+
 else
 NVCCFLAGS += -Wno-deprecated-gpu-targets -arch=all
 endif

@@ -39,6 +39,9 @@ fi
 if [ -n "$ARCHES_CU12" ]; then
 	ARCHES_FLAG="LLAMA_ARCHES_CU12=1"
 fi
+if [ -n "$ARCHES_CU13" ]; then
+	ARCHES_FLAG="LLAMA_ARCHES_CU13=1"
+fi
 if [ -n "$NO_WMMA" ]; then
 	NO_WMMA_FLAG="LLAMA_NO_WMMA=1"
 fi
