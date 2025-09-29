@@ -167,6 +167,9 @@ struct sd_load_model_inputs
     const int threads = 0;
     const int quant = 0;
     const bool flash_attention = false;
+    const bool offload_cpu = false;
+    const bool vae_cpu = false;
+    const bool clip_cpu = false;
     const bool diffusion_conv_direct = false;
     const bool vae_conv_direct = false;
     const bool taesd = false;
@@ -200,6 +203,8 @@ struct sd_generation_inputs
     const int seed = 0;
     const char * sample_method = nullptr;
     const int clip_skip = -1;
+    const int vid_req_frames = 1;
+    const int vid_req_avi = 0;
 };
 struct sd_generation_outputs
 {
