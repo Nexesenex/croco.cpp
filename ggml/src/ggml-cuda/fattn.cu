@@ -462,6 +462,22 @@ static best_fattn_kernel ggml_cuda_get_best_fattn_kernel(const int device, const
 
     // Use the WMMA kernel if possible but only for HIP
 #if defined(GGML_HIP_ROCWMMA_FATTN)
+
+/*      if (ggml_cuda_should_use_wmma_fattn(cc) && (ggml_cuda_highest_compiled_arch(cc) <= GGML_CUDA_CC_TURING || cc == GGML_CUDA_CC_TURING)) {
+        OR older if (fp16_mma_available(cc) && (ggml_cuda_highest_compiled_arch(cc) <= GGML_CUDA_CC_TURING || cc == GGML_CUDA_CC_TURING)) { */
+
+        //kcpp: use wmma to fix cu11 incoherence (old)
+/*         if (fp16_mma_available(cc) && (ggml_cuda_highest_compiled_arch(cc) <= GGML_CUDA_CC_TURING || cc == GGML_CUDA_CC_TURING)) {
+            return = BEST_FATTN_KERNEL_WMMA_F16;
+        } */
+
+        //kcpp: use wmma to fix cu11 incoherence (new)
+/*         if (ggml_cuda_should_use_wmma_fattn(cc) && (ggml_cuda_highest_compiled_arch(cc) <= GGML_CUDA_CC_TURING || cc == GGML_CUDA_CC_TURING)) {
+            best = BEST_FATTN_KERNEL_WMMA_F16;
+        } */
+
+    // Use the WMMA kernel if possible:
+
     if (ggml_cuda_should_use_wmma_fattn(cc) && K->ne[1] % FATTN_KQ_STRIDE == 0 && Q->ne[0] != 40 && Q->ne[0] != 72 && Q->ne[0] != 512 && Q->ne[0] != 576) {
         if (can_use_vector_kernel && Q->ne[1] <= 2) {
             return BEST_FATTN_KERNEL_VEC;
