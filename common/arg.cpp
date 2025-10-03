@@ -34,13 +34,11 @@
 #include <thread>
 #include <vector>
 
-//#define LLAMA_USE_CURL
-
 #if defined(LLAMA_USE_CURL)
 #include <curl/curl.h>
 #include <curl/easy.h>
 #elif defined(LLAMA_USE_HTTPLIB)
-#include <cpp-httplib/httplib.h>
+#include "http.h"
 #endif
 
 #ifdef __linux__
@@ -55,6 +53,13 @@
 #include <sys/syslimits.h>
 #endif
 #define LLAMA_MAX_URL_LENGTH 2084 // Maximum URL Length in Chrome: 2083
+
+// isatty
+#if defined(_WIN32)
+#include <io.h>
+#else
+#include <unistd.h>
+#endif
 
 using json = nlohmann::ordered_json;
 
@@ -100,6 +105,14 @@ static void write_file(const std::string & fname, const std::string & content) {
 
         throw std::runtime_error(string_format("error: failed to write file '%s'\n", fname.c_str()));
     }
+}
+
+static bool is_output_a_tty() {
+#if defined(_WIN32)
+    return _isatty(_fileno(stdout));
+#else
+    return isatty(1);
+#endif
 }
 
 common_arg & common_arg::set_examples(std::initializer_list<enum llama_example> examples) {
@@ -267,10 +280,6 @@ static std::string read_etag(const std::string & path) {
 }
 
 #ifdef LLAMA_USE_CURL
-
-bool common_has_curl() {
-    return true;
-}
 
 //
 // CURL utils
@@ -588,83 +597,11 @@ std::pair<long, std::vector<char>> common_remote_get_content(const std::string &
 #else
 
 #ifdef LLAMA_USE_HTTPLIB
-
-bool common_has_curl() {
-    return false;
-}
-
-struct common_url {
-    std::string scheme;
-    std::string user;
-    std::string password;
-    std::string host;
-    std::string path;
-};
-
-static common_url parse_url(const std::string & url) {
-    common_url parts;
-    auto scheme_end = url.find("://");
-
-    if (scheme_end == std::string::npos) {
-        throw std::runtime_error("invalid URL: no scheme");
-    }
-    parts.scheme = url.substr(0, scheme_end);
-
-    if (parts.scheme != "http" && parts.scheme != "https") {
-        throw std::runtime_error("unsupported URL scheme: " + parts.scheme);
+static void print_progress(size_t current, size_t total) {
+    if (!is_output_a_tty()) {
+        return;
     }
 
-    auto rest = url.substr(scheme_end + 3);
-    auto at_pos = rest.find('@');
-
-    if (at_pos != std::string::npos) {
-        auto auth = rest.substr(0, at_pos);
-        auto colon_pos = auth.find(':');
-        if (colon_pos != std::string::npos) {
-            parts.user = auth.substr(0, colon_pos);
-            parts.password = auth.substr(colon_pos + 1);
-        } else {
-            parts.user = auth;
-        }
-        rest = rest.substr(at_pos + 1);
-    }
-
-    auto slash_pos = rest.find('/');
-
-    if (slash_pos != std::string::npos) {
-        parts.host = rest.substr(0, slash_pos);
-        parts.path = rest.substr(slash_pos);
-    } else {
-        parts.host = rest;
-        parts.path = "/";
-    }
-    return parts;
-}
-
-static std::pair<httplib::Client, common_url> http_client(const std::string & url) {
-    common_url parts = parse_url(url);
-
-    if (parts.host.empty()) {
-        throw std::runtime_error("error: invalid URL format");
-    }
-
-    if (!parts.user.empty()) {
-        throw std::runtime_error("error: user:password@ not supported yet"); // TODO
-    }
-
-    httplib::Client cli(parts.scheme + "://" + parts.host);
-    cli.set_follow_location(true);
-
-    // TODO cert
-
-    return { std::move(cli), std::move(parts) };
-}
-
-static std::string show_masked_url(const common_url & parts) {
-    return parts.scheme + "://" + (parts.user.empty() ? "" : "****:****@") + parts.host + parts.path;
-}
-
-static void print_progress(size_t current, size_t total) { // TODO isatty
     if (!total) {
         return;
     }
@@ -752,7 +689,7 @@ static bool common_download_file_single_online(const std::string & url,
     static const int max_attempts        = 3;
     static const int retry_delay_seconds = 2;
 
-    auto [cli, parts] = http_client(url);
+    auto [cli, parts] = common_http_client(url);
 
     httplib::Headers default_headers = {{"User-Agent", "llama-cpp"}};
     if (!bearer_token.empty()) {
@@ -832,7 +769,7 @@ static bool common_download_file_single_online(const std::string & url,
 
         // start the download
         LOG_INF("%s: trying to download model from %s to %s (etag:%s)...\n",
-                __func__, show_masked_url(parts).c_str(), path_temporary.c_str(), etag.c_str());
+                __func__, common_http_show_masked_url(parts).c_str(), path_temporary.c_str(), etag.c_str());
         const bool was_pull_successful = common_pull_file(cli, parts.path, path_temporary, supports_ranges, existing_size, total_size);
         if (!was_pull_successful) {
             if (i + 1 < max_attempts) {
@@ -860,7 +797,7 @@ static bool common_download_file_single_online(const std::string & url,
 
 std::pair<long, std::vector<char>> common_remote_get_content(const std::string          & url,
                                                              const common_remote_params & params) {
-    auto [cli, parts] = http_client(url);
+    auto [cli, parts] = common_http_client(url);
 
     httplib::Headers headers = {{"User-Agent", "llama-cpp"}};
     for (const auto & header : params.headers) {

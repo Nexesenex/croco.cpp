@@ -69,7 +69,7 @@ dry_seq_break_max = 128
 extra_images_max = 4
 
 # global vars
-KcppVersion = "1.99.4"
+KcppVersion = "1.100"
 showdebug = True
 kcpp_instance = None #global running instance
 global_memory = {"tunnel_url": "", "restart_target":"", "input_to_exit":False, "load_complete":False, "restart_model": "", "currentConfig": None, "modelOverride": None, "currentModel": None}
@@ -297,8 +297,8 @@ class sd_load_model_inputs(ctypes.Structure):
                 ("taesd", ctypes.c_bool),
                 ("tiled_vae_threshold", ctypes.c_int),
                 ("t5xxl_filename", ctypes.c_char_p),
-                ("clipl_filename", ctypes.c_char_p),
-                ("clipg_filename", ctypes.c_char_p),
+                ("clip1_filename", ctypes.c_char_p),
+                ("clip2_filename", ctypes.c_char_p),
                 ("vae_filename", ctypes.c_char_p),
                 ("lora_filename", ctypes.c_char_p),
                 ("lora_multiplier", ctypes.c_float),
@@ -1715,7 +1715,7 @@ def sd_quant_option(value):
     except Exception:
         return 0
 
-def sd_load_model(model_filename,vae_filename,lora_filename,t5xxl_filename,clipl_filename,clipg_filename,photomaker_filename):
+def sd_load_model(model_filename,vae_filename,lora_filename,t5xxl_filename,clip1_filename,clip2_filename,photomaker_filename):
     global args
     inputs = sd_load_model_inputs()
     inputs.model_filename = model_filename.encode("UTF-8")
@@ -1731,7 +1731,7 @@ def sd_load_model(model_filename,vae_filename,lora_filename,t5xxl_filename,clipl
     inputs.flash_attention = args.sdflashattention
     inputs.offload_cpu = args.sdoffloadcpu
     inputs.vae_cpu = args.sdvaecpu
-    inputs.clip_cpu = args.sdclipcpu
+    inputs.clip_cpu = False if args.sdclipgpu else True
     sdconvdirect = sd_convdirect_option(args.sdconvdirect)
     inputs.diffusion_conv_direct = sdconvdirect == 'full'
     inputs.vae_conv_direct = sdconvdirect in ['vaeonly', 'full']
@@ -1741,8 +1741,8 @@ def sd_load_model(model_filename,vae_filename,lora_filename,t5xxl_filename,clipl
     inputs.lora_filename = lora_filename.encode("UTF-8")
     inputs.lora_multiplier = args.sdloramult
     inputs.t5xxl_filename = t5xxl_filename.encode("UTF-8")
-    inputs.clipl_filename = clipl_filename.encode("UTF-8")
-    inputs.clipg_filename = clipg_filename.encode("UTF-8")
+    inputs.clip1_filename = clip1_filename.encode("UTF-8")
+    inputs.clip2_filename = clip2_filename.encode("UTF-8")
     inputs.photomaker_filename = photomaker_filename.encode("UTF-8")
     inputs.img_hard_limit = args.sdclamped
     inputs.img_soft_limit = args.sdclampedsoft
@@ -5712,13 +5712,13 @@ def show_gui():
     sd_loramult_var = ctk.StringVar(value="1.0")
     sd_vae_var = ctk.StringVar()
     sd_t5xxl_var = ctk.StringVar()
-    sd_clipl_var = ctk.StringVar()
-    sd_clipg_var = ctk.StringVar()
+    sd_clip1_var = ctk.StringVar()
+    sd_clip2_var = ctk.StringVar()
     sd_photomaker_var = ctk.StringVar()
     sd_flash_attention_var = ctk.IntVar(value=0)
     sd_offload_cpu_var = ctk.IntVar(value=0)
     sd_vae_cpu_var = ctk.IntVar(value=0)
-    sd_clip_cpu_var = ctk.IntVar(value=0)
+    sd_clip_gpu_var = ctk.IntVar(value=0)
     sd_vaeauto_var = ctk.IntVar(value=0)
     sd_tiled_vae_var = ctk.StringVar(value=str(default_vae_tile_threshold))
     sd_convdirect_var = ctk.StringVar(value=str(sd_convdirect_choices[0]))
@@ -6481,9 +6481,9 @@ def show_gui():
     makefileentry(images_tab, "Image LoRA:", "Select SD lora file",sd_lora_var, 20, width=160, singlerow=True, filetypes=[("*.safetensors *.gguf", "*.safetensors *.gguf")],tooltiptxt="Select a .safetensors or .gguf SD LoRA model file to be loaded. Should be unquantized!")
     makelabelentry(images_tab, "Multiplier:" , sd_loramult_var, 20, 50,padx=390,singleline=True,tooltip="What mutiplier value to apply the SD LoRA with.",labelpadx=330)
 
-    makefileentry(images_tab, "T5-XXL File:", "Select Optional T5-XXL model file (SD3 or flux)",sd_t5xxl_var, 24, width=280, singlerow=True, filetypes=[("*.safetensors *.gguf","*.safetensors *.gguf")],tooltiptxt="Select a .safetensors t5xxl file to be loaded.")
-    makefileentry(images_tab, "Clip-L File:", "Select Optional Clip-L model file (SD3 or flux)",sd_clipl_var, 26, width=280, singlerow=True, filetypes=[("*.safetensors *.gguf","*.safetensors *.gguf")],tooltiptxt="Select a .safetensors t5xxl file to be loaded.")
-    makefileentry(images_tab, "Clip-G File:", "Select Optional Clip-G model file (SD3)",sd_clipg_var, 28, width=280, singlerow=True, filetypes=[("*.safetensors *.gguf","*.safetensors *.gguf")],tooltiptxt="Select a .safetensors t5xxl file to be loaded.")
+    makefileentry(images_tab, "T5-XXL File:", "Select T5-XXL model file (SD3, Flux, WAN)",sd_t5xxl_var, 24, width=280, singlerow=True, filetypes=[("*.safetensors *.gguf","*.safetensors *.gguf")],tooltiptxt="Select a .safetensors t5xxl file to be loaded.")
+    makefileentry(images_tab, "Clip-1 File:", "Select First Clip model file (Clip-L for SD3 or Flux, or other vision encoder)",sd_clip1_var, 26, width=280, singlerow=True, filetypes=[("*.safetensors *.gguf","*.safetensors *.gguf")],tooltiptxt="Select a .safetensors Clip-1 file to be loaded.\nThis is Clip-L for SD3 and Flux, or Clip Vision for WAN and QwenImage")
+    makefileentry(images_tab, "Clip-2 File:", "Select Second Clip model file (Clip-G for SD3)",sd_clip2_var, 28, width=280, singlerow=True, filetypes=[("*.safetensors *.gguf","*.safetensors *.gguf")],tooltiptxt="Select a .safetensors Clip-2 file to be loaded.\nThis is Clip-G for SD3")
     makefileentry(images_tab, "PhotoMaker:", "Select Optional PhotoMaker model file (SDXL)",sd_photomaker_var, 30, width=280, singlerow=True, filetypes=[("*.safetensors *.gguf","*.safetensors *.gguf")],tooltiptxt="PhotoMaker is a model that allows face cloning.\nSelect a .safetensors PhotoMaker file to be loaded (SDXL only).")
 
     sdvaeitem1,sdvaeitem2,sdvaeitem3 = makefileentry(images_tab, "Image VAE:", "Select Optional SD VAE file",sd_vae_var, 40, width=280, singlerow=True, filetypes=[("*.safetensors *.gguf", "*.safetensors *.gguf")],tooltiptxt="Select a .safetensors or .gguf SD VAE file to be loaded.")
@@ -6503,7 +6503,7 @@ def show_gui():
     makecheckbox(images_tab, "SD Flash Attention", sd_flash_attention_var, 44,padx=230, tooltiptxt="Enable Flash Attention for image diffusion. May save memory or improve performance.")
     makecheckbox(images_tab, "Model CPU Offload", sd_offload_cpu_var, 50,padx=8, tooltiptxt="Offload image weights in RAM to save VRAM, swap into VRAM when needed.")
     makecheckbox(images_tab, "VAE on CPU", sd_vae_cpu_var, 50,padx=160, tooltiptxt="Force VAE to CPU only for image generation.")
-    makecheckbox(images_tab, "CLIP on CPU", sd_clip_cpu_var, 50,padx=280, tooltiptxt="Force CLIP to CPU only for image generation.")
+    makecheckbox(images_tab, "CLIP on GPU", sd_clip_gpu_var, 50,padx=280, tooltiptxt="Put CLIP and T5 to GPU for image generation. Otherwise, CLIP will use CPU.")
 
     # audio tab
     audio_tab = tabcontent["Audio"]
@@ -6751,8 +6751,8 @@ def show_gui():
             args.sdoffloadcpu = True
         if sd_vae_cpu_var.get()==1:
             args.sdvaecpu = True
-        if sd_clip_cpu_var.get()==1:
-            args.sdclipcpu = True
+        if sd_clip_gpu_var.get()==1:
+            args.sdclipgpu = True
         args.sdthreads = (0 if sd_threads_var.get()=="" else int(sd_threads_var.get()))
         args.sdclamped = (0 if int(sd_clamped_var.get())<=0 else int(sd_clamped_var.get()))
         args.sdclampedsoft = (0 if int(sd_clamped_soft_var.get())<=0 else int(sd_clamped_soft_var.get()))
@@ -6768,10 +6768,10 @@ def show_gui():
         args.sdconvdirect = sd_convdirect_option(sd_convdirect_var.get())
         if sd_t5xxl_var.get() != "":
             args.sdt5xxl = sd_t5xxl_var.get()
-        if sd_clipl_var.get() != "":
-            args.sdclipl = sd_clipl_var.get()
-        if sd_clipg_var.get() != "":
-            args.sdclipg = sd_clipg_var.get()
+        if sd_clip1_var.get() != "":
+            args.sdclip1 = sd_clip1_var.get()
+        if sd_clip2_var.get() != "":
+            args.sdclip2 = sd_clip2_var.get()
         if sd_photomaker_var.get() != "":
             args.sdphotomaker = sd_photomaker_var.get()
         args.sdquant = sd_quant_option(sd_quant_var.get())
@@ -6997,12 +6997,12 @@ def show_gui():
         sd_flash_attention_var.set(1 if ("sdflashattention" in dict and dict["sdflashattention"]) else 0)
         sd_offload_cpu_var.set(1 if ("sdoffloadcpu" in dict and dict["sdoffloadcpu"]) else 0)
         sd_vae_cpu_var.set(1 if ("sdvaecpu" in dict and dict["sdvaecpu"]) else 0)
-        sd_clip_cpu_var.set(1 if ("sdclipcpu" in dict and dict["sdclipcpu"]) else 0)
+        sd_clip_gpu_var.set(1 if ("sdclipgpu" in dict and dict["sdclipgpu"]) else 0)
         sd_convdirect_var.set(sd_convdirect_option(dict.get("sdconvdirect")))
         sd_vae_var.set(dict["sdvae"] if ("sdvae" in dict and dict["sdvae"]) else "")
         sd_t5xxl_var.set(dict["sdt5xxl"] if ("sdt5xxl" in dict and dict["sdt5xxl"]) else "")
-        sd_clipl_var.set(dict["sdclipl"] if ("sdclipl" in dict and dict["sdclipl"]) else "")
-        sd_clipg_var.set(dict["sdclipg"] if ("sdclipg" in dict and dict["sdclipg"]) else "")
+        sd_clip1_var.set(dict["sdclip1"] if ("sdclip1" in dict and dict["sdclip1"]) else "")
+        sd_clip2_var.set(dict["sdclip2"] if ("sdclip2" in dict and dict["sdclip2"]) else "")
         sd_photomaker_var.set(dict["sdphotomaker"] if ("sdphotomaker" in dict and dict["sdphotomaker"]) else "")
         sd_vaeauto_var.set(1 if ("sdvaeauto" in dict and dict["sdvaeauto"]) else 0)
         sd_tiled_vae_var.set(str(dict["sdtiledvae"]) if ("sdtiledvae" in dict and dict["sdtiledvae"]) else str(default_vae_tile_threshold))
@@ -7380,6 +7380,10 @@ def convert_invalid_args(args):
         dict["sdtiledvae"] = (0 if (dict["sdnotile"]) else default_vae_tile_threshold) # convert legacy option
     if 'sdquant' in dict and type(dict['sdquant']) is bool:
         dict['sdquant'] = 2 if dict['sdquant'] else 0
+    if "sdclipl" in dict and "sdclip1" not in dict:
+        dict["sdclip1"] = dict["sdclipl"]
+    if "sdclipg" in dict and "sdclip2" not in dict:
+        dict["sdclip2"] = dict["sdclipg"]
     return args
 
 def setuptunnel(global_memory, has_sd):
@@ -7572,7 +7576,7 @@ def delete_old_pyinstaller():
             if absdirpath!=selfdirpath and (time.time() - os.path.getctime(absdirpath)) > 14400: # remove if older than 4 hours
                 kobold_itemcheck1 = os.path.join(absdirpath, 'koboldcpp_default.dll')
                 kobold_itemcheck2 = os.path.join(absdirpath, 'koboldcpp_default.so')
-                kobold_itemcheck3 = os.path.join(absdirpath, 'klite.embd')
+                kobold_itemcheck3 = os.path.join(absdirpath, 'koboldcpp.py')
                 kobold_itemcheck4 = os.path.join(absdirpath, 'cublasLt64_11.dll')
                 kobold_itemcheck5 = os.path.join(absdirpath, 'cublas64_11.dll')
                 kobold_itemcheck6 = os.path.join(absdirpath, 'clblast.dll')
@@ -8107,14 +8111,14 @@ def kcpp_main_process(launch_args, g_memory=None, gui_launcher=False):
         dlfile = download_model_from_url(args.sdt5xxl,[".gguf",".safetensors"],min_file_size=500000)
         if dlfile:
             args.sdt5xxl = dlfile
-    if args.sdclipl and args.sdclipl!="":
-        dlfile = download_model_from_url(args.sdclipl,[".gguf",".safetensors"],min_file_size=500000)
+    if args.sdclip1 and args.sdclip1!="":
+        dlfile = download_model_from_url(args.sdclip1,[".gguf",".safetensors"],min_file_size=500000)
         if dlfile:
-            args.sdclipl = dlfile
-    if args.sdclipg and args.sdclipg!="":
-        dlfile = download_model_from_url(args.sdclipg,[".gguf",".safetensors"],min_file_size=500000)
+            args.sdclip1 = dlfile
+    if args.sdclip2 and args.sdclip2!="":
+        dlfile = download_model_from_url(args.sdclip2,[".gguf",".safetensors"],min_file_size=500000)
         if dlfile:
-            args.sdclipg = dlfile
+            args.sdclip2 = dlfile
     if args.sdphotomaker and args.sdphotomaker!="":
         dlfile = download_model_from_url(args.sdphotomaker,[".gguf",".safetensors"],min_file_size=500000)
         if dlfile:
@@ -8400,8 +8404,8 @@ def kcpp_main_process(launch_args, g_memory=None, gui_launcher=False):
             imglora = ""
             imgvae = ""
             imgt5xxl = ""
-            imgclipl = ""
-            imgclipg = ""
+            imgclip1 = ""
+            imgclip2 = ""
             imgphotomaker = ""
             if args.sdlora:
                 if os.path.exists(args.sdlora):
@@ -8418,16 +8422,16 @@ def kcpp_main_process(launch_args, g_memory=None, gui_launcher=False):
                     imgt5xxl = os.path.abspath(args.sdt5xxl)
                 else:
                     print("Missing SD T5-XXL model file...")
-            if args.sdclipl:
-                if os.path.exists(args.sdclipl):
-                    imgclipl = os.path.abspath(args.sdclipl)
+            if args.sdclip1:
+                if os.path.exists(args.sdclip1):
+                    imgclip1 = os.path.abspath(args.sdclip1)
                 else:
-                    print("Missing SD Clip-L model file...")
-            if args.sdclipg:
-                if os.path.exists(args.sdclipg):
-                    imgclipg = os.path.abspath(args.sdclipg)
+                    print("Missing SD Clip-1 model file...")
+            if args.sdclip2:
+                if os.path.exists(args.sdclip2):
+                    imgclip2 = os.path.abspath(args.sdclip2)
                 else:
-                    print("Missing SD Clip-G model file...")
+                    print("Missing SD Clip-2 model file...")
             if args.sdphotomaker:
                 if os.path.exists(args.sdphotomaker):
                     imgphotomaker = os.path.abspath(args.sdphotomaker)
@@ -8439,7 +8443,7 @@ def kcpp_main_process(launch_args, g_memory=None, gui_launcher=False):
             friendlysdmodelname = os.path.basename(imgmodel)
             friendlysdmodelname = os.path.splitext(friendlysdmodelname)[0]
             friendlysdmodelname = sanitize_string(friendlysdmodelname)
-            loadok = sd_load_model(imgmodel,imgvae,imglora,imgt5xxl,imgclipl,imgclipg,imgphotomaker)
+            loadok = sd_load_model(imgmodel,imgvae,imglora,imgt5xxl,imgclip1,imgclip2,imgphotomaker)
             print("Load Image Model OK: " + str(loadok))
             if not loadok:
                 exitcounter = 999
@@ -8509,9 +8513,9 @@ def kcpp_main_process(launch_args, g_memory=None, gui_launcher=False):
 
 
     #load embedded lite
+    embddir = os.path.join(os.path.abspath(os.path.dirname(os.path.realpath(__file__))),"embd_res")
     try:
-        basepath = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
-        with open(os.path.join(basepath, "klite.embd"), mode='rb') as f:
+        with open(os.path.join(embddir, "klite.embd"), mode='rb') as f:
             embedded_kailite = f.read()
             # patch it with extra stuff
             patches = [{"find":"Sorry, KoboldAI Lite requires Javascript to function.","replace":"Sorry, KoboldAI Lite requires Javascript to function.<br>You can use <a class=\"color_blueurl\" href=\"/noscript\">KoboldCpp NoScript mode</a> instead."},
@@ -8526,16 +8530,14 @@ def kcpp_main_process(launch_args, g_memory=None, gui_launcher=False):
         print("Could not find KoboldAI Lite. Embedded KoboldAI Lite will not be available.")
 
     try:
-        basepath = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
-        with open(os.path.join(basepath, "kcpp_docs.embd"), mode='rb') as f:
+        with open(os.path.join(embddir, "kcpp_docs.embd"), mode='rb') as f:
             embedded_kcpp_docs = f.read()
             print("Embedded API docs loaded.")
     except Exception:
         print("Could not find Embedded KoboldCpp API docs.")
 
     try:
-        basepath = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
-        with open(os.path.join(basepath, "kcpp_sdui.embd"), mode='rb') as f:
+        with open(os.path.join(embddir, "kcpp_sdui.embd"), mode='rb') as f:
             embedded_kcpp_sdui = f.read()
             if args.sdmodel:
                 print("Embedded SDUI loaded.")
@@ -8861,14 +8863,14 @@ if __name__ == '__main__':
     sdparsergroup.add_argument("--sdthreads", metavar=('[threads]'), help="Use a different number of threads for image generation if specified. Otherwise, has the same value as --threads.", type=int, default=0)
     sdparsergroup.add_argument("--sdclamped", metavar=('[maxres]'), help="If specified, limit generation steps and image size for shared use. Accepts an extra optional parameter that indicates maximum resolution (eg. 768 clamps to 768x768, min 512px, disabled if 0).", nargs='?', const=512, type=int, default=0)
     sdparsergroup.add_argument("--sdclampedsoft", metavar=('[maxres]'), help="If specified, limit max image size to curb memory usage. Similar to --sdclamped, but less strict, allows trade-offs between width and height (e.g. 640 would allow 640x640, 512x768 and 768x512 images). Total resolution cannot exceed 1MP.", type=int, default=0)
-    sdparsergroup.add_argument("--sdt5xxl", metavar=('[filename]'), help="Specify a T5-XXL safetensors model for use in SD3 or Flux. Leave blank if prebaked or unused.", default="")
-    sdparsergroup.add_argument("--sdclipl", metavar=('[filename]'), help="Specify a Clip-L safetensors model for use in SD3 or Flux. Leave blank if prebaked or unused.", default="")
-    sdparsergroup.add_argument("--sdclipg", metavar=('[filename]'), help="Specify a Clip-G safetensors model for use in SD3. Leave blank if prebaked or unused.", default="")
+    sdparsergroup.add_argument("--sdt5xxl", metavar=('[filename]'), help="Specify a T5-XXL safetensors model. Leave blank if prebaked or unused.", default="")
+    sdparsergroup.add_argument("--sdclip1", "--sdclipl", metavar=('[filename]'), help="Specify first safetensors Clip model (SD3 or Flux Clip-L, WAN or QwenImg vision). Leave blank if prebaked or unused.", default="")
+    sdparsergroup.add_argument("--sdclip2", "--sdclipg", metavar=('[filename]'), help="Specify second safetensors Clip model (SD3 Clip-G). Leave blank if prebaked or unused.", default="")
     sdparsergroup.add_argument("--sdphotomaker", metavar=('[filename]'), help="PhotoMaker is a model that allows face cloning. Specify a PhotoMaker safetensors model which will be applied replacing img2img. SDXL models only. Leave blank if unused.", default="")
     sdparsergroup.add_argument("--sdflashattention", help="Enables Flash Attention for image generation.", action='store_true')
     sdparsergroup.add_argument("--sdoffloadcpu", help="Offload image weights in RAM to save VRAM, swap into VRAM when needed.", action='store_true')
     sdparsergroup.add_argument("--sdvaecpu", help="Force VAE to CPU only for image generation.", action='store_true')
-    sdparsergroup.add_argument("--sdclipcpu", help="Force CLIP to CPU only for image generation.", action='store_true')
+    sdparsergroup.add_argument("--sdclipgpu", help="Put CLIP and T5 to GPU for image generation. Otherwise, CLIP will use CPU.", action='store_true')
     sdparsergroup.add_argument("--sdconvdirect", help="Enables Conv2D Direct. May improve performance or reduce memory usage. Might crash if not supported by the backend. Can be 'off' (default) to disable, 'full' to turn it on for all operations, or 'vaeonly' to enable only for the VAE.", type=sd_convdirect_option, choices=sd_convdirect_choices, default=sd_convdirect_choices[0])
     sdparsergroupvae = sdparsergroup.add_mutually_exclusive_group()
     sdparsergroupvae.add_argument("--sdvae", metavar=('[filename]'), help="Specify an image generation safetensors VAE which replaces the one in the model.", default="")

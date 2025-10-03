@@ -17,8 +17,11 @@
 #include "model.h"
 #include "stable-diffusion.h"
 #include "util.h"
+#ifdef KCPP_BAKE_SD_VOCAB
 #include "vocab.hpp"
+#include "vocab_qwen.hpp"
 #include "vocab_umt5.hpp"
+#endif
 
 #include "ggml-alloc.h"
 #include "ggml-backend.h"
@@ -124,6 +127,9 @@ const char* unused_tensors[] = {
     "embedding_manager",
     "denoiser.sigmas",
     "text_encoders.t5xxl.transformer.encoder.embed_tokens.weight",  // only used during training
+    "text_encoders.qwen2vl.output.weight",
+    "text_encoders.qwen2vl.lm_head.",
+    "text_encoders.qwen2vl.visual.",
 };
 
 bool is_unused_tensor(std::string name) {
@@ -207,6 +213,21 @@ std::unordered_map<std::string, std::string> pmid_v2_name_map = {
      "pmid.qformer_perceiver.token_proj.fc2.weight"},
 };
 
+std::unordered_map<std::string, std::string> qwenvl_name_map{
+    {"token_embd.", "model.embed_tokens."},
+    {"blk.", "model.layers."},
+    {"attn_q.", "self_attn.q_proj."},
+    {"attn_k.", "self_attn.k_proj."},
+    {"attn_v.", "self_attn.v_proj."},
+    {"attn_output.", "self_attn.o_proj."},
+    {"attn_norm.", "input_layernorm."},
+    {"ffn_down.", "mlp.down_proj."},
+    {"ffn_gate.", "mlp.gate_proj."},
+    {"ffn_up.", "mlp.up_proj."},
+    {"ffn_norm.", "post_attention_layernorm."},
+    {"output_norm.", "model.norm."},
+};
+
 std::string convert_cond_model_name(const std::string& name) {
     std::string new_name = name;
     std::string prefix;
@@ -263,6 +284,13 @@ std::string convert_cond_model_name(const std::string& name) {
         pos = new_name.find("attn_rel_b.");
         if (pos != std::string::npos) {
             new_name.replace(pos, 11, "layer.0.SelfAttention.relative_attention_bias.");
+        }
+    } else if (contains(name, "qwen2vl")) {
+        for (auto kv : qwenvl_name_map) {
+            size_t pos = new_name.find(kv.first);
+            if (pos != std::string::npos) {
+                new_name.replace(pos, kv.first.size(), kv.second);
+            }
         }
     } else if (name == "text_encoders.t5xxl.transformer.token_embd.weight") {
         new_name = "text_encoders.t5xxl.transformer.shared.weight";
@@ -594,7 +622,11 @@ std::string convert_tensor_name(std::string name) {
     //     name.replace(pos, strlen("lora_B"), "lora_down");
     // }
     std::string new_name = name;
-    if (starts_with(name, "cond_stage_model.") || starts_with(name, "conditioner.embedders.") || starts_with(name, "text_encoders.") || ends_with(name, ".vision_model.visual_projection.weight")) {
+    if (starts_with(name, "cond_stage_model.") ||
+        starts_with(name, "conditioner.embedders.") ||
+        starts_with(name, "text_encoders.") ||
+        ends_with(name, ".vision_model.visual_projection.weight") ||
+        starts_with(name, "qwen2vl")) {
         new_name = convert_cond_model_name(name);
     } else if (starts_with(name, "first_stage_model.decoder")) {
         new_name = convert_vae_decoder_name(name);
@@ -713,6 +745,7 @@ void preprocess_tensor(TensorStorage tensor_storage,
 
     // convert unet transformer linear to conv2d 1x1
     if (starts_with(new_name, "model.diffusion_model.") &&
+        !starts_with(new_name, "model.diffusion_model.proj_out.") &&
         (ends_with(new_name, "proj_in.weight") || ends_with(new_name, "proj_out.weight"))) {
         tensor_storage.unsqueeze();
     }
@@ -1772,6 +1805,9 @@ SDVersion ModelLoader::get_sd_version() {
             if (tensor_storage.name.find("model.diffusion_model.joint_blocks.") != std::string::npos) {
                 return VERSION_SD3;
             }
+            if (tensor_storage.name.find("model.diffusion_model.transformer_blocks.0.img_mod.1.weight") != std::string::npos) {
+                return VERSION_QWEN_IMAGE;
+            }
             if (tensor_storage.name.find("model.diffusion_model.blocks.0.cross_attn.norm_k.weight") != std::string::npos) {
                 is_wan = true;
             }
@@ -1976,18 +2012,39 @@ void ModelLoader::set_wtype_override(ggml_type wtype, std::string prefix) {
 }
 
 std::string ModelLoader::load_merges() {
+#ifdef KCPP_BAKE_SD_VOCAB
     std::string merges_utf8_str(reinterpret_cast<const char*>(merges_utf8_c_str), sizeof(merges_utf8_c_str));
     return merges_utf8_str;
+#else
+    return sd_load_merges();
+#endif
+}
+
+std::string ModelLoader::load_qwen2_merges() {
+#ifdef KCPP_BAKE_SD_VOCAB
+    std::string merges_utf8_str(reinterpret_cast<const char*>(qwen2_merges_utf8_c_str), sizeof(qwen2_merges_utf8_c_str));
+    return merges_utf8_str;
+#else
+    return sd_load_qwen2_merges();
+#endif
 }
 
 std::string ModelLoader::load_t5_tokenizer_json() {
+#ifdef KCPP_BAKE_SD_VOCAB
     std::string json_str(reinterpret_cast<const char*>(t5_tokenizer_json_str), sizeof(t5_tokenizer_json_str));
     return json_str;
+#else
+    return sd_load_t5();
+#endif
 }
 
 std::string ModelLoader::load_umt5_tokenizer_json() {
+#ifdef KCPP_BAKE_SD_VOCAB
     std::string json_str(reinterpret_cast<const char*>(umt5_tokenizer_json_str), sizeof(umt5_tokenizer_json_str));
     return json_str;
+#else
+    return sd_load_umt5();
+#endif
 }
 
 bool ModelLoader::load_tensors(on_new_tensor_cb_t on_new_tensor_cb, int n_threads_p) {

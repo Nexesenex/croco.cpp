@@ -15,11 +15,17 @@
 
 #include "model_adapter.h"
 
+std::string sd_load_merges();
+std::string sd_load_t5();
+std::string sd_load_umt5();
+std::string sd_load_qwen2_merges();
+
 #include "flux.hpp"
 #include "stable-diffusion.cpp"
 #include "util.cpp"
 #include "upscaler.cpp"
 #include "model.cpp"
+#include "tokenize_util.cpp"
 #include "zip.c"
 
 #include "otherarch/utils.h"
@@ -112,6 +118,62 @@ static bool loaded_model_is_chroma(sd_ctx_t* ctx)
     return false;
 }
 
+static std::string read_str_from_disk(std::string filepath)
+{
+    std::string output;
+    std::cout << "\nTry read vocab from " << filepath << std::endl;
+
+    std::ifstream file(filepath);  // text mode
+    if (!file) {
+        throw std::runtime_error("Failed to open file: " + filepath);
+    }
+
+    output.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+
+    return output;
+}
+
+std::string sd_load_merges()
+{
+    static std::string mergesstr;  // cached string
+    if (!mergesstr.empty()) {
+        return mergesstr;  // already loaded
+    }
+    std::string filepath = executable_path + "embd_res/merges_utf8_c_str.embd";
+    mergesstr = read_str_from_disk(filepath);
+    return mergesstr;
+}
+std::string sd_load_qwen2_merges()
+{
+    static std::string qwenmergesstr;  // cached string
+    if (!qwenmergesstr.empty()) {
+        return qwenmergesstr;  // already loaded
+    }
+    std::string filepath = executable_path + "embd_res/qwen2_merges_utf8_c_str.embd";
+    qwenmergesstr = read_str_from_disk(filepath);
+    return qwenmergesstr;
+}
+std::string sd_load_t5()
+{
+    static std::string t5str = "";
+    if (!t5str.empty()) {
+        return t5str;  // already loaded
+    }
+    std::string filepath = executable_path + "embd_res/t5_tokenizer_json.embd";
+    t5str = read_str_from_disk(filepath);
+    return t5str;
+}
+std::string sd_load_umt5()
+{
+    static std::string umt5str = "";
+    if (!umt5str.empty()) {
+        return umt5str;  // already loaded
+    }
+    std::string filepath = executable_path + "embd_res/umt5_tokenizer_json.embd";
+    umt5str = read_str_from_disk(filepath);
+    return umt5str;
+}
+
 bool sdtype_load_model(const sd_load_model_inputs inputs) {
     sd_is_quiet = inputs.quiet;
     set_sd_quiet(sd_is_quiet);
@@ -120,8 +182,8 @@ bool sdtype_load_model(const sd_load_model_inputs inputs) {
     std::string lorafilename = inputs.lora_filename;
     std::string vaefilename = inputs.vae_filename;
     std::string t5xxl_filename = inputs.t5xxl_filename;
-    std::string clipl_filename = inputs.clipl_filename;
-    std::string clipg_filename = inputs.clipg_filename;
+    std::string clip1_filename = inputs.clip1_filename;
+    std::string clip2_filename = inputs.clip2_filename;
     std::string photomaker_filename = inputs.photomaker_filename;
     cfg_tiled_vae_threshold = inputs.tiled_vae_threshold;
     cfg_tiled_vae_threshold = (cfg_tiled_vae_threshold > 8192 ? 8192 : cfg_tiled_vae_threshold);
@@ -136,7 +198,7 @@ bool sdtype_load_model(const sd_load_model_inputs inputs) {
     }
     if(inputs.taesd)
     {
-        taesdpath = executable_path + "taesd.embd";
+        taesdpath = executable_path + "embd_res/taesd.embd";
         printf("With TAE SD VAE: %s\n",taesdpath.c_str());
         if (cfg_tiled_vae_threshold < 8192) {
             printf("  disabling VAE tiling for TAESD\n");
@@ -151,13 +213,13 @@ bool sdtype_load_model(const sd_load_model_inputs inputs) {
     {
         printf("With Custom T5-XXL Model: %s\n",t5xxl_filename.c_str());
     }
-    if(clipl_filename!="")
+    if(clip1_filename!="")
     {
-        printf("With Custom Clip-L Model: %s\n",clipl_filename.c_str());
+        printf("With Custom Clip-1 Model: %s\n",clip1_filename.c_str());
     }
-    if(clipg_filename!="")
+    if(clip2_filename!="")
     {
-        printf("With Custom Clip-G Model: %s\n",clipg_filename.c_str());
+        printf("With Custom Clip-2 Model: %s\n",clip2_filename.c_str());
     }
     if(photomaker_filename!="")
     {
@@ -220,12 +282,12 @@ bool sdtype_load_model(const sd_load_model_inputs inputs) {
     sd_params->vae_path = vaefilename;
     sd_params->taesd_path = taesdpath;
     sd_params->t5xxl_path = t5xxl_filename;
-    sd_params->clip_l_path = clipl_filename;
-    sd_params->clip_g_path = clipg_filename;
+    sd_params->clip_l_path = clip1_filename;
+    sd_params->clip_g_path = clip2_filename;
     sd_params->stacked_id_embeddings_path = photomaker_filename;
     //if t5 is set, and model is a gguf, load it as a diffusion model path
     bool endswithgguf = (sd_params->model_path.rfind(".gguf") == sd_params->model_path.size() - 5);
-    if(sd_params->t5xxl_path!="" && endswithgguf)
+    if((sd_params->t5xxl_path!="" || sd_params->clip_l_path!="" || sd_params->clip_g_path!="") && endswithgguf)
     {
         //extra check - make sure there is no diffusion model prefix already inside!
         if(!gguf_tensor_exists(sd_params->model_path,"model.diffusion_model.",false))
@@ -491,6 +553,99 @@ static enum sample_method_t sampler_from_name(const std::string& sampler)
     }
 }
 
+
+uint8_t* load_image_from_b64(const std::string & b64str, int& width, int& height, int expected_width = 0, int expected_height = 0, int expected_channel = 3)
+{
+    std::vector<uint8_t> decoded_buf = kcpp_base64_decode(b64str);
+    int c = 0;
+    uint8_t* image_buffer = (uint8_t*)stbi_load_from_memory(decoded_buf.data(), decoded_buf.size(), &width, &height, &c, expected_channel);
+
+    if (image_buffer == NULL) {
+        fprintf(stderr, "load_image_from_b64 failed\n");
+        return NULL;
+    }
+    if (c < expected_channel) {
+        fprintf(stderr, "load_image_from_b64: the number of channels for the input image must be >= %d, but got %d channels\n", expected_channel, c);
+        free(image_buffer);
+        return NULL;
+    }
+    if (width <= 0) {
+        fprintf(stderr, "load_image_from_b64 error: the width of image must be greater than 0\n");
+        free(image_buffer);
+        return NULL;
+    }
+    if (height <= 0) {
+        fprintf(stderr, "load_image_from_b64 error: the height of image must be greater than 0\n");
+        free(image_buffer);
+        return NULL;
+    }
+
+    // Resize input image ...
+    if ((expected_width > 0 && expected_height > 0) && (height != expected_height || width != expected_width)) {
+        float dst_aspect = (float)expected_width / (float)expected_height;
+        float src_aspect = (float)width / (float)height;
+
+        int crop_x = 0, crop_y = 0;
+        int crop_w = width, crop_h = height;
+
+        if (src_aspect > dst_aspect) {
+            crop_w = (int)(height * dst_aspect);
+            crop_x = (width - crop_w) / 2;
+        } else if (src_aspect < dst_aspect) {
+            crop_h = (int)(width / dst_aspect);
+            crop_y = (height - crop_h) / 2;
+        }
+
+        if (crop_x != 0 || crop_y != 0) {
+            if(!sd_is_quiet && sddebugmode==1)
+            {
+                printf("\ncrop input image from %dx%d to %dx%d\n", width, height, crop_w, crop_h);
+            }
+            uint8_t* cropped_image_buffer = (uint8_t*)malloc(crop_w * crop_h * expected_channel);
+            if (cropped_image_buffer == NULL) {
+                fprintf(stderr, "\nerror: allocate memory for crop\n");
+                free(image_buffer);
+                return NULL;
+            }
+            for (int row = 0; row < crop_h; row++) {
+                uint8_t* src = image_buffer + ((crop_y + row) * width + crop_x) * expected_channel;
+                uint8_t* dst = cropped_image_buffer + (row * crop_w) * expected_channel;
+                memcpy(dst, src, crop_w * expected_channel);
+            }
+
+            width  = crop_w;
+            height = crop_h;
+            free(image_buffer);
+            image_buffer = cropped_image_buffer;
+        }
+
+        if(!sd_is_quiet && sddebugmode==1)
+        {
+            printf("\nresize input image from %dx%d to %dx%d\n", width, height, expected_width, expected_height);
+        }
+        int resized_height = expected_height;
+        int resized_width  = expected_width;
+
+        uint8_t* resized_image_buffer = (uint8_t*)malloc(resized_height * resized_width * expected_channel);
+        if (resized_image_buffer == NULL) {
+            fprintf(stderr, "\nerror: allocate memory for resize input image\n");
+            free(image_buffer);
+            return NULL;
+        }
+        stbir_resize(image_buffer, width, height, 0,
+                     resized_image_buffer, resized_width, resized_height, 0, STBIR_TYPE_UINT8,
+                     expected_channel, STBIR_ALPHA_CHANNEL_NONE, 0,
+                     STBIR_EDGE_CLAMP, STBIR_EDGE_CLAMP,
+                     STBIR_FILTER_BOX, STBIR_FILTER_BOX,
+                     STBIR_COLORSPACE_SRGB, nullptr);
+        width  = resized_width;
+        height = resized_height;
+        free(image_buffer);
+        image_buffer = resized_image_buffer;
+    }
+    return image_buffer;
+}
+
 sd_generation_outputs sdtype_generate(const sd_generation_inputs inputs)
 {
     sd_generation_outputs output;
@@ -581,22 +736,16 @@ sd_generation_outputs sdtype_generate(const sd_generation_inputs inputs)
 
     //for img2img
     sd_image_t input_image = {0,0,0,nullptr};
-    std::vector<sd_image_t> extraimage_references;
-    extraimage_references.reserve(max_extra_images);
-    std::vector<uint8_t> image_buffer;
-    std::vector<uint8_t> image_mask_buffer;
-    std::vector<std::vector<uint8_t>> extraimage_buffers;
-    extraimage_buffers.reserve(max_extra_images);
+    std::vector<sd_image_t> kontext_imgs;
+    std::vector<sd_image_t> wan_imgs;
+    std::vector<sd_image_t> photomaker_imgs;
+    bool is_wan = (loadedsdver == SDVersion::VERSION_WAN2 || loadedsdver == SDVersion::VERSION_WAN2_2_I2V || loadedsdver == SDVersion::VERSION_WAN2_2_TI2V);
+    bool is_kontext = (loadedsdver==SDVersion::VERSION_FLUX && !loaded_model_is_chroma(sd_ctx));
 
     int nx, ny, nc;
     int img2imgW = sd_params->width; //for img2img input
     int img2imgH = sd_params->height;
     int img2imgC = 3; // Assuming RGB image
-    //because the reference image can be larger than the output image, allocate at least enough for 1024x1024
-    const int imgMemNeed = std::max(img2imgW * img2imgH * img2imgC + 512, 1024 * 1024 * img2imgC + 512);
-    std::vector<uint8_t> resized_image_buf(imgMemNeed);
-    std::vector<uint8_t> resized_mask_buf(imgMemNeed);
-    std::vector<std::vector<uint8_t>> resized_extraimage_bufs(max_extra_images, std::vector<uint8_t>(imgMemNeed));
 
     std::string ts = get_timestamp_str();
     if(!sd_is_quiet)
@@ -618,52 +767,45 @@ sd_generation_outputs sdtype_generate(const sd_generation_inputs inputs)
             }
             input_extraimage_buffers.clear();
         }
-        extraimage_buffers.clear();
-        extraimage_references.clear();
         for(int i=0;i<extra_image_data.size() && i<max_extra_images;++i)
         {
             int nx2, ny2, nc2;
             int desiredchannels = 3;
-            extraimage_buffers.push_back(kcpp_base64_decode(extra_image_data[i]));
-            input_extraimage_buffers.push_back(stbi_load_from_memory(extraimage_buffers[i].data(), extraimage_buffers[i].size(), &nx2, &ny2, &nc2, desiredchannels));
-            // Resize the image
-            float aspect_ratio = static_cast<float>(nx2) / ny2;
-            int desiredWidth = nx2;
-            int desiredHeight = ny2;
-            int smallestsrcdim = std::min(img2imgW,img2imgH);
-            if(desiredWidth > desiredHeight)
+            if(is_wan)
             {
-                desiredWidth = smallestsrcdim;
-                desiredHeight = smallestsrcdim / aspect_ratio;
-            } else {
-                desiredHeight = smallestsrcdim;
-                desiredWidth = smallestsrcdim * aspect_ratio;
+                uint8_t * loaded = load_image_from_b64(extra_image_data[i],nx2,ny2,img2imgW,img2imgH,3);
+                if(loaded)
+                {
+                    input_extraimage_buffers.push_back(loaded);
+                    sd_image_t extraimage_reference;
+                    extraimage_reference.width = nx2;
+                    extraimage_reference.height = ny2;
+                    extraimage_reference.channel = desiredchannels;
+                    extraimage_reference.data = loaded;
+                    wan_imgs.push_back(extraimage_reference);
+                }
             }
-
-            //round dims to 64
-            desiredWidth = roundnearest(16,desiredWidth);
-            desiredHeight = roundnearest(16,desiredHeight);
-            desiredWidth = std::clamp(desiredWidth,64,1024);
-            desiredHeight = std::clamp(desiredHeight,64,1024);
-
-            if(!sd_is_quiet && sddebugmode==1)
+            else if (is_kontext || photomaker_enabled)
             {
-                printf("Resize Extraimg: %dx%d to %dx%d\n",nx2,ny2,desiredWidth,desiredHeight);
+                uint8_t * loaded = load_image_from_b64(extra_image_data[i],nx2,ny2);
+                if(loaded)
+                {
+                    input_extraimage_buffers.push_back(loaded);
+                    sd_image_t extraimage_reference;
+                    extraimage_reference.width = nx2;
+                    extraimage_reference.height = ny2;
+                    extraimage_reference.channel = desiredchannels;
+                    extraimage_reference.data = loaded;
+                    if(is_kontext)
+                    {
+                        kontext_imgs.push_back(extraimage_reference);
+                    }
+                    else
+                    {
+                        photomaker_imgs.push_back(extraimage_reference);
+                    }
+                }
             }
-            int resok = stbir_resize_uint8(input_extraimage_buffers[i], nx2, ny2, 0, resized_extraimage_bufs[i].data(), desiredWidth, desiredHeight, 0, desiredchannels);
-            if (!resok) {
-                printf("\nKCPP SD: resize extra image failed!\n");
-                output.data = "";
-                output.animated = 0;
-                output.status = 0;
-                return output;
-            }
-            sd_image_t extraimage_reference;
-            extraimage_reference.width = desiredWidth;
-            extraimage_reference.height = desiredHeight;
-            extraimage_reference.channel = desiredchannels;
-            extraimage_reference.data = resized_extraimage_bufs[i].data();
-            extraimage_references.push_back(extraimage_reference);
         }
 
         //ensure prompt has img keyword, otherwise append it
@@ -676,33 +818,10 @@ sd_generation_outputs sdtype_generate(const sd_generation_inputs inputs)
                 sd_params->prompt = "person " + sd_params->prompt;
             }
         }
-    }
 
-    std::vector<sd_image_t> reference_imgs;
-    bool is_wan = (loadedsdver == SDVersion::VERSION_WAN2 || loadedsdver == SDVersion::VERSION_WAN2_2_I2V || loadedsdver == SDVersion::VERSION_WAN2_2_TI2V);
-    bool is_kontext = (loadedsdver==SDVersion::VERSION_FLUX && !loaded_model_is_chroma(sd_ctx));
-    if(extra_image_data.size()>0 && (is_wan || is_kontext))
-    {
-        for(int i=0;i<extra_image_data.size();++i)
-        {
-            reference_imgs.push_back(extraimage_references[i]);
-        }
         if(!sd_is_quiet && sddebugmode==1)
         {
-            printf("\nImage Gen: Using %d reference images\n",reference_imgs.size());
-        }
-    }
-
-    std::vector<sd_image_t> photomaker_imgs;
-    if(photomaker_enabled && extra_image_data.size()>0)
-    {
-        for(int i=0;i<extra_image_data.size();++i)
-        {
-            photomaker_imgs.push_back(extraimage_references[i]);
-        }
-        if(!sd_is_quiet && sddebugmode==1)
-        {
-            printf("\nPhotomaker: Using %d reference images\n",photomaker_imgs.size());
+            printf("\nImageGen References: Kontext=%d Wan=%d Photomaker=%d\n",kontext_imgs.size(),wan_imgs.size(),photomaker_imgs.size());
         }
     }
 
@@ -725,9 +844,8 @@ sd_generation_outputs sdtype_generate(const sd_generation_inputs inputs)
     params.vae_tiling_params.enabled = dotile;
     params.batch_count = 1;
 
-    params.ref_images = reference_imgs.data();
-    params.ref_images_count = reference_imgs.size();
-
+    params.ref_images = kontext_imgs.data();
+    params.ref_images_count = kontext_imgs.size();
     params.pm_params.id_images = photomaker_imgs.data();
     params.pm_params.id_images_count = photomaker_imgs.size();
 
@@ -752,15 +870,15 @@ sd_generation_outputs sdtype_generate(const sd_generation_inputs inputs)
         vid_gen_params.strength = params.strength;
         vid_gen_params.seed = params.seed;
         vid_gen_params.video_frames = vid_req_frames;
-        if(reference_imgs.size()>0)
+        if(wan_imgs.size()>0)
         {
-            if(reference_imgs.size()>=1)
+            if(wan_imgs.size()>=1)
             {
-                vid_gen_params.init_image = reference_imgs[0];
+                vid_gen_params.init_image = wan_imgs[0];
             }
-            if(reference_imgs.size()>=2)
+            if(wan_imgs.size()>=2)
             {
-                vid_gen_params.end_image = reference_imgs[1];
+                vid_gen_params.end_image = wan_imgs[1];
             }
         }
         if(!sd_is_quiet && sddebugmode==1)
@@ -775,7 +893,7 @@ sd_generation_outputs sdtype_generate(const sd_generation_inputs inputs)
             << "\nSTRENGTH:" << vid_gen_params.strength
             << "\nFRAMES:"   << vid_gen_params.video_frames
             << "\nCTRL_FRM:" << vid_gen_params.control_frames_size
-            << "\nREF_IMGS:"   << reference_imgs.size()
+            << "\nINIT_IMGS:" << wan_imgs.size()
             << "\n\n";
             printf("%s", ss.str().c_str());
         }
@@ -819,37 +937,16 @@ sd_generation_outputs sdtype_generate(const sd_generation_inputs inputs)
             return output;
         }
 
-        image_buffer = kcpp_base64_decode(img2img_data);
         if(input_image_buffer!=nullptr) //just in time free old buffer
         {
              stbi_image_free(input_image_buffer);
              input_image_buffer = nullptr;
         }
-        input_image_buffer = stbi_load_from_memory(image_buffer.data(), image_buffer.size(), &nx, &ny, &nc, 3);
 
-        if (nx < 64 || ny < 64 || nx > 2048 || ny > 2048 || nc!= 3) {
-            printf("\nKCPP SD: bad input image dimensions %d x %d!\n",nx,ny);
-            output.data = "";
-            output.animated = 0;
-            output.status = 0;
-            return output;
-        }
+        input_image_buffer = load_image_from_b64(img2img_data,nx,ny,img2imgW,img2imgH,3);
+
         if (!input_image_buffer) {
             printf("\nKCPP SD: load image from memory failed!\n");
-            output.data = "";
-            output.animated = 0;
-            output.status = 0;
-            return output;
-        }
-
-        // Resize the image
-        if(!sd_is_quiet && sddebugmode==1)
-        {
-            printf("Resize Img2Img: %dx%d to %dx%d\n",nx,ny,img2imgW,img2imgH);
-        }
-        int resok = stbir_resize_uint8(input_image_buffer, nx, ny, 0, resized_image_buf.data(), img2imgW, img2imgH, 0, img2imgC);
-        if (!resok) {
-            printf("\nKCPP SD: resize image failed!\n");
             output.data = "";
             output.animated = 0;
             output.status = 0;
@@ -864,26 +961,13 @@ sd_generation_outputs sdtype_generate(const sd_generation_inputs inputs)
                 stbi_image_free(input_mask_buffer);
                 input_mask_buffer = nullptr;
             }
-            image_mask_buffer = kcpp_base64_decode(img2img_mask);
-            input_mask_buffer = stbi_load_from_memory(image_mask_buffer.data(), image_mask_buffer.size(), &nx2, &ny2, &nc2, 1);
-            // Resize the image
-             if(!sd_is_quiet && sddebugmode==1)
-            {
-                printf("Resize Mask: %dx%d to %dx%d\n",nx2,ny2,img2imgW,img2imgH);
-            }
-            int resok = stbir_resize_uint8(input_mask_buffer, nx2, ny2, 0, resized_mask_buf.data(), img2imgW, img2imgH, 0, 1);
-            if (!resok) {
-                printf("\nKCPP SD: resize image failed!\n");
-                output.data = "";
-                output.animated = 0;
-                output.status = 0;
-                return output;
-            }
+            input_mask_buffer = load_image_from_b64(img2img_mask,nx2,ny2,img2imgW,img2imgH,1);
+
             if(inputs.flip_mask)
             {
-                int bufsiz = resized_mask_buf.size();
+                int bufsiz = nx2 * ny2 * 1; //1 channel
                 for (int i = 0; i < bufsiz; ++i) {
-                    resized_mask_buf[i] = 255 - resized_mask_buf[i];
+                    input_mask_buffer[i] = 255 - input_mask_buffer[i];
                 }
             }
         }
@@ -891,12 +975,12 @@ sd_generation_outputs sdtype_generate(const sd_generation_inputs inputs)
         input_image.width = img2imgW;
         input_image.height = img2imgH;
         input_image.channel = img2imgC;
-        input_image.data = resized_image_buf.data();
+        input_image.data = input_image_buffer;
 
         uint8_t* mask_image_buffer    = NULL;
         std::vector<uint8_t> default_mask_image_vec(img2imgW * img2imgH * img2imgC, 255);
         if (img2img_mask != "") {
-            mask_image_buffer = resized_mask_buf.data();
+            mask_image_buffer = input_mask_buffer;
         } else {
             mask_image_buffer = default_mask_image_vec.data();
         }
@@ -908,7 +992,7 @@ sd_generation_outputs sdtype_generate(const sd_generation_inputs inputs)
         if(!sd_is_quiet && sddebugmode==1)
         {
             std::stringstream ss;
-            ss  << "\nnIMG2IMG PROMPT:" << params.prompt
+            ss  << "\nIMG2IMG PROMPT:" << params.prompt
                 << "\nNPROMPT:" << params.negative_prompt
                 << "\nCLPSKP:" << params.clip_skip
                 << "\nCFGSCLE:" << params.sample_params.guidance.txt_cfg

@@ -209,7 +209,7 @@ static best_fattn_kernel ggml_cuda_get_best_fattn_kernel(const int device, const
     const int cc = ggml_cuda_info().devices[device].cc;
 
     #if defined(GGML_HIP_ROCWMMA_FATTN)
-    if (GGML_CUDA_CC_IS_AMD(cc) && fp16_mma_available(cc)) { //kcpp: fix for rocwmma
+    if (GGML_CUDA_CC_IS_AMD(cc) && ggml_cuda_should_use_wmma_fattn(cc)) { //kcpp: fix for rocwmma
         return BEST_FATTN_KERNEL_WMMA_F16;
     }
     #endif // defined(GGML_HIP_ROCWMMA_FATTN)
@@ -228,7 +228,7 @@ static best_fattn_kernel ggml_cuda_get_best_fattn_kernel(const int device, const
             if (V->ne[0] != K->ne[0]) {
                 return BEST_FATTN_KERNEL_NONE;
             }
-            if (!fp16_mma_available(cc) && !turing_mma_available(cc)) {
+            if (!ggml_cuda_should_use_wmma_fattn(cc) && !turing_mma_available(cc)) {
                 return BEST_FATTN_KERNEL_NONE;
             }
             break;
@@ -298,7 +298,7 @@ static best_fattn_kernel ggml_cuda_get_best_fattn_kernel(const int device, const
         }
 
         //kcpp: use wmma to fix cu11 incoherence
-        if (fp16_mma_available(cc) && (ggml_cuda_highest_compiled_arch(cc) <= GGML_CUDA_CC_TURING || cc == GGML_CUDA_CC_TURING)) {
+        if (ggml_cuda_should_use_wmma_fattn(cc) && (ggml_cuda_highest_compiled_arch(cc) <= GGML_CUDA_CC_TURING || cc == GGML_CUDA_CC_TURING)) {
             best = BEST_FATTN_KERNEL_WMMA_F16;
         }
 
@@ -311,7 +311,7 @@ static best_fattn_kernel ggml_cuda_get_best_fattn_kernel(const int device, const
     }
 
     // For large batch sizes, use the WMMA kernel if possible:
-    if (fp16_mma_available(cc)) {
+    if (ggml_cuda_should_use_wmma_fattn(cc)) {
         return BEST_FATTN_KERNEL_WMMA_F16;
     }
 

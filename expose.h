@@ -175,8 +175,8 @@ struct sd_load_model_inputs
     const bool taesd = false;
     const int tiled_vae_threshold = 0;
     const char * t5xxl_filename = nullptr;
-    const char * clipl_filename = nullptr;
-    const char * clipg_filename = nullptr;
+    const char * clip1_filename = nullptr;
+    const char * clip2_filename = nullptr;
     const char * vae_filename = nullptr;
     const char * lora_filename = nullptr;
     const float lora_multiplier = 1.0f;
