@@ -682,9 +682,12 @@ sd_generation_outputs sdtype_generate(const sd_generation_inputs inputs)
     sd_params->clip_skip = inputs.clip_skip;
     sd_params->sample_method = sampler_from_name(inputs.sample_method);
 
-    bool is_img2img = img2img_data != "";
-
     auto loadedsdver = get_loaded_sd_version(sd_ctx);
+    bool is_img2img = img2img_data != "";
+    bool is_wan = (loadedsdver == SDVersion::VERSION_WAN2 || loadedsdver == SDVersion::VERSION_WAN2_2_I2V || loadedsdver == SDVersion::VERSION_WAN2_2_TI2V);
+    bool is_qwenimg = (loadedsdver == SDVersion::VERSION_QWEN_IMAGE);
+    bool is_kontext = (loadedsdver==SDVersion::VERSION_FLUX && !loaded_model_is_chroma(sd_ctx));
+
     if (loadedsdver == SDVersion::VERSION_FLUX)
     {
         if (!loaded_model_is_chroma(sd_ctx) && sd_params->cfg_scale != 1.0f) {
@@ -701,6 +704,11 @@ sd_generation_outputs sdtype_generate(const sd_generation_inputs inputs)
             }
             sd_params->sample_method = sample_method_t::EULER;
         }
+    }
+
+    if(is_wan && extra_image_data.size()==0 && is_img2img)
+    {
+        extra_image_data.push_back(img2img_data);
     }
 
     const int default_res_limit = 8192; // arbitrary, just to simplify the code
@@ -739,8 +747,6 @@ sd_generation_outputs sdtype_generate(const sd_generation_inputs inputs)
     std::vector<sd_image_t> kontext_imgs;
     std::vector<sd_image_t> wan_imgs;
     std::vector<sd_image_t> photomaker_imgs;
-    bool is_wan = (loadedsdver == SDVersion::VERSION_WAN2 || loadedsdver == SDVersion::VERSION_WAN2_2_I2V || loadedsdver == SDVersion::VERSION_WAN2_2_TI2V);
-    bool is_kontext = (loadedsdver==SDVersion::VERSION_FLUX && !loaded_model_is_chroma(sd_ctx));
 
     int nx, ny, nc;
     int img2imgW = sd_params->width; //for img2img input
