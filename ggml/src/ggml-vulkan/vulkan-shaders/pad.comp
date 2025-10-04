@@ -1,6 +1,6 @@
 #version 450
 
-#include "types.glsl"
+#include "types.comp"
 
 layout (push_constant) uniform parameter
 {

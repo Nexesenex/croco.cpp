@@ -4,8 +4,9 @@
 #extension GL_EXT_control_flow_attributes : require
 #extension GL_EXT_shader_explicit_arithmetic_types_int32 : require
 
-#include "rte.glsl"
-#include "types.glsl"
+#include "rte.comp"
+
+#include "types.comp"
 
 layout (push_constant) uniform parameter
 {
