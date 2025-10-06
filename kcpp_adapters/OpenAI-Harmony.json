@@ -4,5 +4,5 @@
   "user_start": "<|start|>user<|message|>",
   "user_end": "<|end|>",
   "assistant_start": "<|start|>assistant<|channel|>final<|message|>",
-  "assistant_end": "<|return|>"
+  "assistant_end": "<|end|>"
 }

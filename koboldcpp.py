@@ -76,10 +76,10 @@ extra_images_max = 4
 # extra_images_max = 4
 
 # global vars
-KcppVersion = "1.97100"
-LcppVersion = "b6110"
+KcppVersion = "1.97300"
+LcppVersion = "b6122"
 IKLcppVersion = "IKLpr624"
-EsoboldVersion = "RMv1.14.9m"
+EsoboldVersion = "RMv1.15.9m"
 CudaSpecifics = "Cu128_Ar86_SMC2_DmmvX32Y1"
 ReleaseDate = "2025/10/06"
 showdebug = True
@@ -4405,15 +4405,10 @@ class KcppServerRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         utfprint("\nOutput: " + recvtxt,1)
 
-        if api_format == 1:
-            res = {"data": {"seqs": [recvtxt]}}
-        elif api_format == 3:
-            res = {"id": "cmpl-A1", "object": "text_completion", "created": int(time.time()), "model": friendlymodelname,
-                   "usage": {"prompt_tokens": prompttokens, "completion_tokens": comptokens, "total_tokens": (prompttokens+comptokens)},
-                   "choices": [{"text": recvtxt, "index": 0, "finish_reason": currfinishreason, "logprobs":logprobsdict}]}
-        elif api_format == 4:
+        #tool calls resolution
+        tool_calls = []
+        if api_format == 4 or api_format == 2:
             using_openai_tools = genparams.get('using_openai_tools', False)
-            tool_calls = []
             if using_openai_tools:
                 tool_calls = extract_json_from_string(recvtxt)
                 if tool_calls and len(tool_calls)>0:
@@ -4424,6 +4419,14 @@ class KcppServerRequestHandler(http.server.SimpleHTTPRequestHandler):
                             tc["function"]["arguments"] = json.dumps(tcarg)
                     recvtxt = None
                     currfinishreason = "tool_calls"
+
+        if api_format == 1:
+            res = {"data": {"seqs": [recvtxt]}}
+        elif api_format == 3:
+            res = {"id": "cmpl-A1", "object": "text_completion", "created": int(time.time()), "model": friendlymodelname,
+                   "usage": {"prompt_tokens": prompttokens, "completion_tokens": comptokens, "total_tokens": (prompttokens+comptokens)},
+                   "choices": [{"text": recvtxt, "index": 0, "finish_reason": currfinishreason, "logprobs":logprobsdict}]}
+        elif api_format == 4:
             res = {"id": "chatcmpl-A1", "object": "chat.completion", "created": int(time.time()), "model": friendlymodelname,
                    "usage": {"prompt_tokens": prompttokens, "completion_tokens": comptokens, "total_tokens": (prompttokens+comptokens)},
                    "choices": [{"index": 0, "message": {"role": "assistant", "content": recvtxt, "tool_calls": tool_calls}, "finish_reason": currfinishreason, "logprobs":logprobsdict}]}
@@ -4435,8 +4438,8 @@ class KcppServerRequestHandler(http.server.SimpleHTTPRequestHandler):
             res = {"model": friendlymodelname,"created_at": str(datetime.now(timezone.utc).isoformat()),"response":recvtxt,"done": True,"done_reason":currfinishreason,"context": tokarr,"total_duration": 1,"load_duration": 1,"prompt_eval_count": prompttokens,"prompt_eval_duration": 1,"eval_count": comptokens,"eval_duration": 1}
         elif api_format == 7:
             res = {"model": friendlymodelname,"created_at": str(datetime.now(timezone.utc).isoformat()),"message":{"role":"assistant","content":recvtxt},"done": True,"done_reason":currfinishreason,"total_duration": 1,"load_duration": 1,"prompt_eval_count": prompttokens,"prompt_eval_duration": 1,"eval_count": comptokens,"eval_duration": 1}
-        else:
-            res = {"results": [{"text": recvtxt, "finish_reason": currfinishreason, "logprobs":logprobsdict, "prompt_tokens": prompttokens, "completion_tokens": comptokens}]}
+        else: #kcpp format
+            res = {"results": [{"text": recvtxt, "tool_calls": tool_calls, "finish_reason": currfinishreason, "logprobs":logprobsdict, "prompt_tokens": prompttokens, "completion_tokens": comptokens}]}
 
         try:
             return res
