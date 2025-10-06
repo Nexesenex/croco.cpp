@@ -19,10 +19,11 @@ elif [ -t 0 ]; then
     # Running interactively
     echo "[1] - Proceed to install and launch with default options - no model is loaded by default, but can be downloaded in the UI"
     echo "[2] - Proceed to install and not run."
-    echo "[3] - Select existing model to load (Requires already installed)"
-    echo "[4] - Exit script"
+    echo "[3] - Download GGUF model from web URL (Requires already installed)"
+    echo "[4] - Load existing GGUF model from disk (Requires already installed)"
+    echo "[5] - Exit script"
     echo "--------------------------------------------"
-    read -p "Enter your choice [1-4]: " choice
+    read -p "Enter your choice [1-5]: " choice
 else
     # Non-interactive, default to choice 1
     echo "Defaulting to normal install and model download. Run script interactively for other options. Install will start in 3 seconds."
@@ -38,10 +39,10 @@ else
 fi
 
 # handle user choice
-if [ "$choice" = "4" ]; then
+if [ "$choice" = "5" ]; then
     echo "Exiting script. Goodbye!"
     exit 0
-elif [ "$choice" = "3" ]; then
+elif [ "$choice" = "4" ]; then
     echo "[*] Searching for .gguf model files in $SCRIPT_DIR..."
     MODEL_FILES=$(find "$SCRIPT_DIR" -type f -maxdepth 1 -name "*.gguf" 2>/dev/null)
     if [ -z "$MODEL_FILES" ]; then
@@ -65,7 +66,11 @@ elif [ "$choice" = "3" ]; then
     echo "Now launching with model $SELECTED_MODEL"
     python koboldcpp.py --model $SELECTED_MODEL
     exit 0
-
+elif [ "$choice" = "3" ]; then
+    read -r -p "Please input FULL URL of model you wish to download and run: " SELECTED_MODEL
+    echo "Starting download of model $SELECTED_MODEL"
+    python koboldcpp.py --model $SELECTED_MODEL
+    exit 0
 elif [ "$choice" = "2" ]; then
     echo "[*] Install without model download..."
     INSTALL_MODEL=false

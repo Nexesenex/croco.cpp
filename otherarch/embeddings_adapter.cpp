@@ -120,6 +120,8 @@ bool embeddingstype_load_model(const embeddings_load_model_inputs inputs)
     model_params.use_mmap = inputs.use_mmap;
     model_params.use_mlock = false;
     model_params.n_gpu_layers = inputs.gpulayers; //offload if possible
+    int kcpp_parseinfo_maindevice = inputs.kcpp_main_gpu<=0?0:inputs.kcpp_main_gpu;
+    model_params.main_gpu = kcpp_parseinfo_maindevice;
     model_params.split_mode = llama_split_mode::LLAMA_SPLIT_MODE_LAYER;
 
     llama_model * embeddingsmodel = llama_model_load_from_file(modelfile.c_str(), model_params);

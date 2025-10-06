@@ -62,6 +62,7 @@ struct load_model_inputs
     const int gpulayers = 0;
     const float rope_freq_scale = 1.0f;
     const float rope_freq_base = 10000.0f;
+    const int overridenativecontext = 0;
     const int moe_experts = -1;
 
     const float norm_rms_eps = -1.0f;
