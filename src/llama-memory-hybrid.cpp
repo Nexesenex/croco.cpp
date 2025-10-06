@@ -9,29 +9,32 @@
 //
 
 llama_memory_hybrid::llama_memory_hybrid(
-        const llama_model & model,
-                            /* attn */
-                ggml_type   type_k,
-                ggml_type   type_v,
-                     bool   v_trans,
-                 uint32_t   kv_size,
-                 uint32_t   n_pad,
-                 uint32_t   n_swa,
-           llama_swa_type   swa_type,
-                            /* recurrent */
-                ggml_type   type_r,
-                ggml_type   type_s,
-                 uint32_t   rs_size,
-                            /* common */
-                 uint32_t   n_seq_max,
-                     bool   offload,
-                     bool   unified,
-                            /* layer filters */
-    const layer_filter_cb & filter_attn,
-    const layer_filter_cb & filter_recr) :
+    const llama_model & model,
+                         /* attn */
+            ggml_type    type_k,
+            ggml_type    type_v,
+                 bool    v_trans,
+             uint32_t    kv_size,
+             uint32_t    n_pad,
+             uint32_t    n_swa,
+       llama_swa_type    swa_type,
+                         /* recurrent */
+            ggml_type    type_r,
+            ggml_type    type_s,
+             uint32_t    rs_size,
+                         /* common */
+             uint32_t    n_seq_max,
+                 bool    offload,
+                 bool    unified,
+                         /* layer filters */
+      layer_filter_cb && filter_attn,
+      layer_filter_cb && filter_recr) :
     hparams(model.hparams),
     mem_attn(new llama_kv_cache(
         model,
+        filter_attn == nullptr ?
+            [&](int32_t il) { return !hparams.is_recurrent(il); }
+            : filter_attn,
         type_k,
         type_v,
         v_trans,
@@ -41,22 +44,18 @@ llama_memory_hybrid::llama_memory_hybrid(
         n_seq_max,
         n_pad,
         n_swa,
-        swa_type,
-        filter_attn == nullptr ?
-            [&](int32_t il) { return !hparams.is_recurrent(il); }
-            : filter_attn,
-        nullptr
+        swa_type
     )),
     mem_recr(new llama_memory_recurrent(
         model,
+        filter_recr == nullptr ?
+            [&](int32_t il) { return hparams.is_recurrent(il); }
+            : filter_recr,
         type_r,
         type_s,
         offload,
         rs_size,
-        n_seq_max,
-        filter_recr == nullptr ?
-            [&](int32_t il) { return hparams.is_recurrent(il); }
-            : filter_recr
+        n_seq_max
     )) {}
 
 llama_memory_context_ptr llama_memory_hybrid::init_batch(llama_batch_allocr & balloc, uint32_t n_ubatch, bool embd_all) {

@@ -20,13 +20,11 @@ public:
                          bool   v_trans,
                          bool   offload,
                          bool   swa_full,
-                         bool   unified,
+                         bool  ,
                      uint32_t   kv_size,
                      uint32_t   n_seq_max,
                      uint32_t   n_ubatch,
-                     uint32_t   n_pad,
-        const layer_filter_cb & filter,
-        const  layer_reuse_cb & reuse);
+                     uint32_t   n_pad);
 
     ~llama_kv_cache_iswa() = default;
 
