@@ -77,10 +77,10 @@ extra_images_max = 4
 # extra_images_max = 4
 
 # global vars
-KcppVersion = "1.98100"
-LcppVersion = "b6267-50"
+KcppVersion = "1.99000"
+LcppVersion = "b6311-60"
 IKLcppVersion = "IKLpr624"
-EsoboldVersion = "RMv1.15.9m"
+EsoboldVersion = "RMv1.16.9m"
 CudaSpecifics = "Cu128_Ar86_SMC2_DmmvX32Y1"
 ReleaseDate = "2025/10/06"
 showdebug = True
@@ -3288,6 +3288,8 @@ def tts_generate(genparams):
     oai_voicemap = ["alloy","onyx","echo","nova","shimmer"] # map to kcpp defaults
     voice_mapping = ["kobo","cheery","sleepy","shouty","chatty"]
     normalized_voice = voicestr.strip().lower() if voicestr else ""
+    if normalized_voice.endswith(".wav"):
+        normalized_voice = normalized_voice[:-4]
     if normalized_voice in voice_mapping:
         voice = voice_mapping.index(normalized_voice) + 1
     elif normalized_voice in oai_voicemap:
@@ -6513,7 +6515,7 @@ def show_gui():
     normrmseps_var = ctk.StringVar(value=str(-1.0))
 
     moecpu_var = ctk.StringVar(value=str(0))
-    defaultgenamt_var = ctk.StringVar(value=str(640))
+    defaultgenamt_var = ctk.StringVar(value=str(768))
     nobostoken_var = ctk.IntVar(value=0)
     override_kv_var = ctk.StringVar(value="")
     override_tensors_var = ctk.StringVar(value="")
@@ -7613,7 +7615,7 @@ def show_gui():
         args.normrmseps = float(normrmseps_var.get()) if normrmseps_var.get()!="" else -1.0
 
         args.moecpu = int(moecpu_var.get()) if moecpu_var.get()!="" else 0
-        args.defaultgenamt = int(defaultgenamt_var.get()) if defaultgenamt_var.get()!="" else 640
+        args.defaultgenamt = int(defaultgenamt_var.get()) if defaultgenamt_var.get()!="" else 768
         args.nobostoken = (nobostoken_var.get()==1)
         args.enableguidance = (enableguidance_var.get()==1)
         args.overridekv = None if override_kv_var.get() == "" else override_kv_var.get()
@@ -9909,7 +9911,7 @@ if __name__ == '__main__':
     advparser.add_argument("--neglayeroffset", help="Removes or adds a layer to the GPU layers autoloader calculation in case of OOM or under-exploitation.", type=check_range(int,0,10), default=0)
 
     advparser.add_argument("--moecpu", metavar=('[layers affected]'), help="Keep the Mixture of Experts (MoE) weights of the first N layers in the CPU. If no value is provided, applies to all layers.", nargs='?', const=999, type=int, default=0)
-    advparser.add_argument("--defaultgenamt", help="How many tokens to generate by default, if not specified. Must be smaller than context size. Usually, your frontend GUI will override this.", type=check_range(int,64,8192), default=640)
+    advparser.add_argument("--defaultgenamt", help="How many tokens to generate by default, if not specified. Must be smaller than context size. Usually, your frontend GUI will override this.", type=check_range(int,64,8192), default=768)
     advparser.add_argument("--nobostoken", help="Prevents BOS token from being added at the start of any prompt. Usually NOT recommended for most models.", action='store_true')
     advparser.add_argument("--enableguidance", help="Enables the use of Classifier-Free-Guidance, which allows the use of negative prompts. Has performance and memory impact.", action='store_true')
     advparser.add_argument("--maxrequestsize", metavar=('[size in MB]'), help="Specify a max request payload size. Any requests to the server larger than this size will be dropped. Do not change if unsure.", type=int, default=32)
