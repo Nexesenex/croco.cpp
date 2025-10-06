@@ -290,6 +290,7 @@ struct llama_mmap::impl {
             throw std::runtime_error(format("mmap failed: %s", strerror(errno)));
         }
 
+#ifndef __ANDROID__
         if (prefetch > 0) {
             if (posix_madvise(addr, std::min(file->size(), prefetch), POSIX_MADV_WILLNEED)) {
                 LLAMA_LOG_WARN("warning: posix_madvise(.., POSIX_MADV_WILLNEED) failed: %s\n",
@@ -302,6 +303,7 @@ struct llama_mmap::impl {
                         strerror(errno));
             }
         }
+#endif
 
         mapped_fragments.emplace_back(0, file->size());
     }

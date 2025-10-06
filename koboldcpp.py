@@ -76,12 +76,12 @@ extra_images_max = 4
 # extra_images_max = 4
 
 # global vars
-KcppVersion = "1.97020"
-LcppVersion = "b6014"
+KcppVersion = "1.97100"
+LcppVersion = "b6110"
 IKLcppVersion = "IKLpr624"
 EsoboldVersion = "RMv1.14.9m"
 CudaSpecifics = "Cu128_Ar86_SMC2_DmmvX32Y1"
-ReleaseDate = "2025/07/28"
+ReleaseDate = "2025/10/06"
 showdebug = True
 # guimode = False
 

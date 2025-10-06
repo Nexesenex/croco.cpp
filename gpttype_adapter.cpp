@@ -4549,7 +4549,7 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
                     TopPicksData toppick = top_picks_history[top_picks_history.size()-1];
                     std::string topstr = toppick.selected_token;
                     ::utreplace(topstr, "\n", "\\n");
-                    printf("(%s %.2f%%)", RemoveBell(topstr).c_str(), toppick.selected_probability*100);
+                    printf("(%s <%d> %.2f%%)", RemoveBell(topstr).c_str(), toppick.selected_tokenid, toppick.selected_probability*100);
                     int maxtoshow = (toppick.tokenid.size()>4?4:toppick.tokenid.size());
                     for (int i=0;i<maxtoshow;++i)
                     {

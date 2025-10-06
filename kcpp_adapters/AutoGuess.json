@@ -89,18 +89,18 @@
     }
 }, {
     "search": ["[/INST]", "[SYSTEM_PROMPT]"],
-    "name": "Mistral V7 (with system prompt)",
+    "name": "Mistral Tekken",
     "adapter": {
-        "system_start": "[SYSTEM_PROMPT] ",
+        "system_start": "[SYSTEM_PROMPT]",
         "system_end": "[/SYSTEM_PROMPT]",
-        "user_start": "[INST] ",
+        "user_start": "[INST]",
         "user_end": "",
         "assistant_start": "[/INST]",
         "assistant_end": "</s>"
     }
 }, {
     "search": ["[/INST]", "\"[INST] \" + system_message"],
-    "name": "Mistral V3",
+    "name": "Mistral Non-Tekken",
     "adapter": {
         "system_start": "[INST] ",
         "system_end": "[/INST]",
@@ -190,12 +190,12 @@
     "search": ["<|start|>user<|message|>", "<|channel|>", "<|end|>"],
     "name": "OpenAI Harmony",
     "adapter": {
-        "system_start": "<|start|>system<|message|>",
-        "system_end": "<|end|>\n",
+        "system_start": "<|start|>developer<|message|>",
+        "system_end": "<|end|>",
         "user_start": "<|start|>user<|message|>",
-        "user_end": "<|end|>\n",
+        "user_end": "<|end|>",
         "assistant_start": "<|start|>assistant<|channel|>final<|message|>",
-        "assistant_end": "<|return|>\n"
+        "assistant_end": "<|return|>"
     }
 }, {
     "search": ["rwkv_", "'User: '"],
@@ -212,11 +212,11 @@
     "search": ["[/INST]"],
     "name": "Mistral (Generic)",
     "adapter": {
-        "system_start": "[INST] ",
-        "system_end": "[/INST]\n",
-        "user_start": "[INST] ",
+        "system_start": "[INST]",
+        "system_end": "[/INST]",
+        "user_start": "[INST]",
         "user_end": "",
-        "assistant_start": "[/INST]\n",
+        "assistant_start": "[/INST]",
         "assistant_end": "</s>"
     }
 }, {

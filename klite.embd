@@ -12,7 +12,7 @@ Current version indicated by LITEVER below.
 -->
 
 <script id="init-config">
-	const LITEVER = 267;
+	const LITEVER = 268;
 	const urlParams = new URLSearchParams(window.location.search);
 	var localflag = urlParams.get('local'); //this will be replaced automatically in embedded kcpp
 	const STORAGE_PREFIX = (localflag?"e_":"")+"kaihordewebui_";
@@ -3218,7 +3218,6 @@ Current version indicated by LITEVER below.
 	const kobold_custom_mdl_endpoint = "/api/v1/model";
 	const kobold_custom_version_endpoint = "/api/v1/info/version";
 	const kobold_custom_maxctxlen_endpoint = "/api/v1/config/max_context_length";
-	const kobold_custom_genamt_endpoint = "/api/v1/config/max_length";
 
 	const koboldcpp_version_endpoint = "/api/extra/version";
 	const koboldcpp_abort_endpoint = "/api/extra/abort";
@@ -3259,7 +3258,7 @@ Current version indicated by LITEVER below.
 	const default_mistralai_base = "https://api.mistral.ai/v1";
 	const default_featherless_base = "https://api.featherless.ai/v1";
 	const default_grok_base = "https://api.x.ai/v1";
-	const default_oai_base = "https://api.openai.com";
+	const default_oai_base = "https://api.openai.com/v1";
 	const default_claude_base = "https://api.anthropic.com";
 	const default_gemini_base = "https://generativelanguage.googleapis.com/v1beta/models/";
 	const default_gemini_suffix = ":generateContent?key=";
@@ -3796,10 +3795,10 @@ Current version indicated by LITEVER below.
 		"system_end":"",
 	},
 	{
-		"name":"Mistral Legacy",
-		"user":" [INST] ",
+		"name":"Mistral Non-Tekken",
+		"user":"[INST] ",
 		"user_end":"",
-		"assistant":" [/INST]",
+		"assistant":"[/INST]",
 		"assistant_end":"</s>",
 		"system":"",
 		"system_end":"",
@@ -3834,11 +3833,11 @@ Current version indicated by LITEVER below.
 	{
 		"name":"OpenAI Harmony",
 		"user":"<|start|>user<|message|>",
-		"user_end":"<|end|>\\n",
+		"user_end":"<|end|>",
 		"assistant":"<|start|>assistant<|channel|>final<|message|>",
-		"assistant_end":"<|return|>\\n",
-		"system":"<|start|>system<|message|>",
-		"system_end":"<|end|>\\n",
+		"assistant_end":"<|return|>",
+		"system":"<|start|>developer<|message|>",
+		"system_end":"<|end|>",
 	},
 	{
 		"name":"Deepseek V2.5",
@@ -6071,7 +6070,7 @@ Current version indicated by LITEVER below.
 			return;
 		}
 		hide_msgbox();
-		fetch(custom_kobold_endpoint + koboldcpp_check_endpoint, {
+		fetch(apply_proxy_url(custom_kobold_endpoint + koboldcpp_check_endpoint), {
 			method: 'POST',
 			headers: get_kobold_header(),
 			body: JSON.stringify({
@@ -6249,7 +6248,7 @@ Current version indicated by LITEVER below.
 						//if we wanted logprobs, try fetching them manually
 						if(localsettings.request_logprobs && last_response_obj==null)
 						{
-							fetch(custom_kobold_endpoint + koboldcpp_logprobs_endpoint, {
+							fetch(apply_proxy_url(custom_kobold_endpoint + koboldcpp_logprobs_endpoint), {
 								method: 'POST',
 								headers: get_kobold_header(),
 								body: JSON.stringify({
@@ -10965,6 +10964,10 @@ Current version indicated by LITEVER below.
 			document.getElementById("inputboxcontainerinputarea").classList.remove("hidden");
 			document.getElementById("inputboxcontainerinputarea").value = inputVal;
 			document.getElementById("inputboxcontainerinputarea").placeholder = escape_html(inputPlaceholder);
+			if(!isPassword)
+			{
+				document.getElementById("inputboxcontainerinputarea").focus();
+			}
 		}
 		else
 		{
@@ -10976,15 +10979,19 @@ Current version indicated by LITEVER below.
 			{
 				inputboxIsPassword = true;
 			}
+			else
+			{
+				document.getElementById("inputboxcontainerinput").focus();
+			}
 		}
 		inputboxblur();
 		onInputboxOk = function(){document.getElementById("inputboxcontainer").classList.add("hidden");onDone();};
 		onInputboxCancel = null;
 		document.getElementById("inputboxcancel").classList.add("hidden");
 	}
-	function inputBoxOkCancel(text,title,inputVal,inputPlaceholder,onDone,onCancel,isHtml=false,isTextArea=false)
+	function inputBoxOkCancel(text,title,inputVal,inputPlaceholder,onDone,onCancel,isHtml=false,isTextArea=false,isPassword=false)
 	{
-		inputBox(text,title,inputVal,inputPlaceholder,onDone,isHtml,isTextArea);
+		inputBox(text,title,inputVal,inputPlaceholder,onDone,isHtml,isTextArea,isPassword);
 		document.getElementById("inputboxcancel").classList.remove("hidden");
 		onInputboxCancel = function(){document.getElementById("inputboxcontainer").classList.add("hidden");onCancel();};
 	}
@@ -11365,7 +11372,13 @@ Current version indicated by LITEVER below.
 		autofetch_attempt_dict[desired_oai_ep] = true;
 
 		let dropdown = get_custom_ep_model_dropdown();
-		fetch((desired_oai_ep + oai_models_endpoint), {
+		let fetchurl = desired_oai_ep + oai_models_endpoint;
+		let epchoice = document.getElementById("customapidropdown").value;
+		if(epchoice==2 && !is_local_url(desired_oai_ep) && document.getElementById("corsproxy_oai").checked)
+		{
+			fetchurl = cors_proxy + "?" + fetchurl; //temp cors proxy if selected
+		}
+		fetch(fetchurl, {
 			method: 'GET',
 			headers: oaiheaders,
 			referrerPolicy: 'no-referrer',
@@ -11626,12 +11639,12 @@ Current version indicated by LITEVER below.
 			let is_local = is_local_url(desired_oai_ep);
 			desired_oai_ep = (is_local?"http://":"https://") + desired_oai_ep;
 		}
+		//fix incorrect paths
+		if(desired_oai_ep!="" && desired_oai_ep.toLowerCase().endsWith("/chat/completions")) {
+			desired_oai_ep = desired_oai_ep.slice(0,-17);
+		}
 		if (document.getElementById("oaiaddversion").checked && !desired_oai_ep.toLowerCase().includes("text.pollinations.ai"))
 		{
-			//fix incorrect paths
-			if(desired_oai_ep!="" && desired_oai_ep.toLowerCase().endsWith("/chat/completions")) {
-				desired_oai_ep = desired_oai_ep.slice(0,-17);
-			}
 			if(desired_oai_ep!="" && desired_oai_ep.length > 4 && !desired_oai_ep.slice(-4).toLowerCase().includes("/v") && !desired_oai_ep.toLowerCase().includes("/v1/")) {
 				desired_oai_ep = desired_oai_ep + "/v1";
 			}
@@ -11657,6 +11670,7 @@ Current version indicated by LITEVER below.
 		let epchoice = document.getElementById("customapidropdown").value;
 		document.getElementById("connectstatusproxied").classList.add("hidden");
 		document.getElementById("connectstatus").innerHTML = "Connecting";
+		clear_cors_proxy_flag();
 
 		if(epchoice==0) //ai horde
 		{
@@ -11689,7 +11703,12 @@ Current version indicated by LITEVER below.
 				custom_kobold_endpoint = desiredkoboldendpoint;
 				custom_kobold_key = desiredkoboldkey;
 
-				const backup_oai_test = desiredkoboldendpoint + "/v1" + oai_models_endpoint; //last resort later
+				if(!is_local_url(desiredkoboldendpoint) && document.getElementById("corsproxy_kai").checked)
+				{
+					uses_cors_proxy = true;
+				}
+
+				const backup_oai_test = apply_proxy_url(desiredkoboldendpoint + "/v1" + oai_models_endpoint); //last resort later
 
 				let fetchedurl = apply_proxy_url(desiredkoboldendpoint + kobold_custom_mdl_endpoint);
 
@@ -11964,21 +11983,16 @@ Current version indicated by LITEVER below.
 
 					//we will go down the fallbacks one by one until we run out of options
 					localmodeport = backup_localmodeport;
-					if(is_local && sublocalpathname!="")
+					if(is_local && !uses_cors_proxy && sublocalpathname!="")
 					{
 						sublocalpathname = ""; // first fallback, check subdir paths
 						attempt_connect(false);
 					}
-					else if(reattempt_local_port80) // second fallback, try port 80
+					else if(!uses_cors_proxy && reattempt_local_port80) // second fallback, try port 80
 					{
 						reattempt_local_port80 = false;
 						localmodeport = 80;
 						attempt_connect(false);
-					}
-					else if(!is_local && !uses_cors_proxy) //third fallback, use cors proxy if not a local IP
-					{
-						uses_cors_proxy = true; // fallback to cors proxy, this will remain for rest of session
-						connect_custom_endpoint(); //one more try
 					}
 					else //finally, we give up
 					{
@@ -12047,6 +12061,11 @@ Current version indicated by LITEVER below.
 					localsettings.saved_oai_tts_url = custom_oai_endpoint + default_oai_tts_endpoint;
 					localsettings.saved_oai_embd_key = custom_oai_key;
 					localsettings.saved_oai_embd_url = custom_oai_endpoint + default_oai_embeddings_endpoint;
+
+					if(!is_local_url(custom_oai_endpoint) && document.getElementById("corsproxy_oai").checked)
+					{
+						uses_cors_proxy = true;
+					}
 				}
 				else if(epchoice==7)
 				{
@@ -12097,6 +12116,14 @@ Current version indicated by LITEVER below.
 				}
 				document.getElementById("connectstatus").innerHTML = "OpenAI Endpoint";
 				render_gametext(true);
+
+				if(uses_cors_proxy && !is_local_url(desired_oai_ep))
+				{
+					document.getElementById("connectstatusproxied").classList.remove("hidden");
+				}else
+				{
+					document.getElementById("connectstatusproxied").classList.add("hidden");
+				}
 			}
 			else
 			{
@@ -12259,7 +12286,7 @@ Current version indicated by LITEVER below.
 			{
 				header['Authorization'] = 'Bearer ' + adminkey;
 			}
-			return fetch(custom_kobold_endpoint + koboldcpp_admin_list_endpoint, {
+			fetch(apply_proxy_url(custom_kobold_endpoint + koboldcpp_admin_list_endpoint), {
 				method: 'GET',
 				headers: header,
 			})
@@ -12380,7 +12407,7 @@ Current version indicated by LITEVER below.
 		{
 			header['Authorization'] = 'Bearer ' + last_admin_key;
 		}
-		fetch(custom_kobold_endpoint + koboldcpp_admin_reload_endpoint, {
+		fetch(apply_proxy_url(custom_kobold_endpoint + koboldcpp_admin_reload_endpoint), {
 			method: 'POST',
 			headers: header,
 			body: JSON.stringify({
@@ -12418,7 +12445,7 @@ Current version indicated by LITEVER below.
 		{
 			header['Authorization'] = 'Bearer ' + last_admin_key;
 		}
-		fetch(custom_kobold_endpoint + koboldcpp_admin_savestate_endpoint, {
+		fetch(apply_proxy_url(custom_kobold_endpoint + koboldcpp_admin_savestate_endpoint), {
 			method: 'POST',
 			headers: header,
 			body: JSON.stringify({
@@ -12450,7 +12477,7 @@ Current version indicated by LITEVER below.
 		{
 			header['Authorization'] = 'Bearer ' + last_admin_key;
 		}
-		fetch(custom_kobold_endpoint + koboldcpp_admin_loadstate_endpoint, {
+		fetch(apply_proxy_url(custom_kobold_endpoint + koboldcpp_admin_loadstate_endpoint), {
 			method: 'POST',
 			headers: header,
 			body: JSON.stringify({
@@ -12634,7 +12661,7 @@ Current version indicated by LITEVER below.
 		if(is_using_kcpp_with_savedatafile())
 		{
 			//grab saves
-			fetch(custom_kobold_endpoint + koboldcpp_savedata_list_endpoint, {
+			fetch(apply_proxy_url(custom_kobold_endpoint + koboldcpp_savedata_list_endpoint), {
 			method: 'POST', // or 'PUT'
 			headers: get_kobold_header(),
 			})
@@ -12743,7 +12770,7 @@ Current version indicated by LITEVER below.
 						userinput = defaultsavename;
 					}
 					//complete remote save
-					fetch(custom_kobold_endpoint + koboldcpp_savedata_save_endpoint, {
+					fetch(apply_proxy_url(custom_kobold_endpoint + koboldcpp_savedata_save_endpoint), {
 					method: 'POST', // or 'PUT'
 					headers: get_kobold_header(),
 					body: JSON.stringify({
@@ -12809,7 +12836,7 @@ Current version indicated by LITEVER below.
 				});
 			} else {
 				last_used_saveslot = -1;
-				fetch(custom_kobold_endpoint + koboldcpp_savedata_load_endpoint, {
+				fetch(apply_proxy_url(custom_kobold_endpoint + koboldcpp_savedata_load_endpoint), {
 				method: 'POST', // or 'PUT'
 				headers: get_kobold_header(),
 				body: JSON.stringify({
@@ -12867,7 +12894,7 @@ Current version indicated by LITEVER below.
 		}
 		else
 		{
-			fetch(custom_kobold_endpoint + koboldcpp_savedata_load_endpoint, {
+			fetch(apply_proxy_url(custom_kobold_endpoint + koboldcpp_savedata_load_endpoint), {
 			method: 'POST', // or 'PUT'
 			headers: get_kobold_header(),
 			body: JSON.stringify({
@@ -12920,7 +12947,7 @@ Current version indicated by LITEVER below.
 			});
 		} else {
 			msgboxYesNo("Delete story in Server Storage Slot " + slotnumshown + "?", "Delete Server Storage Slot " + slotnumshown, () => {
-				fetch(custom_kobold_endpoint + koboldcpp_savedata_save_endpoint, {
+				fetch(apply_proxy_url(custom_kobold_endpoint + koboldcpp_savedata_save_endpoint), {
 				method: 'POST', // or 'PUT'
 				headers: get_kobold_header(),
 				body: JSON.stringify({
@@ -13021,7 +13048,11 @@ Current version indicated by LITEVER below.
 
 	function fetch_koboldcpp_perf()
 	{
-		fetch(apply_proxy_url(custom_kobold_endpoint + koboldcpp_perf_endpoint))
+		fetch(apply_proxy_url(custom_kobold_endpoint + koboldcpp_perf_endpoint),
+		{
+			method: 'GET',
+			headers: get_kobold_header(),
+		})
 		.then(x => x.json())
 		.then(resp => {
 			console.log(resp);
@@ -15489,7 +15520,7 @@ Current version indicated by LITEVER below.
 		else if(is_using_kcpp_with_streaming())
 		{
 			//we can use abort functions
-			fetch(custom_kobold_endpoint + koboldcpp_abort_endpoint, {
+			fetch(apply_proxy_url(custom_kobold_endpoint + koboldcpp_abort_endpoint), {
 			method: 'POST', // or 'PUT'
 			headers: get_kobold_header(),
 			body: JSON.stringify({
@@ -15561,7 +15592,7 @@ Current version indicated by LITEVER below.
 
 	function add_img_btn_custom()
 	{
-		inputBox("Enter a custom prompt to generate an image with.","Generate Image Manually","","Enter a Prompt",()=>{
+		inputBoxOkCancel("Enter a custom prompt to generate an image with.","Generate Image Manually","","Enter a Prompt",()=>{
 			let userinput = getInputBoxValue();
 			if(userinput.trim()!="")
 			{
@@ -17702,7 +17733,7 @@ Current version indicated by LITEVER below.
 			else if (custom_oai_key != "")//handle for OAI
 			{
 
-				let targetep = (custom_oai_endpoint + oai_submit_endpoint);
+				let targetep = apply_proxy_url(custom_oai_endpoint + oai_submit_endpoint);
 
 				let scaled_rep_pen = 0;
 				if(submit_payload.params.presence_penalty > 0)
@@ -17811,7 +17842,7 @@ Current version indicated by LITEVER below.
 					}
 
 					oai_payload.messages = [];
-					targetep = (custom_oai_endpoint + oai_submit_endpoint_chat);
+					targetep = apply_proxy_url(custom_oai_endpoint + oai_submit_endpoint_chat);
 					if (document.getElementById("jailbreakprompt") && document.getElementById("jailbreakprompt").checked && document.getElementById("jailbreakprompttext").value!="") {
 						let addrole = document.getElementById("jailbreakprompttextrole").value;
 						addrole = ((addrole==2)?"system":(addrole==1?"assistant":"user"));
@@ -18832,9 +18863,7 @@ Current version indicated by LITEVER below.
 					};
 					fetch(apply_proxy_url(custom_kobold_endpoint + koboldcpp_transcribe_endpoint), {
 						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-						},
+						headers: get_kobold_header(),
 						body: JSON.stringify(payload),
 					})
 					.then(x => x.json())
@@ -20195,9 +20224,7 @@ Current version indicated by LITEVER below.
 		};
 		fetch(apply_proxy_url(custom_kobold_endpoint + koboldcpp_transcribe_endpoint), {
 			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
+			headers: get_kobold_header(),
 			body: JSON.stringify(payload),
 		})
 		.then(x => x.json())
@@ -20246,9 +20273,7 @@ Current version indicated by LITEVER below.
 							};
 							fetch(apply_proxy_url(custom_kobold_endpoint + koboldcpp_transcribe_endpoint), {
 								method: 'POST',
-								headers: {
-									'Content-Type': 'application/json',
-								},
+								headers: get_kobold_header(),
 								body: JSON.stringify(payload),
 							})
 							.then(x => x.json())
@@ -20278,9 +20303,7 @@ Current version indicated by LITEVER below.
 		};
 		fetch(apply_proxy_url(custom_kobold_endpoint + koboldcpp_tokenize_endpoint), {
 			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
+			headers: get_kobold_header(),
 			body: JSON.stringify(payload),
 		})
 		.then(x => x.json())
@@ -20441,7 +20464,7 @@ Current version indicated by LITEVER below.
 						if (polledstreaming && (localflag?true:(poll_ticks_passed%2==0)))
 						{
 							//get in-progress results
-							fetch(custom_kobold_endpoint + koboldcpp_check_endpoint, {
+							fetch(apply_proxy_url(custom_kobold_endpoint + koboldcpp_check_endpoint), {
 								method: 'POST',
 								headers: get_kobold_header(),
 								body: JSON.stringify({
@@ -26942,37 +26965,45 @@ Current version indicated by LITEVER below.
 				<input class="form-control" title="Enter KoboldCpp Custom Endpoint" id="customkoboldendpoint" placeholder="https://sample-remote-address.trycloudflare.com" value="">
 				<input class="form-control" title="Enter KoboldCpp API Key" type="password" id="customkoboldkey" placeholder="KoboldAI API Key (Optional)" value="" onfocus="focus_api_keys()" onblur="blur_api_keys()"><br>
 				<div class="borderbox flex flex-push-right">
+					<input type="checkbox" id="corsproxy_kai" title="Use CORS Proxy">
+					<div class="box-label">Use CORS Proxy <span class="helpicon">?<span class="helptext">Attempts to use a CORS proxy to bypass CORS restrictions. Only use this if normal connections fail. Only works on public internet APIs.</span></span></div>
 				</div>
 			</div>
 			<div id="oaicustom" class="menutext hidden">
 				<span id="oaidesc">
 				Entering your OpenAI API key will allow you to use KoboldAI Lite with their API.<br><br>
-				Note that KoboldAI Lite takes no responsibility for your usage or consequences of this feature. Your API key is used directly with the OpenAI API and is not transmitted to us. Note that connecting will reset any custom DALL-E based or custom OpenAI based TTS endpoint urls to this new address.<br>Only Temperature, Top-P and Repetition Penalty samplers are used.<br><br>
-				<span class="color_green" style="font-weight: bold;">Please input OpenAI API URL and Key.</span><br><br>
+				KoboldAI Lite takes no responsibility for your usage of this feature. Your API key is used directly with the OpenAI API, <span class="color_red">unless CORS proxy is used</span>. Reconnecting resets all custom OpenAI URLs.<br>Only Temperature, Top-P and Repetition Penalty samplers are used.<br><br>
+				<span class="color_green" style="font-weight: bold;">Please input OpenAI API URL and Key.</span><br>
+				<div style="display:inline-flex">
+					<div><input type="checkbox" id="corsproxy_oai" title="Use CORS Proxy">
+					<div class="box-label">Use CORS Proxy <span class="helpicon">?<span class="helptext">Attempts to use a CORS proxy to bypass CORS restrictions. Only use this if normal connections fail. Only works on public internet APIs.</span></span></div></div>
+					<div><input type="checkbox" id="oaiaddversion" title="Add Endpoint Version Number" onchange="" checked>
+					<div class="box-label">Add Ver. Num <span class="helpicon">?<span class="helptext">Usually OpenAI Compatible APIs end with /v1. If they do not, uncheck this box.</span></span></div></div>
+				</div>
 				</span>
 				<span id="openrouterdesc" class="hidden">
 				Entering your OpenRouter API key will allow you to use KoboldAI Lite with their API.<br><br>
-				Note that KoboldAI Lite takes no responsibility for your usage or consequences of this feature. Your API key is used directly with the OpenRouter API and is not transmitted to us.<br>Only Temperature, Top-P and Repetition Penalty samplers are used.<br><br>
+				KoboldAI Lite takes no responsibility for your usage of this feature. Your API key is used directly with the OpenRouter API and is not transmitted to us.<br>Only Temperature, Top-P and Repetition Penalty samplers are used.<br><br>
 				<span class="color_green" style="font-weight: bold;">Please input OpenRouter Key.</span><br><br>
 				</span>
 				<span id="mistralaidesc" class="hidden">
 				Entering your MistralAI API key will allow you to use KoboldAI Lite with their API.<br><br>
-				Note that KoboldAI Lite takes no responsibility for your usage or consequences of this feature. Your API key is used directly with the MistralAI API and is not transmitted to us.<br>Only Temperature and Top-P samplers are used.<br><br>
+				KoboldAI Lite takes no responsibility for your usage of this feature. Your API key is used directly with the MistralAI API and is not transmitted to us.<br>Only Temperature and Top-P samplers are used.<br><br>
 				<span class="color_green" style="font-weight: bold;">Please input MistralAI Key.</span><br><br>
 				</span>
 				<span id="featherlessdesc" class="hidden">
 				Entering your Featherless API key will allow you to use KoboldAI Lite with their API.<br><br>
-				Note that KoboldAI Lite takes no responsibility for your usage or consequences of this feature. Your API key is used directly with the Featherless API and is not transmitted to us.<br>Only Temperature, Top-P, Top-K, Min-P and Repetition Penalty samplers are used.<br><br>
+				KoboldAI Lite takes no responsibility for your usage of this feature. Your API key is used directly with the Featherless API and is not transmitted to us.<br>Only Temperature, Top-P, Top-K, Min-P and Repetition Penalty samplers are used.<br><br>
 				<span class="color_green" style="font-weight: bold;">Please input Featherless Key.</span><br><br>
 				</span>
 				<span id="grokdesc" class="hidden">
 				Entering your Grok API key will allow you to use KoboldAI Lite with their API.<br><br>
-				Note that KoboldAI Lite takes no responsibility for your usage or consequences of this feature. Your API key is used directly with the Grok API and is not transmitted to us.<br>Only Temperature, Top-P, Top-K, Min-P and Repetition Penalty samplers are used.<br><br>
+				KoboldAI Lite takes no responsibility for your usage of this feature. Your API key is used directly with the Grok API and is not transmitted to us.<br>Only Temperature, Top-P, Top-K, Min-P and Repetition Penalty samplers are used.<br><br>
 				<span class="color_green" style="font-weight: bold;">Please input Grok Key.</span><br><br>
 				</span>
 				<span id="pollinationsdesc" class="hidden">
 				Pollinations.ai API is free to use without any key required.<br><br>
-				Note that KoboldAI Lite takes no responsibility for your usage or consequences of this feature. This service is ad driven, ads may appear in the output.<br>Only Temperature, Top-P, Top-K and Repetition Penalty samplers are used.<br><br>
+				KoboldAI Lite takes no responsibility for your usage of this feature. This service is ad driven, ads may appear in the output.<br>Only Temperature, Top-P, Top-K and Repetition Penalty samplers are used.<br><br>
 				<span class="color_green" style="font-weight: bold;">No Key Required.</span><br><br>
 				</span>
 
@@ -27080,8 +27111,6 @@ Current version indicated by LITEVER below.
 					<div class="box-label">Emulate Completions API with Prefill</div></div>
 				</div>
 				<div style="display:inline-flex">
-					<div><input type="checkbox" id="oaiaddversion" title="Add Endpoint Version Number" onchange="" checked>
-					<div class="box-label">Add Ver. Num</div></div>
 					<div><input type="checkbox" id="useoaichatcompl" title="Use ChatCompletions API" onchange="toggleoaichatcompl()">
 					<div class="box-label">Chat-Completions API</div></div>
 					<div><input type="checkbox" id="useoainonstandard" title="Send Non-Standard Fields">
@@ -27129,7 +27158,7 @@ Current version indicated by LITEVER below.
 			</div>
 			<div id="claudecustom" class="menutext hidden">
 				Entering your Claude API key will allow you to use KoboldAI Lite with their API.<br><br>
-				Note that KoboldAI Lite takes no responsibility for your usage or consequences of this feature. <br><span class="color_red">At this time, the official Claude API has CORS restrictions and must be accessed with a CORS proxy. Your connection WILL be proxied.</span><br>Only Temperature, Top-P and Top-K samplers are used.<br><br>
+				KoboldAI Lite takes no responsibility for your usage of this feature. <br><span class="color_red">At this time, the official Claude API has CORS restrictions and must be accessed with a CORS proxy. Your connection WILL be proxied.</span><br>Only Temperature, Top-P and Top-K samplers are used.<br><br>
 				<span class="color_green" style="font-weight: bold;">Please input Claude API URL and Key.</span><br><br>
 				<input class="form-control" type="text" id="custom_claude_endpoint" placeholder="Claude API URL" value="">
 				<input class="form-control" type="password" id="custom_claude_key" placeholder="Claude API Key (Required)" value="" onfocus="focus_api_keys()" onblur="blur_api_keys()"><br>
@@ -27174,7 +27203,7 @@ Current version indicated by LITEVER below.
 			</div>
 			<div id="geminicustom" class="menutext hidden">
 				Uses Gemini by Google.<br><br>
-				Note that KoboldAI Lite takes no responsibility for your usage or consequences of this feature. Your API key is used directly with the Gemini API and is not transmitted to us.<br><br>
+				KoboldAI Lite takes no responsibility for your usage of this feature. Your API key is used directly with the Gemini API and is not transmitted to us.<br><br>
 				<div>
 				<select title="Gemini AI Model Selection" style="padding:4px; width:calc(100% - 110px); display:inline-block" class="form-control" id="custom_gemini_model" onchange="togglegeminimodel()">
 					<option value="gemini-1.5-flash-latest" selected="selected">gemini-1.5-flash-latest</option>
@@ -27228,7 +27257,7 @@ Current version indicated by LITEVER below.
 			</div>
 			<div id="coherecustom" class="menutext hidden">
 				Uses Cohere's models through their own API.<br><br>
-				Note that KoboldAI Lite takes no responsibility for your usage or consequences of this feature. Your API key is used directly with the Cohere API and is not transmitted to us.<br><br>
+				KoboldAI Lite takes no responsibility for your usage of this feature. Your API key is used directly with the Cohere API and is not transmitted to us.<br><br>
 				<select title="Cohere AI Model Selection" style="padding:4px;" class="form-control" id="custom_cohere_model">
 					<option value="command" selected="selected">command</option>
 					<option value="command-r">command-r</option>
@@ -27250,7 +27279,7 @@ Current version indicated by LITEVER below.
 				</span>
 			</div>
 			<div class="popupfooter">
-				<button type="button" class="btn btn-primary" onclick="clear_cors_proxy_flag();connect_custom_endpoint()">Ok</button>
+				<button type="button" class="btn btn-primary" onclick="connect_custom_endpoint()">Ok</button>
 				<button type="button" class="btn btn-primary" onclick="dismiss_endpoint_container()">Cancel</button>
 			</div>
 		</div>
