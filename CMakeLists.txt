@@ -997,7 +997,7 @@ set_target_properties(whisper_adapter PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 add_library(tts_adapter
             otherarch/tts_adapter.cpp)
-target_include_directories(tts_adapter PUBLIC . ./ggml/include ./ggml/src ./ggml/src/ggml-cpu ./include ./otherarch ./otherarch/tools ./vendor/stb ./vendor ./tools ./common)
+target_include_directories(tts_adapter PUBLIC . ./ggml/include ./ggml/src ./ggml/src/ggml-cpu ./include ./otherarch ./otherarch/tools ./vendor/stb ./vendor ./otherarch/ttscpp/include ./otherarch/ttscpp/src ./tools ./common)
 target_compile_features(tts_adapter PUBLIC cxx_std_17) # don't bump
 target_link_libraries(tts_adapter PRIVATE common2 ggml ${LLAMA_EXTRA_LIBS})
 set_target_properties(tts_adapter PROPERTIES POSITION_INDEPENDENT_CODE ON)

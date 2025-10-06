@@ -296,6 +296,7 @@ json common_chat_msgs_to_json_oaicompat(const std::vector<common_chat_msg> & msg
         }
         if (!msg.reasoning_content.empty()) {
             jmsg["reasoning_content"] = msg.reasoning_content;
+            jmsg["thinking"] = msg.reasoning_content; // gpt-oss
         }
         if (!msg.tool_name.empty()) {
             jmsg["name"] = msg.tool_name;
@@ -472,11 +473,12 @@ std::string common_chat_format_single(
     return ss.str();
 }
 
-std::string common_chat_format_example(const struct common_chat_templates * tmpls, bool use_jinja) {
+std::string common_chat_format_example(const struct common_chat_templates * tmpls, bool use_jinja, const std::map<std::string, std::string> & chat_template_kwargs) {
     common_chat_templates_inputs inputs;
     inputs.use_jinja = use_jinja;
     inputs.add_bos = tmpls->add_bos;
     inputs.add_eos = tmpls->add_eos;
+    inputs.chat_template_kwargs = chat_template_kwargs;
     auto add_simple_msg = [&](auto role, auto content) {
         common_chat_msg msg;
         msg.role = role;
@@ -1767,8 +1769,8 @@ static common_chat_params common_chat_templates_apply_jinja(
     params.enable_thinking = inputs.enable_thinking;
     params.grammar = inputs.grammar;
     params.now = inputs.now;
-    params.add_bos = inputs.add_bos;
-    params.add_eos = inputs.add_eos;
+    params.add_bos = tmpls->add_bos;
+    params.add_eos = tmpls->add_eos;
 
     params.extra_context = json::object();
     for (auto el : inputs.chat_template_kwargs) {

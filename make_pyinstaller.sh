@@ -22,6 +22,7 @@ pyinstaller --noconfirm --onefile --clean --console --collect-all customtkinter 
 --add-data "./koboldcpp_clblast_failsafe.so:." \
 --add-data "./koboldcpp_vulkan_noavx2.so:." \
 --add-data "./koboldcpp_vulkan.so:." \
+--add-data "./kokoro_ipa.embd:." \
 --add-data "./rwkv_vocab.embd:." \
 --add-data "./rwkv_world_vocab.embd:." \
 --version-file "./version.txt" \

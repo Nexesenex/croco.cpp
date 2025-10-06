@@ -665,6 +665,18 @@ extern "C" {
         GGML_OP_GLU,
 
         GGML_OP_COUNT,
+
+        //kcpp: dirtypatch of unofficial ops for ttscpp
+        GGML_OP_UPSCALE_LINEAR, // linear interpolate
+        GGML_OP_RECIPROCAL,
+        GGML_OP_ROUND,
+        GGML_OP_MOD,
+        GGML_OP_CUMSUM,
+        GGML_OP_STFT,
+        GGML_OP_AA_STFT,
+        GGML_OP_ISTFT,
+        GGML_OP_AA_ISTFT,
+        GGML_OP_CONV_TRANSPOSE_1D_TTS,
     };
 
     enum ggml_unary_op {
@@ -2581,6 +2593,76 @@ extern "C" {
     GGML_API struct ggml_threadpool_params ggml_threadpool_params_default(int n_threads);
     GGML_API void                          ggml_threadpool_params_init   (struct ggml_threadpool_params * p, int n_threads);
     GGML_API bool                          ggml_threadpool_params_match  (const struct ggml_threadpool_params * p0, const struct ggml_threadpool_params * p1);
+
+    //kcpp: dirtypatch of ttscpp additions
+    GGML_API struct ggml_tensor * ggml_round(
+            struct ggml_context * ctx,
+            struct ggml_tensor * a);
+    GGML_API struct ggml_tensor * ggml_round_inplace(
+            struct ggml_context * ctx,
+            struct ggml_tensor * a);
+    // This is a floating point mod by the mod_val parameter
+    GGML_API struct ggml_tensor * ggml_mod(
+            struct ggml_context * ctx,
+            struct ggml_tensor * a,
+            float mod_val);
+    GGML_API struct ggml_tensor * ggml_mod_inplace(
+            struct ggml_context * ctx,
+            struct ggml_tensor * a,
+            float mod_val);
+    // reciprocal of each value in tensor a
+    GGML_API struct ggml_tensor * ggml_reciprocal(
+            struct ggml_context * ctx,
+            struct ggml_tensor  * a);
+    GGML_API struct ggml_tensor * ggml_reciprocal_inplace(
+            struct ggml_context * ctx,
+            struct ggml_tensor  * a);
+        // cumulative sums along first axis (ne0)
+    GGML_API struct ggml_tensor * ggml_cumsum(
+            struct ggml_context * ctx,
+            struct ggml_tensor  * a);
+    GGML_API struct ggml_tensor * ggml_conv_1d_dw_tts(
+            struct ggml_context * ctx,
+            struct ggml_tensor  * a,   // convolution kernel
+            struct ggml_tensor  * b,   // data
+            int                   s0,  // stride
+            int                   p0,  // padding
+            int                   d0); // dilation
+    GGML_API struct ggml_tensor * ggml_conv_transpose_1d_tts(
+            struct ggml_context * ctx,
+            struct ggml_tensor  * a,   // convolution kernel
+            struct ggml_tensor  * b,   // data
+            int                   s0,  // stride
+            int                   p0,  // padding
+            int                   d0,  // dilation
+            int                   op0, // output padding
+            int                   g0); // groups
+    GGML_API struct ggml_tensor * ggml_conv_1d_tts(
+            struct ggml_context * ctx,
+            struct ggml_tensor  * a,   // convolution kernel
+            struct ggml_tensor  * b,   // data
+            int                   s0,  // stride
+            int                   p0,  // padding
+            int                   d0); // dilation
+    GGML_API struct ggml_tensor * ggml_stft(
+            struct ggml_context * ctx,
+            struct ggml_tensor * a,
+            struct ggml_tensor * w, // the window
+            int filter_length,
+            int hop_length,
+            bool compute_abs_and_angle);
+    GGML_API struct ggml_tensor * ggml_istft(
+            struct ggml_context * ctx,
+            struct ggml_tensor * a, // magnitude + phase
+            struct ggml_tensor * w,
+            int filter_length,
+            int hop_length,
+            bool from_abs_and_angle);
+    GGML_API struct ggml_tensor * ggml_upscale_linear(
+            struct ggml_context * ctx,
+            struct ggml_tensor  * a,
+            int                   scale_factor);
+    //end kcpp dirtypatch
 
 #ifdef  __cplusplus
 }

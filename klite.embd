@@ -12,7 +12,7 @@ Current version indicated by LITEVER below.
 -->
 
 <script id="init-config">
-	const LITEVER = 272;
+	const LITEVER = 274;
 	const urlParams = new URLSearchParams(window.location.search);
 	var localflag = urlParams.get('local'); //this will be replaced automatically in embedded kcpp
 	const STORAGE_PREFIX = (localflag?"e_":"")+"kaihordewebui_";
@@ -3388,14 +3388,13 @@ Current version indicated by LITEVER below.
 	var synchro_polled_response = null;
 	var last_stop_reason = ""; //update stop reason if known
 	var synchro_pending_stream = ""; //used for storing incomplete streaming text
-	var gemini_was_thinking = false; //used as a switch to determine when thinking ends, to wrap output in tags
+	var streaming_was_thinking = false; //used as a switch to determine when thinking ends, to wrap output in tags
 	var waiting_for_tool_call = 0; //0=not waiting, 1=autosummary, 2=websearchsummary
 	var oaiemulatecompletionscontent = "";
 	var italics_regex = new RegExp(/\*(\S[^*]+\S)\*/g); //the fallback regex
 	var bold_regex = new RegExp(/\*\*(\S[^*]+\S)\*\*/g); //the fallback regex
 	var temp_scenario = null;
 	var last_token_budget = ""; //to display token limits
-	var last_known_filename = "saved_story.json";
 	var last_used_saveslot = -1; //used for corpo mode quicksave
 	var backup_localmodeport = 5001; //sometimes we reattempt a different port, this stores a backup
 	var localmodeport = 5001;
@@ -3536,11 +3535,13 @@ Current version indicated by LITEVER below.
 		speech_synth: 0, //0 is disabled, 1000 is xtts
 		xtts_voice: "female_calm",
 		kcpp_tts_voice: "kobo",
+		oai_tts_voice: "alloy",
 		kcpp_tts_json: "",
 		beep_on: false,
 		notify_on: false,
 		narrate_both_sides: false,
 		narrate_only_dialog: false,
+		embed_narrations: false,
 		voice_end_delay: 300,
 		voice_suppress_nonspeech: false,
 		voice_langcode: "auto",
@@ -3566,6 +3567,7 @@ Current version indicated by LITEVER below.
 		save_images: true,
 		save_remote_images: false,
 		prompt_for_savename: false,
+		last_known_filename: "saved_story.json",
 		case_sensitive_wi: false,
 		last_selected_preset: 0,
 		gui_type_story: 0, //0=standard, 1=messenger, 2=aesthetic, 3=corpo
@@ -3620,7 +3622,7 @@ Current version indicated by LITEVER below.
 		wordsearch_enabled: false,
 
 		max_context_length: (localflag?4096:3072),
-		max_length: (localflag?512:256),
+		max_length: (localflag?640:400),
 		last_maxctx: 0,
 		auto_ctxlen: true,
 		auto_genamt: true,
@@ -4950,7 +4952,7 @@ Current version indicated by LITEVER below.
 			let loadedsettings = JSON.parse(loadedsettingsjson);
 			//see if persist is enabled
 			if (loadedsettings && loadedsettings.persist_session) {
-				import_compressed_story(loadedstorycompressed,true); //use the same compressed format as shared stories and import it
+				import_compressed_story(loadedstorycompressed,true,false); //use the same compressed format as shared stories and import it
 				import_props_into_object(localsettings,loadedsettings);
 				console.log("Loaded local settings and story");
 
@@ -5970,7 +5972,7 @@ Current version indicated by LITEVER below.
 		}
 		return story;
 	}
-	function import_compressed_story(cstoryjson,force_load_settngs) { //attempts to load story from compressed json, in KAI format
+	function import_compressed_story(cstoryjson,force_load_settngs,save_after_loading=true) { //attempts to load story from compressed json, in KAI format
 		console.log("Importing shared story...");
 
 		var story = decompress_story(cstoryjson);
@@ -6037,7 +6039,7 @@ Current version indicated by LITEVER below.
 				});
 			}
 
-			kai_json_load(story, force_load_settngs);
+			kai_json_load(story, force_load_settngs, false, save_after_loading);
 
 		} else {
 			msgbox("Could not import from URL or TextData. Is it valid?");
@@ -6449,7 +6451,7 @@ Current version indicated by LITEVER below.
 	function oai_api_stream_sse(sub_endpt,submit_payload,submit_headers)
 	{
 		synchro_pending_stream = "";
-		gemini_was_thinking = false;
+		streaming_was_thinking = false;
 		let reqOpt =
 		{method: 'POST',
 		headers: submit_headers,
@@ -6515,16 +6517,16 @@ Current version indicated by LITEVER below.
 									{
 										if(event.data.candidates[0].content.parts[x].thought)
 										{
-											gemini_was_thinking = true;
+											streaming_was_thinking = true;
 										}
 										if(!event.data.candidates[0].content.parts[x].text)
 										{
 											continue;
 										}
-										if(!event.data.candidates[0].content.parts[x].thought && gemini_was_thinking)
+										if(!event.data.candidates[0].content.parts[x].thought && streaming_was_thinking)
 										{
 											synchro_pending_stream = `${localsettings.start_thinking_tag}${synchro_pending_stream}${localsettings.stop_thinking_tag}`;
-											gemini_was_thinking = false;
+											streaming_was_thinking = false;
 										}
 										synchro_pending_stream += event.data.candidates[0].content.parts[x].text;
 									}
@@ -6537,11 +6539,19 @@ Current version indicated by LITEVER below.
 								if(event.data.choices[0].text)
 								{
 									synchro_pending_stream += event.data.choices[0].text;
-								}else if(event.data.choices[0].delta && event.data.choices[0].delta.content)
+								}
+								else if(event.data.choices[0].delta && event.data.choices[0].delta.content)
 								{
+									if(streaming_was_thinking)
+									{
+										streaming_was_thinking = false;
+										synchro_pending_stream = `${localsettings.start_thinking_tag}${synchro_pending_stream}${localsettings.stop_thinking_tag}`;
+									}
 									synchro_pending_stream += event.data.choices[0].delta.content;
-								}else if(event.data.choices[0].delta && !event.data.choices[0].delta.content && event.data.choices[0].delta.reasoning_content!=null&& event.data.choices[0].delta.reasoning_content!="")
+								}
+								else if(event.data.choices[0].delta && !event.data.choices[0].delta.content && event.data.choices[0].delta.reasoning_content!=null&& event.data.choices[0].delta.reasoning_content!="")
 								{
+									streaming_was_thinking = true;
 									synchro_pending_stream += event.data.choices[0].delta.reasoning_content;
 								}
 
@@ -6604,7 +6614,7 @@ Current version indicated by LITEVER below.
 						synchro_polled_response = cleanup_story_completion(synchro_polled_response);
 					}
 					synchro_pending_stream = "";
-					gemini_was_thinking = false;
+					streaming_was_thinking = false;
 					poll_pending_response();
 					//handle gen failures
 					if(resp.status==503)
@@ -6758,21 +6768,51 @@ Current version indicated by LITEVER below.
 		};
 		const replaceLatex = (input) =>{
 			//all latex patterns except inline tex
-			input = input.replace(/(^```math\n([\s\S]*?)\n```$|^ {0,6}\\\[\n([\s\S]*?)\n {0,6}\\\]$|^\$\$\n([\s\S]*?)\n\$\$$|\$\$([^\n]+?)\$\$|\\\(([^\n]+?)\\\)|\\\[([^\n]+?)\\\])/gm, (match, p1, p2, p3, p4, p5, p6, p7) => {
-				let content = p2 || p3 || p4 || p5 || p6 || p7;
+			input = input.replace(/(^```math\n([\s\S]*?)\n```$|^ {0,6}\\\[\n([\s\S]*?)\n {0,6}\\\]$|^\$\$\n([\s\S]*?)\n\$\$$|^ {2}\$\$\n {2}([\s\S]*?)\n {2}\$\$$|\$\$([^\n]+?)\$\$|\\\(([^\n]+?)\\\)|\\\[([^\n]+?)\\\])/gm, (match, p1, p2, p3, p4, p5, p6, p7, p8) => {
+				let content = p2 || p3 || p4 || p5 || p6 || p7 || p8;
 				const matchedlw = match.match(/^[ \t]*/);
 				const leadingWhitespace = matchedlw ? matchedlw[0] : '';
 				content = unescape_html(content);
+				if(content.replace(/\s+/g, '').match(/^\${1,}$/)) //only dollar signs, just return
+				{
+					return match;
+				}
 				return leadingWhitespace + temml.renderToString(content); // render LaTeX content
 			});
-			input = input.replace(/(?:^|[^\\])\$(\S[^$\n]*?\S)\$(?!\d)/g, (match, p1) => {
+			input = input.replace(/(^|[^\\])\$(\S[^$\n]*?\S)\$(?!\d)/g, (match, prefix, p1) => {
 				let content = p1;
 				content = unescape_html(content);
-				return " "+temml.renderToString(content); // render LaTeX content
+				if(content.replace(/\s+/g, '').match(/^\${1,}$/)) //only dollar signs, just return
+				{
+					return match;
+				}
+				return prefix+temml.renderToString(content); // render LaTeX content
+			});
+			input = input.replace(/(^|[^\\])\$([A-Za-z0-9])\$(?!\d)/g, (match, prefix, p1) => { //single letter or number
+				let content = p1;
+				content = unescape_html(content);
+				if(content.replace(/\s+/g, '').match(/^\${1,}$/)) //only dollar signs, just return
+				{
+					return match;
+				}
+				return prefix+temml.renderToString(content); // render LaTeX content
+			});
+			input = input.replace(/(^|[^\\])\$ (\S[^$\n]*?) \$(?!\d)/g, (match, prefix, p1) => { //special version that handles a single space on both sides
+				let content = p1;
+				content = unescape_html(content);
+				if(content.replace(/\s+/g, '').match(/^\${1,}$/)) //only dollar signs, just return
+				{
+					return match;
+				}
+				return prefix+temml.renderToString(content); // render LaTeX content
 			});
 			input = input.replace(/(^\\begin\{math\}\n([\s\S]*?)\n\\end\{math\}$|^\\begin\{equation\}\n([\s\S]*?)\n\\end\{equation\}$)/gm, (match, p1, p2, p3) => { //match math eqns
 				let content = p2 || p3;
 				content = unescape_html(content);
+				if(content.replace(/\s+/g, '').match(/^\${1,}$/)) //only dollar signs, just return
+				{
+					return match;
+				}
 				return temml.renderToString(content); // render LaTeX content
 			});
 			return input;
@@ -6877,7 +6917,10 @@ Current version indicated by LITEVER below.
 			md = md.replace(/<\/code\><\/pre\>\n<pre\><code\>/g, "\n");
 			if(renderLatex)
 			{
+				//to aid the latex renderer, we temporarily add newlines between some blocks
+				md = md.replace(/<\/li><li>/gm, "</li>\n<li>");
 				md = replaceLatex(md);
+				md = md.replace(/<\/li>\n<li>/gm, "</li><li>");
 			}
 			md = md.replace(/<\/ul>\n/gm, "</ul>").replace(/<\/ol>\n/gm, "</ol>");
 			md = md.replace(/\\([`_~\*\+\-\.\^\\\<\>\(\)\[\]])/gm, "$1");
@@ -8084,6 +8127,11 @@ Current version indicated by LITEVER below.
 			let selectedImg = null;
 			selectedImg = input.files[0];
 			const objectURL = URL.createObjectURL(selectedImg);
+			let maxRes = 1024, quality = 0.5;
+			if (!!localsettings?.img_allowhd)
+			{
+				maxRes = 8000, quality = 0.95;
+			}
 			compressImage(objectURL, (compressedImageURI, aspectratio)=>{
 				selectedImg = `url('${compressedImageURI}')`;
 				document.body.style.backgroundImage = selectedImg;
@@ -8091,7 +8139,7 @@ Current version indicated by LITEVER below.
 				document.getElementById("enhancedchatinterface").classList.add("transparentbg");
 				document.getElementById("enhancedchatinterface_inner").classList.add("transparentbg");
 				indexeddb_save("bgimg", compressedImageURI);
-			}, false, 1024, 0.5);
+			}, false, maxRes, quality);
 		}
 	};
 	function clear_bg_img()
@@ -8202,19 +8250,20 @@ Current version indicated by LITEVER below.
 			{
 				save_file_obj = generate_savefile(localsettings.save_images, localsettings.export_settings, localsettings.export_settings);
 			}
-			saveFileGeneric(last_known_filename, JSON.stringify(save_file_obj), "application/json");
+			saveFileGeneric(localsettings.last_known_filename, JSON.stringify(save_file_obj), "application/json");
 		}
 
 		if(localsettings.prompt_for_savename)
 		{
-			inputBox("Enter a Filename","Save File",last_known_filename,"Input Filename", ()=>{
+			inputBox("Enter a Filename","Save File",localsettings.last_known_filename,"Input Filename", ()=>{
 				let userinput = getInputBoxValue();
 				if (userinput != null && userinput.trim()!="") {
-					last_known_filename = userinput.trim();
-					if(!last_known_filename.toLowerCase().includes(".json"))
+					let tmp = userinput.trim();
+					if(!tmp.toLowerCase().includes(".json"))
 					{
-						last_known_filename += ".json";
+						tmp += ".json";
 					}
+					localsettings.last_known_filename = tmp;
 					save_file();
 				}
 			},false);
@@ -8370,7 +8419,7 @@ Current version indicated by LITEVER below.
 					//quick sanity check. if prompt does not exist, this is not a KAI save.
 					kai_json_load(new_loaded_storyobj,false);
 					if (selectedFilename && selectedFilename != "") {
-						last_known_filename = selectedFilename;
+						localsettings.last_known_filename = selectedFilename;
 					}
 				} else {
 					//check for tavernai fields
@@ -8500,7 +8549,7 @@ Current version indicated by LITEVER below.
 		return is_kai;
 	}
 
-	function kai_json_load(storyobj, force_load_settings, ignore_multiplayer_sync)
+	function kai_json_load(storyobj, force_load_settings, ignore_multiplayer_sync=false, save_after_loading=true)
 	{
 		//either show popup or just proceed to load
 		handle_advload_popup((localsettings.show_advanced_load && !force_load_settings),()=>
@@ -8866,7 +8915,7 @@ Current version indicated by LITEVER below.
 			toggle_invert_colors();
 			toggle_sidepanel_mode();
 			update_for_sidepanel();
-			render_gametext(true);
+			render_gametext(save_after_loading);
 			if(!ignore_multiplayer_sync) //we don't want an infinite loop
 			{
 				sync_multiplayer(true);
@@ -13746,6 +13795,7 @@ Current version indicated by LITEVER below.
 		document.getElementById("ttsselect").innerHTML = ttshtml;
 		document.getElementById("ttsselect").value = localsettings.speech_synth;
 		document.getElementById("kcpp_tts_voice").value = localsettings.kcpp_tts_voice;
+		document.getElementById("oai_tts_voice").value = localsettings.oai_tts_voice;
 		kcpp_tts_json = localsettings.kcpp_tts_json;
 		toggle_tts_mode();
 		document.getElementById("beep_on").checked = localsettings.beep_on;
@@ -13753,6 +13803,7 @@ Current version indicated by LITEVER below.
 		document.getElementById("no_escape_html").checked = no_escape_html;
 		document.getElementById("narrate_both_sides").checked = localsettings.narrate_both_sides;
 		document.getElementById("narrate_only_dialog").checked = localsettings.narrate_only_dialog;
+		document.getElementById("embed_narrations").checked = localsettings.embed_narrations;
 		document.getElementById("tts_speed").value = localsettings.tts_speed;
 		document.getElementById("voice_end_delay").value = localsettings.voice_end_delay;
 		document.getElementById("voice_suppress_nonspeech").checked = localsettings.voice_suppress_nonspeech;
@@ -14294,12 +14345,14 @@ Current version indicated by LITEVER below.
 		localsettings.speech_synth = document.getElementById("ttsselect").value;
 		localsettings.xtts_voice = document.getElementById("xtts_voices").value;
 		localsettings.kcpp_tts_voice = document.getElementById("kcpp_tts_voice").value;
+		localsettings.oai_tts_voice = document.getElementById("oai_tts_voice").value?document.getElementById("oai_tts_voice").value:defaultsettings.oai_tts_voice;
 		localsettings.kcpp_tts_json = kcpp_tts_json;
 		localsettings.beep_on = (document.getElementById("beep_on").checked?true:false);
 		localsettings.notify_on = (document.getElementById("notify_on").checked?true:false);
 		no_escape_html = (document.getElementById("no_escape_html").checked?true:false);
 		localsettings.narrate_both_sides = (document.getElementById("narrate_both_sides").checked?true:false);
 		localsettings.narrate_only_dialog = (document.getElementById("narrate_only_dialog").checked?true:false);
+		localsettings.embed_narrations = (document.getElementById("embed_narrations").checked?true:false);
 		localsettings.tts_speed = document.getElementById("tts_speed").value;
 		localsettings.voice_end_delay = document.getElementById("voice_end_delay").value;
 		localsettings.voice_suppress_nonspeech = (document.getElementById("voice_suppress_nonspeech").checked?true:false);
@@ -15156,7 +15209,7 @@ Current version indicated by LITEVER below.
 		synchro_polled_response = null;
 		last_stop_reason = "";
 		synchro_pending_stream = "";
-		gemini_was_thinking = false;
+		streaming_was_thinking = false;
 		waiting_for_tool_call = 0;
 		horde_poll_nearly_completed = false;
 		oaiemulatecompletionscontent = "";
@@ -15181,7 +15234,7 @@ Current version indicated by LITEVER below.
 		synchro_polled_response = null;
 		last_stop_reason = "";
 		synchro_pending_stream = "";
-		gemini_was_thinking = false;
+		streaming_was_thinking = false;
 		waiting_for_tool_call = 0;
 		oaiemulatecompletionscontent = "";
 		last_reply_was_empty = false;
@@ -15195,12 +15248,12 @@ Current version indicated by LITEVER below.
 		interrogation_db = {};
 		completed_imgs_meta = {};
 		localsettings.adventure_switch_mode = 0;
+		localsettings.last_known_filename = defaultsettings.last_known_filename;
 		prev_hl_chunk = null;
 		gametext_focused = false;
 		last_token_budget = "";
 		groupchat_removals = [];
 		welcome = "";
-		last_known_filename = "saved_story.json";
 		is_impersonate_user = false;
 		voice_is_processing = false;
 		recentSearchQueries = [];
@@ -16228,6 +16281,16 @@ Current version indicated by LITEVER below.
 		a.download = "audio.wav";
 		setTimeout(function(){a.click()},20);
 	}
+	function tts_embed_audio(arrayBufferData)
+	{
+		var file = new Blob([arrayBufferData], { type: 'audio/wav' });
+		var reader = new FileReader();
+		reader.onload = function() {
+			var base64Audio = this.result;
+			self_upload_audio(base64Audio, "tts_audio");
+		};
+		reader.readAsDataURL(file);
+	}
 
 	var ttsIsBeingGenerated = false
 	function tts_speak(text, speech_synth_override=null, do_download=false)
@@ -16266,6 +16329,12 @@ Current version indicated by LITEVER below.
 			{
 				text = strippedtxt;
 			}
+		}
+
+		let do_embed_tts = false;
+		if(!do_download && speech_synth_override==null) //dont use it for tests
+		{
+			do_embed_tts = localsettings.embed_narrations;
 		}
 
 		if(ssval==XTTS_ID || ssval==ALLTALK_ID || ssval==OAI_TTS_ID || ssval==KCPP_TTS_ID || ssval==POLLINATIONS_TTS_ID) //xtts api server
@@ -16326,6 +16395,10 @@ Current version indicated by LITEVER below.
 					{
 						tts_download(audiofile_ref);
 					}
+					if(do_embed_tts)
+					{
+						tts_embed_audio(audiofile_ref);
+					}
 					ttsIsBeingGenerated = false
 					const playSound = audioContext.createBufferSource();
 					playSound.buffer = decodedData;
@@ -16369,6 +16442,10 @@ Current version indicated by LITEVER below.
 					if(do_download)
 					{
 						tts_download(audiofile_ref);
+					}
+					if(do_embed_tts)
+					{
+						tts_embed_audio(audiofile_ref);
 					}
 					ttsIsBeingGenerated = false
 					const playSound = audioContext.createBufferSource();
@@ -16414,6 +16491,10 @@ Current version indicated by LITEVER below.
 						if(do_download)
 						{
 							tts_download(audiofile_ref);
+						}
+						if(do_embed_tts)
+						{
+							tts_embed_audio(audiofile_ref);
 						}
 						ttsIsBeingGenerated = false
 						const playSound = audioContext.createBufferSource();
@@ -16481,6 +16562,10 @@ Current version indicated by LITEVER below.
 							{
 								tts_download(audiofile_ref);
 							}
+							if(do_embed_tts)
+							{
+								tts_embed_audio(audiofile_ref);
+							}
 							playDecodedAllTalkData(decodedData);
 						})
 						.catch((error) => {
@@ -16534,6 +16619,10 @@ Current version indicated by LITEVER below.
 											{
 												tts_download(audiofile_ref);
 											}
+											if(do_embed_tts)
+											{
+												tts_embed_audio(audiofile_ref);
+											}
 											playDecodedAllTalkData(decodedData);
 										})
 										.catch((error) => {
@@ -16567,6 +16656,10 @@ Current version indicated by LITEVER below.
 									if(do_download)
 									{
 										tts_download(audiofile_ref);
+									}
+									if(do_embed_tts)
+									{
+										tts_embed_audio(audiofile_ref);
 									}
 									playDecodedAllTalkData(decodedData);
 								}).catch((error) => {
@@ -17754,7 +17847,7 @@ Current version indicated by LITEVER below.
 			synchro_polled_response = null;
 			last_stop_reason = "";
 			synchro_pending_stream = "";
-			gemini_was_thinking = false;
+			streaming_was_thinking = false;
 
 			//if this is set, we don't use horde, use the custom endpoint instead
 			if (custom_kobold_endpoint != "") //handle for kai
@@ -21023,13 +21116,20 @@ Current version indicated by LITEVER below.
 
 		if(elements && elements.length>0)
 		{
+			//check if we are on an instruct boundary
+			let onboundary = false;
+			if(gametext_arr.length>0 && gametext_arr[gametext_arr.length-1].trim().endsWith("{{[OUTPUT]}}"))
+			{
+				onboundary = true;
+			}
 			elements.forEach(function (element) {
 				let temp_stream = synchro_pending_stream;
-				// let codeblockcount = (temp_stream.match(/```/g) || []).length;
-				// if(codeblockcount>0 && codeblockcount%2!=0)
-				// {
-				// 	temp_stream += "```"; //force end code block
-				// }
+				if (onboundary) {
+					let codeblockcount = (temp_stream.match(/```/g) || []).length;
+					if (codeblockcount > 0 && codeblockcount % 2 != 0) {
+						temp_stream += "```"; //force end code block
+					}
+				}
 				let pend = escape_html(pending_context_preinjection) + format_streaming_text(escape_html(temp_stream));
 				element.innerHTML = pend;
 			});
@@ -26222,6 +26322,10 @@ Current version indicated by LITEVER below.
 						<div class="settinglabel">
 							<div class="justifyleft settingsmall"  title="If unchecked, only speak AI replies, not other text.">Narrate Only Dialog </div>
 							<input title="Narrate Only Dialog" type="checkbox" id="narrate_only_dialog" style="margin:0px 0px 0px auto;">
+						</div>
+						<div class="settinglabel">
+							<div class="justifyleft settingsmall"  title="Try to save and embed TTS narration files into story if possible. Does not work for internal browser TTS. Not recommend due to large size.">Save Narrations </div>
+							<input title="Save Narrations" type="checkbox" id="embed_narrations" style="margin:0px 0px 0px auto;">
 						</div>
 						<div class="inlinelabel" style="font-size: 11px;">
 							<div class="justifyleft">Browser TTS Speed: </div>

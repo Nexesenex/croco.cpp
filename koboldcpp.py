@@ -381,6 +381,7 @@ class tts_generation_inputs(ctypes.Structure):
     _fields_ = [("prompt", ctypes.c_char_p),
                 ("speaker_seed", ctypes.c_int),
                 ("audio_seed", ctypes.c_int),
+                ("custom_speaker_voice", ctypes.c_char_p),
                 ("custom_speaker_text", ctypes.c_char_p),
                 ("custom_speaker_data", ctypes.c_char_p)]
 
@@ -3209,8 +3210,8 @@ def whisper_generate(genparams):
 def tts_load_model(ttc_model_filename,cts_model_filename):
     global args
     inputs = tts_load_model_inputs()
-    inputs.ttc_model_filename = ttc_model_filename.encode("UTF-8")
-    inputs.cts_model_filename = cts_model_filename.encode("UTF-8")
+    inputs.ttc_model_filename = ttc_model_filename.encode("UTF-8") if ttc_model_filename else "".encode("UTF-8")
+    inputs.cts_model_filename = cts_model_filename.encode("UTF-8") if cts_model_filename else "".encode("UTF-8")
     inputs.gpulayers = (999 if args.ttsgpu else 0)
     inputs.flash_attention =  args.flashattention
     thds = args.threads
@@ -3266,6 +3267,7 @@ def tts_generate(genparams):
     else:
         voice = simple_lcg_hash(voicestr.strip()) if voicestr else 1
     inputs = tts_generation_inputs()
+    inputs.custom_speaker_voice = normalized_voice.encode("UTF-8")
     inputs.prompt = prompt.encode("UTF-8")
     inputs.speaker_seed = voice
     aseed = -1
@@ -6482,7 +6484,7 @@ def show_gui():
     normrmseps_var = ctk.StringVar(value=str(-1.0))
 
     moecpu_var = ctk.StringVar(value=str(0))
-    defaultgenamt_var = ctk.StringVar(value=str(512))
+    defaultgenamt_var = ctk.StringVar(value=str(640))
     nobostoken_var = ctk.IntVar(value=0)
     override_kv_var = ctk.StringVar(value="")
     override_tensors_var = ctk.StringVar(value="")
@@ -7351,13 +7353,13 @@ def show_gui():
     audio_tab = tabcontent["Audio"]
     makefileentry(audio_tab, "Whisper Model (Speech-To-Text):", "Select Whisper .bin Model File", whisper_model_var, 1, width=280, filetypes=[("*.bin","*.bin")], tooltiptxt="Select a Whisper .bin model file on disk to be loaded for Voice Recognition.")
     whisper_model_var.trace_add("write", gui_changed_modelfile)
-    makefileentry(audio_tab, "OuteTTS Model (Text-To-Speech Required):", "Select OuteTTS GGUF Model File", tts_model_var, 3, width=280, filetypes=[("*.gguf","*.gguf")], tooltiptxt="Select a OuteTTS GGUF model file on disk to be loaded for Narration.")
+    makefileentry(audio_tab, "TTS Model (Text-To-Speech):", "Select TTS GGUF Model File", tts_model_var, 3, width=280, filetypes=[("*.gguf","*.gguf")], tooltiptxt="Select a TTS GGUF model file on disk to be loaded for Narration.")
     tts_model_var.trace_add("write", gui_changed_modelfile)
-    makelabelentry(audio_tab, "OuteTTS Threads:" , tts_threads_var, 5, 50,padx=290,singleline=True,tooltip="How many threads to use during TTS generation.\nIf left blank, uses same value as threads.")
-    makelabelentry(audio_tab, "OuteTTS Max Tokens:" , ttsmaxlen_var, 7, 50,padx=290,singleline=True,tooltip="Max allowed audiotokens to generate per TTS request.")
+    makelabelentry(audio_tab, "TTS Threads:" , tts_threads_var, 5, 50,padx=290,singleline=True,tooltip="How many threads to use during TTS generation.\nIf left blank, uses same value as threads.")
+    makelabelentry(audio_tab, "TTS Max Tokens:" , ttsmaxlen_var, 7, 50,padx=290,singleline=True,tooltip="Max allowed audiotokens to generate per TTS request.")
     makecheckbox(audio_tab, "TTS Use GPU", ttsgpu_var, 9, 0,tooltiptxt="Uses the GPU for TTS.")
     ttsgpu_var.trace_add("write", gui_changed_modelfile)
-    makefileentry(audio_tab, "WavTokenizer Model (Text-To-Speech Required):", "Select WavTokenizer GGUF Model File", wavtokenizer_var, 11, width=280, filetypes=[("*.gguf","*.gguf")], tooltiptxt="Select a WavTokenizer GGUF model file on disk to be loaded for Narration.")
+    makefileentry(audio_tab, "WavTokenizer Model (Required for OuteTTS):", "Select WavTokenizer GGUF Model File", wavtokenizer_var, 11, width=280, filetypes=[("*.gguf","*.gguf")], tooltiptxt="Select a WavTokenizer GGUF model file on disk to be loaded for Narration.")
     wavtokenizer_var.trace_add("write", gui_changed_modelfile)
 
     admin_tab = tabcontent["Admin"]
@@ -7564,7 +7566,7 @@ def show_gui():
         args.normrmseps = float(normrmseps_var.get()) if normrmseps_var.get()!="" else -1.0
 
         args.moecpu = int(moecpu_var.get()) if moecpu_var.get()!="" else 0
-        args.defaultgenamt = int(defaultgenamt_var.get()) if defaultgenamt_var.get()!="" else 512
+        args.defaultgenamt = int(defaultgenamt_var.get()) if defaultgenamt_var.get()!="" else 640
         args.nobostoken = (nobostoken_var.get()==1)
         args.enableguidance = (enableguidance_var.get()==1)
         args.overridekv = None if override_kv_var.get() == "" else override_kv_var.get()
@@ -7656,7 +7658,7 @@ def show_gui():
             args.embeddingsmaxctx = (0 if embeddings_ctx_var.get()=="" else int(embeddings_ctx_var.get()))
         args.embeddingsgpu = (embeddings_gpu_var.get()==1)
 
-        if tts_model_var.get() != "" and wavtokenizer_var.get() != "":
+        if tts_model_var.get() != "":
             args.ttsthreads = (0 if tts_threads_var.get()=="" else int(tts_threads_var.get()))
             args.ttsmodel = tts_model_var.get()
             args.ttswavtokenizer = wavtokenizer_var.get()
@@ -7912,8 +7914,8 @@ def show_gui():
         kcpp_exporting_template = False
         export_vars()
         savdict = json.loads(json.dumps(args.__dict__))
-        file_type = [("KoboldCpp/Croco.Cpp Settings", "*.kcpps")]
-        filename = zentk_asksaveasfilename(filetypes=file_type, defaultextension=".kcpps")
+        file_type = [("KoboldCpp/Croco.Cpp Settings Settings", "*.kcpps")]
+        filename = zentk_asksaveasfilename(filetypes=file_type, defaultextension=".kcpps",title="Save kcpps settings config file")
         if not filename:
             return
         filenamestr = str(filename).strip()
@@ -9356,8 +9358,8 @@ def kcpp_main_process(launch_args, g_memory=None, gui_launcher=False):
                 exit_with_error(3,"Could not load whisper model: " + whispermodel)
 
     #handle tts model
-    if args.ttsmodel and args.ttsmodel!="" and args.ttswavtokenizer and args.ttswavtokenizer!="":
-        if not os.path.exists(args.ttsmodel) or not os.path.exists(args.ttswavtokenizer):
+    if args.ttsmodel and args.ttsmodel!="":
+        if not os.path.exists(args.ttsmodel) or (args.ttswavtokenizer and args.ttswavtokenizer!="" and not os.path.exists(args.ttswavtokenizer)):
             if args.ignoremissing:
                 print("Ignoring missing TTS model files!")
                 args.ttsmodel = None
@@ -9369,7 +9371,8 @@ def kcpp_main_process(launch_args, g_memory=None, gui_launcher=False):
             ttsmodelpath = args.ttsmodel
             ttsmodelpath = os.path.abspath(ttsmodelpath)
             wavtokpath = args.ttswavtokenizer
-            wavtokpath = os.path.abspath(wavtokpath)
+            if wavtokpath:
+                wavtokpath = os.path.abspath(wavtokpath)
             loadok = tts_load_model(ttsmodelpath,wavtokpath)
             print("Load TTS Model OK: " + str(loadok))
             if not loadok:
@@ -9851,7 +9854,7 @@ if __name__ == '__main__':
     advparser.add_argument("--neglayeroffset", help="Removes or adds a layer to the GPU layers autoloader calculation in case of OOM or under-exploitation.", type=check_range(int,0,10), default=0)
 
     advparser.add_argument("--moecpu", metavar=('[layers affected]'), help="Keep the Mixture of Experts (MoE) weights of the first N layers in the CPU. If no value is provided, applies to all layers.", nargs='?', const=999, type=int, default=0)
-    advparser.add_argument("--defaultgenamt", help="How many tokens to generate by default, if not specified. Must be smaller than context size. Usually, your frontend GUI will override this.", type=check_range(int,64,8192), default=512)
+    advparser.add_argument("--defaultgenamt", help="How many tokens to generate by default, if not specified. Must be smaller than context size. Usually, your frontend GUI will override this.", type=check_range(int,64,8192), default=640)
     advparser.add_argument("--nobostoken", help="Prevents BOS token from being added at the start of any prompt. Usually NOT recommended for most models.", action='store_true')
     advparser.add_argument("--enableguidance", help="Enables the use of Classifier-Free-Guidance, which allows the use of negative prompts. Has performance and memory impact.", action='store_true')
     advparser.add_argument("--maxrequestsize", metavar=('[size in MB]'), help="Specify a max request payload size. Any requests to the server larger than this size will be dropped. Do not change if unsure.", type=int, default=32)
@@ -9891,7 +9894,7 @@ if __name__ == '__main__':
     whisperparsergroup.add_argument("--whispermodel", metavar=('[filename]'), help="Specify a Whisper .bin model to enable Speech-To-Text transcription.", default="")
 
     ttsparsergroup = parser.add_argument_group('TTS Narration Commands')
-    ttsparsergroup.add_argument("--ttsmodel", metavar=('[filename]'), help="Specify the OuteTTS Text-To-Speech GGUF model.", default="")
+    ttsparsergroup.add_argument("--ttsmodel", metavar=('[filename]'), help="Specify the TTS Text-To-Speech GGUF model.", default="")
     ttsparsergroup.add_argument("--ttswavtokenizer", metavar=('[filename]'), help="Specify the WavTokenizer GGUF model.", default="")
     ttsparsergroup.add_argument("--ttsgpu", help="Use the GPU for TTS.", action='store_true')
     ttsparsergroup.add_argument("--ttsmaxlen", help="Limit number of audio tokens generated with TTS.",  type=int, default=default_ttsmaxlen)

@@ -254,6 +254,7 @@ struct tts_generation_inputs
     const char * prompt = nullptr;
     const int speaker_seed = 0;
     const int audio_seed = 0;
+    const char * custom_speaker_voice = "";
     const char * custom_speaker_text = "";
     const char * custom_speaker_data = "";
 };

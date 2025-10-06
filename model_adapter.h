@@ -138,6 +138,7 @@ void ContextFastForward(std::vector<int> &current_context_tokens, std::vector<in
  int &n_past, std::vector<int> &last_n_tokens, const int nctx, std::vector<int> &smartcontext,
  const bool useSmartContext, const bool requireFullSubset);
 bool gguf_tensor_exists(const std::string & filename, std::string tensor_name, bool exactmatch);
+std::string gguf_get_model_arch(const std::string & filename);
 
 size_t gpttype_calc_new_state_kv();
 size_t gpttype_calc_new_state_tokencount();
