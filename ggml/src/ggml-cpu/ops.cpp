@@ -8074,7 +8074,7 @@ static void ggml_compute_forward_conv_3d_impl(const ggml_compute_params * params
                             if (kernel_type == GGML_TYPE_F32) {
                                 *(float *)element_ptr = src_val;
                             } else if (kernel_type == GGML_TYPE_F16) {
-                                *(ggml_fp16_t *)element_ptr = GGML_CPU_FP32_TO_FP16(src_val);
+                                *(ggml_fp16_t *)element_ptr = GGML_FP32_TO_FP16(src_val);
                             }
                         }
                     }
