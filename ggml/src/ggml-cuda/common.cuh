@@ -107,7 +107,7 @@ constexpr bool ggml_cuda_has_arch(const int arch) {
 
 constexpr int ggml_cuda_highest_compiled_arch_impl(const int /*arch*/, const int cur) {
     if (cur == 0) {
-        GGML_LOG_WARN("ggml was not compiled with any CUDA arch warning");
+        GGML_ABORT("ggml was not compiled with any CUDA arch warning");
         return -1;
     }
     return cur;

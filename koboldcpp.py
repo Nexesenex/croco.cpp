@@ -78,9 +78,9 @@ extra_images_max = 4
 
 # global vars
 KcppVersion = "1.99001"
-LcppVersion = "b6332-60"
+LcppVersion = "b6332-70"
 IKLcppVersion = "IKLpr624"
-EsoboldVersion = "RMv1.17.9m"
+EsoboldVersion = "RMv1.17.19m"
 CudaSpecifics = "Cu128_Ar86_SMC2_DmmvX32Y1"
 ReleaseDate = "2025/10/06"
 showdebug = True
