@@ -1,7 +1,15 @@
 #pragma once
 
 #include "ggml-common.h"
-#include "convert.cuh"
+
+template<typename src_t, typename dst_t>
+static __device__ __forceinline__ void convert_flt(const src_t * src, dst_t * dst) {
+    if constexpr (std::is_same_v<src_t, dst_t>) {
+        *dst = *src;
+    } else {
+        *dst = float(*src);
+    }
+}
 
 static __device__ __forceinline__ int best_index_int8(int n, const int8_t * val, float x) {
     if (x <= val[0]) return 0;
@@ -213,5 +221,5 @@ static __device__ void cpy_blck_f32_iq4_nl(const char * cxi, char * cdsti) {
 
 template<typename src_t, typename dst_t>
 static __device__ void cpy_1_flt(const char * cxi, char * cdsti) {
-    *(dst_t *) cdsti = ggml_cuda_cast<dst_t>(*(const src_t *) cxi);
+    convert_flt((const src_t *)cxi, (dst_t *)cdsti);
 }
