@@ -566,6 +566,13 @@ std::string string_from(const struct llama_context * ctx, const std::vector<llam
 
         auto detokenized = common_token_to_piece(ctx, token);
 
+        detokenized.erase(
+            std::remove_if(
+                detokenized.begin(),
+                detokenized.end(),
+                [](const unsigned char c) { return !std::isprint(c); }),
+            detokenized.end());
+
         buf << "'" << detokenized << "'"
             << ":" << std::to_string(token);
     }
@@ -589,6 +596,13 @@ std::string string_from(const struct llama_context * ctx, const struct llama_bat
         }
 
         auto detokenized = common_token_to_piece(ctx, batch.token[i]);
+
+        detokenized.erase(
+                std::remove_if(
+                    detokenized.begin(),
+                    detokenized.end(),
+                    [](const unsigned char c) { return !std::isprint(c); }),
+                detokenized.end());
 
         buf << "\n"          << std::to_string(i)
             << ", token '"   << detokenized << "'"
