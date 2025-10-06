@@ -52,18 +52,6 @@ static bool old_mixtral_warning_showed = false;
 // interface implementation
 //
 
-const char * llama_flash_attn_type_name(enum llama_flash_attn_type flash_attn_type) {
-    switch (flash_attn_type) {
-        case LLAMA_FLASH_ATTN_TYPE_AUTO:
-            return "auto";
-        case LLAMA_FLASH_ATTN_TYPE_DISABLED:
-            return "disabled";
-        case LLAMA_FLASH_ATTN_TYPE_ENABLED:
-            return "enabled";
-    }
-    GGML_ABORT("fatal error");
-}
-
 struct llama_sampler_chain_params llama_sampler_chain_default_params() {
     struct llama_sampler_chain_params result = {
         /*.no_perf                     =*/ true,
