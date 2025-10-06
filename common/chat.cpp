@@ -635,8 +635,6 @@ const char * common_reasoning_format_name(common_reasoning_format format) {
 common_reasoning_format common_reasoning_format_from_name(const std::string & format) {
     if (format == "none") {
         return COMMON_REASONING_FORMAT_NONE;
-    } else if (format == "auto") {
-        return COMMON_REASONING_FORMAT_AUTO;
     } else if (format == "deepseek") {
         return COMMON_REASONING_FORMAT_DEEPSEEK;
     } else if (format == "deepseek-legacy") {
