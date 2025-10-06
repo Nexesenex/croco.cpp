@@ -415,11 +415,6 @@ static best_fattn_kernel ggml_cuda_get_best_fattn_kernel(const int device, const
         return BEST_FATTN_KERNEL_WMMA_F16;
     }
 
-    //kcpp: always force WMMA for older gpus, fix issues like "FlashAttention without tensor cores only supports head sizes 64 and 128."
-    if (ggml_cuda_highest_compiled_arch(cc) <= GGML_CUDA_CC_TURING || cc == GGML_CUDA_CC_TURING) {
-        return BEST_FATTN_KERNEL_WMMA_F16;
-    }
-
     // If there is no suitable kernel for tensor cores or small batch sizes, use the generic kernel for large batch sizes:
     if (prec == GGML_PREC_DEFAULT && fast_fp16_available(cc)) {
         return BEST_FATTN_KERNEL_TILE_F16;
