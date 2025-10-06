@@ -5851,11 +5851,6 @@ class OlmoModel(TextModel):
         return [(self.map_tensor_name(name), data_torch)]
 
 
-@ModelBase.register("SeedOssForCausalLM")
-class SeedOssModel(TextModel):
-    model_arch = gguf.MODEL_ARCH.SEED_OSS
-
-
 @ModelBase.register("Olmo2ForCausalLM")
 class Olmo2Model(TextModel):
     model_arch = gguf.MODEL_ARCH.OLMO2
