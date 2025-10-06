@@ -5645,6 +5645,25 @@ Current version indicated by LITEVER below.
 		};
 		fileReader.readAsArrayBuffer(blob);
 	}
+
+	function updateCharacterListFromAll()
+	{
+		indexeddb_save("characterList", JSON.stringify(allCharacterNames)).then(() => {
+			waitingToast.hide()
+		})
+	}
+
+	function debounce(func, delay) {
+		let timeout;
+		return function (...args) {
+			clearTimeout(timeout);
+			timeout = setTimeout(() => {
+				func.apply(this, args);
+			}, delay);
+		};
+	}
+	let updateCharacterListFromAllDe = debounce(updateCharacterListFromAll, 5000);
+
 	function convertTavernPng(data) //import tavern png data. adapted from png-chunks-extract under MIT license
 	{
 		//accepts png input data, and returns the extracted JSON
@@ -5772,21 +5791,18 @@ Current version indicated by LITEVER below.
 						return base64url.slice(base64url.indexOf(',') + 1);
 					}
 
-					bufferToBase64(data).then(b64 => {
+					bufferToBase64(data).then(async (b64) => {
 						b64Url = `data:image/png;base64,${b64}`
 						let charData = !!decoded?.data ? decoded.data : decoded, charName = charData.name;
+						let dataUrl = await generateThumbnail(b64Url, [256, 256])
 						let dataToSave = {
 							name: charName,
 							data: charData,
 							image: b64Url
 						}
 						indexeddb_save(`character_${charName}`, JSON.stringify(dataToSave)).then(() => {
-							indexeddb_load("characterList", "[]").then(charListJson => {
-								let charList = JSON.parse(charListJson);
-								charList.push(charName);
-								allCharacterNames = charList;
-								indexeddb_save("characterList", JSON.stringify(charList));
-							})
+							allCharacterNames.push({name: charName, thumbnail: dataUrl})
+							updateCharacterListFromAllDe();
 						})
 					})
 					
@@ -8305,15 +8321,17 @@ Current version indicated by LITEVER below.
 		a.download = newfilename;
 		setTimeout(function(){a.click()},20);
 	}
-	function promptUserForLocalFile(fileCallback, allowedTypes = "")
+	function promptUserForLocalFile(fileCallback, allowedTypes = "", multiple = false)
 	{
 		//allowedTypes should be a string, because then you can accept MIME types like audio/*
 		let picker = document.getElementById('tempfilepicker');
 		picker.accept = allowedTypes;
+		picker.multiple = !!multiple ? true : undefined
 		picker.onchange = function (event) {
 			let input = event.target;
-			if (input.files.length > 0) {
-				let file = input.files[0];
+			for (let i = 0; i < input.files.length; i++)
+			{
+				let file = input.files[i];
 				let fileNameWithExt = file.name;
 				let extPos = fileNameWithExt.lastIndexOf(".");
 				let fileName = fileNameWithExt.substring(0, extPos);
@@ -23737,6 +23755,10 @@ Current version indicated by LITEVER below.
 		let arr = new Uint8Array(data)
 
 		let tavernData = convertTavernPng(arr)
+		return importCharacterCardAsWIInternal(tavernData)
+	}
+
+	function importCharacterCardAsWIInternal(tavernData) {
 		let charData = !!tavernData?.data ? tavernData.data : tavernData
 		let charName = charData.name
 		let memory = charData.description 
@@ -24457,23 +24479,28 @@ Current version indicated by LITEVER below.
 		allCharacterNames = JSON.parse(await indexeddb_load("characterList", "[]"))
 	})
 	
+	function getCharacterData(characterName)
+	{
+		return indexeddb_load(`character_${characterName}`, "{}").then(charData => {
+			return JSON.parse(charData);
+		});
+	}
+
 	function getImageUrlFromCharacter(characterName)
 	{
-		if (allCharacterNames.includes(characterName))
+		let charData = allCharacterNames.find(c => c.name === characterName)
+		if (charData !== undefined)
 		{
 			let charName = characterName.replaceAll(/[^\w]/g, "_"), id = `style_image_${charName}`;
 			let varName = `--img_character_${charName}`
 			if (!document.getElementById(id))
 			{
-				indexeddb_load(`character_${characterName}`, "{}").then(charData => {
-					let image = JSON.parse(charData)?.image;
-					let styleElem = document.createElement("style");
-					styleElem.id = id
-					styleElem.innerHTML = `:root{
-						${varName}:url(${image})
-					}`
-					document.body.appendChild(styleElem)
-				})
+				let styleElem = document.createElement("style");
+				styleElem.id = id
+				styleElem.innerHTML = `:root{
+					${varName}:url(${charData?.thumbnail})
+				}`
+				document.body.appendChild(styleElem)
 			}
 			return `var(${varName})`
 		}
@@ -33387,7 +33414,14 @@ class MarkdownWYSIWYG {
 					ctx.drawImage(img, 0, 0, w, h)
 					return resolve(canvas.toDataURL(file.type))
 				}
-				img.src = URL.createObjectURL(file)
+				if (typeof file === "string")
+				{
+					img.src = file
+				}
+				else
+				{
+					img.src = URL.createObjectURL(file)
+				}
 			}
 			finally {
 				URL.revokeObjectURL(img.src)
@@ -36564,7 +36598,7 @@ let checkFinalThoughtsPrompt = `Action: {"command":{"name":"thought","args":{"me
 	}
 
 	let getEmbeddingPresetFromModel = () => {
-		let embeddingPreset = embeddingPresets[Object.keys(embeddingPresets).filter(presetName => get_kcpp_embedding_model().includes(presetName))]
+		let embeddingPreset = embeddingPresets[Object.keys(embeddingPresets).filter(presetName => !!get_kcpp_embedding_model()?.includes(presetName))]
 		if (!!embeddingPreset && (!documentdb_sqPrefix && !documentdb_cPrefix))
 		{
 			documentdb_sqPrefix = embeddingPreset.query_prompt
@@ -36895,7 +36929,7 @@ let checkFinalThoughtsPrompt = `Action: {"command":{"name":"thought","args":{"me
 			showOpenButton() {
 				this.hideOpenButton()
 				
-				let openButton = document.createElement("span")
+				let openButton = document.createElement("span"), container = document.createElement("li");
 				openButton.id = "openTreeDiagram"
 				openButton.title = "World tree"
 				openButton.onclick = () => {
@@ -36909,6 +36943,7 @@ let checkFinalThoughtsPrompt = `Action: {"command":{"name":"thought","args":{"me
 					}
 				}
 				openButton.style = `
+				display: block;
 				background-color: black;
 				border-radius: 10px;
 				height: 20px;
@@ -36918,9 +36953,11 @@ let checkFinalThoughtsPrompt = `Action: {"command":{"name":"thought","args":{"me
 				height: 50px;
 				background-size: contain;
 				background-repeat: no-repeat;
-				background-position: center;
-				float: right;`
-				document.querySelector("#navbarNavDropdown > ul").appendChild(openButton)
+				background-position: center;`
+
+				container.classList.add("nav-item")
+				container.appendChild(openButton)
+				document.querySelector("#navbarNavDropdown > ul").appendChild(container)
 			}
 
 			closeTreeView() {
@@ -37354,6 +37391,9 @@ flowchart TD\n${treeToViewOutput.outputText.trim()}`
 		topButton += `<li class="nav-item" id="topbtn_server_saves">
 			<a class="nav-link mainnav" href="#" onclick="showServerSavesPopup()" tabindex="0">Server saves</a>
 		</li>`
+		topButton += `<li class="nav-item" id="topbtn_server_saves">
+			<a class="nav-link mainnav" href="#" onclick="showCharacterList()" tabindex="0">Characters</a>
+		</li>`
 
 		document.querySelector("#navbarNavDropdown > ul").innerHTML += topButton
 		treeViewer.showOpenButton()
@@ -37475,5 +37515,202 @@ flowchart TD\n${treeToViewOutput.outputText.trim()}`
 		background-origin: content-box;
 		background-repeat: no-repeat;
 	}
+
+	#popupContainer > .nspopup
+	{
+		max-height: 80%;
+		max-width: 80%;
+	}
+
+	#popupContainer .popuptitlebar
+	{
+		height: 40px;
+	}
+	
+	#popupContainer .popupContent
+	{
+		overflow-y: auto;
+		height: calc(100% - 40px);
+	}
+
+	#popupContainer .popupfooter button
+	{
+		width: unset;
+	}
+
+	.containAndScaleImage.tile
+	{
+		height: 128px;
+		aspect-ratio: 1;
+		border-radius: 25px;
+		text-align: center;
+	}
+
+	.containAndScaleImage.tile > b
+	{
+		text-shadow: 2px 2px 5px #ffffff;
+		color: white;
+		background-color: black;
+		border-radius: 4px;
+		font-weight: bold;
+		padding: 2px;
+	}
+
+	.fillContainer
+	{
+		height: 100%;
+		width: 100%;
+	}
+
+	.autoGrid
+	{
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+		padding: 12px;
+		gap: 12px;
+	}
+
+	.autoGrid > *
+	{
+		display: block;
+	}
 </style>
+<script>
+	class PopupUtils
+	{
+		popupElem
+		titleElem
+		contentElem
+		buttonsElem
+		constructor()
+		{
+			let popupElem = document.createElement("div");
+			popupElem.classList.add("popupcontainer", "flex", "hidden");
+			popupElem.id = "popupContainer";
+			popupElem.innerHTML = `<div class="popupbg flex"></div>
+			<div class="nspopup higher">
+				<div class="popuptitlebar">
+					<div class="popuptitletext" id="popupTitle"></div>
+				</div>
+				<div class="popupContent">
+
+				</div>
+				<div class="popupfooter">
+					
+				</div>
+			</div>`
+			document.body.appendChild(popupElem)
+
+		 	this.popupElem = document.getElementById("popupContainer")
+			this.titleElem = popupElem.querySelector(".popuptitletext")
+			this.contentElem = popupElem.querySelector(".popupContent")
+			this.buttonsElem = popupElem.querySelector(".popupfooter")
+		}
+
+		_createButtonForPopup(text, onClick) {
+			let button = document.createElement("button")
+			button.type = "button"
+			button.classList.add("btn", "btn-primary")
+			button.innerText = text
+			button.onclick = onClick
+			return button
+		}
+
+		reset()
+		{
+			this.popupElem.classList.add("hidden");
+			this.titleElem.innerText = "";
+			this.contentElem.innerHTML = "";
+			this.buttonsElem.innerHTML = "";
+			return this;
+		}
+
+		show()
+		{
+			this.popupElem.classList.remove("hidden")
+			return this;
+		}
+
+		title(title)
+		{
+			this.titleElem.innerText = title
+			return this;
+		}
+
+		content(elem)
+		{
+			this.contentElem.appendChild(elem)
+			return this;
+		}
+
+		button(text, onClick)
+		{
+			this.buttonsElem.appendChild(this._createButtonForPopup(text, onClick))
+			return this;
+		}
+	}
+	
+	window.addEventListener("load", () => {
+		window.popupUtils = new PopupUtils()
+	})
+
+	let showCharacterList = async () => {
+		let container = document.createElement("div");
+		container.classList.add("fillContainer", "autoGrid")
+		container.style.width = "70vw"
+		container.style.overflowX = "hidden"
+		if (allCharacterNames.length === 0)
+		{
+			let charIcon = document.createElement("span");
+			charIcon.innerText = "No characters added yet";
+			charIcon.style.color = "white";
+			container.appendChild(charIcon);
+		}
+		else
+		{
+			for (let i = 0; i < allCharacterNames.length; i++)
+			{
+				let {name, thumbnail} = allCharacterNames[i];
+				let charIcon = document.createElement("span");
+				let charText = document.createElement("b");
+				charIcon.classList.add("containAndScaleImage", "tile")
+				charIcon.style.backgroundImage = `url(${thumbnail})`
+				charIcon.title = name
+				charText.innerText = name
+				charIcon.onclick = () => {
+					popupUtils.reset().title("Character Options").button("Load character", async () => {
+						popupUtils.reset()
+						let charData = await getCharacterData(name)
+						load_tavern_obj(charData.data);
+					}).button("Add character to WI", async () => {
+						popupUtils.reset()
+						let charData = await getCharacterData(name)
+						let wiToAdd = importCharacterCardAsWIInternal(charData.data);
+						current_wi = current_wi.filter(wi => wi?.folder !== name)
+						current_wi.push(...wiToAdd)
+					}).button("Delete character", async () => {
+						popupUtils.reset()
+						allCharacterNames = allCharacterNames.filter(c => c.name !== name)
+						updateCharacterListFromAll()
+					}).button("Close", () => popupUtils.reset()).show();
+				}
+				charIcon.appendChild(charText)
+				container.appendChild(charIcon)
+			}
+		}
+		popupUtils.reset().title("Character List").content(container).button("Upload characters", () => {
+			popupUtils.reset()
+			promptUserForLocalFile(async (result) => {
+				let { file, fileName, ext, content, plaintext, dataArr } = result;
+				waitingToast.show()
+				waitingToast.setText(`Loading character ${fileName}`)
+				if (ext === ".png")
+				{
+					let arr = new Uint8Array(dataArr)
+					convertTavernPng(arr)
+				}
+			}, [".png"], true)
+		}).button("Close", () => popupUtils.reset()).show();
+	}
+</script>
 </html>

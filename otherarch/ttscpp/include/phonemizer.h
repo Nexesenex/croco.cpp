@@ -128,7 +128,7 @@ static const std::map<const char, std::string> LETTER_PHONEMES = {
 	{'d', "dˈiː"},
 	{'e', "ˈiː"},
 	{'f', "ˈɛf"},
-	{'j', "dʒˈeɪ"},
+	{'g', "dʒˈi"},
 	{'h', "ˈeɪtʃ"},
 	{'i', "ˈaɪ"},
 	{'j', "dʒˈeɪ"},

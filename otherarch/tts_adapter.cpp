@@ -64,6 +64,85 @@ struct wav_header {
     uint32_t data_size;
 };
 
+// #include <vector>
+// #include <cstdio>
+// #include <cmath>
+
+// static void audio_post_clean(std::vector<float>& data) { // detect clicks
+//     const float silenceThreshold = 1e-5f;
+//     const float noiseThreshold   = 1e-3f;
+//     const size_t minSilence      = 100;   // samples
+//     const size_t noiseSpan       = 150;   // samples
+//     const size_t minSilence2      = 100;   // samples
+
+//     size_t len = data.size();
+
+//     int silencecounterA = 0;
+//     int noisecounterA   = 0;
+//     int silencecounterB = 0;
+//     int state = 0; // 0 = finding first silence, 1 = measuring noise, 2 = finding second silence
+
+//     size_t noiseStart = 0;
+
+//     for (size_t i = 0; i < len; ++i) {
+//         float sample = std::fabs(data[i]);
+
+//         if (state == 0) { // finding first silence
+//             if (sample < silenceThreshold) {
+//                 silencecounterA++;
+//             } else {
+//                 if (silencecounterA >= minSilence) {
+//                     state = 1;
+//                     noisecounterA = 1;
+//                     noiseStart = i;
+//                 } else {
+//                     silencecounterA = 0;
+//                     noisecounterA = 0;
+//                     silencecounterB = 0;
+//                 }
+//             }
+//         }
+//         if (state == 1) { // measuring noise span
+//             noisecounterA++;
+//             if(sample>noiseThreshold)
+//             {
+//                 state = 0;
+//                 silencecounterA = 0;
+//                 noisecounterA = 0;
+//                 silencecounterB = 0;
+//             }
+//             else if(noisecounterA>noiseSpan)
+//             {
+//                 state = 2;
+//             }
+//         }
+//         if (state == 2) { // finding second silence
+//             if (sample < silenceThreshold) {
+//                 silencecounterB++;
+//                 if (silencecounterB >= minSilence2) {
+//                     // full click detected
+//                     size_t noiseend = noiseStart + noisecounterA - 1;
+//                     //printf("Click detected from %zu to %zu\n", noiseStart, noiseend);
+//                     for(size_t j=noiseStart;j<noiseend;++j)
+//                     {
+//                         data[j] *= 0.01f; //greatly suppress noise
+//                     }
+//                     // reset to search again
+//                     state = 0;
+//                     silencecounterA = 0;
+//                     noisecounterA = 0;
+//                     silencecounterB = 0;
+//                 }
+//             } else {
+//                 state = 0;
+//                 silencecounterA = 0;
+//                 noisecounterA = 0;
+//                 silencecounterB = 0;
+//             }
+//         }
+//     }
+// }
+
 static std::string save_wav16_base64(const std::vector<float> &data, int sample_rate) {
     std::ostringstream oss;
     wav_header header;
@@ -740,6 +819,7 @@ static tts_generation_outputs ttstype_generate_ttscpp(const tts_generation_input
         ttstime = timer_check();
         printf("\nTTS Generated audio in %.2fs.\n",ttstime);
         std::vector<float> wavdat = std::vector(response_data.data, response_data.data + response_data.n_outputs);
+        //audio_post_clean(wavdat);
         last_generated_audio = save_wav16_base64(wavdat, ttscpp_runner->sampling_rate);
         output.data = last_generated_audio.c_str();
         output.status = 1;
