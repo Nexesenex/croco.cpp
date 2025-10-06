@@ -22,7 +22,7 @@
         "assistant_end": "<|im_end|>\n"
     }
 }, {
-    "search": ["<|im_user|>user<|im_middle|>", "<|im_assistant|>assistant<|im_middle|>", "<|im_end|>"],
+    "search": ["<|im_user|>{{role_name}}<|im_middle|>", "<|im_assistant|>{{role_name}}<|im_middle|>", "<|im_end|>"],
     "name": "ChatML (Kimi)",
     "adapter": {
         "system_start": "<|im_system|>system<|im_middle|>",
@@ -106,7 +106,8 @@
         "system_end": "[/INST]",
         "user_start": "[INST] ",
         "user_end": "",
-        "assistant_start": "[/INST]",
+        "assistant_start": "[/INST] ",
+        "assistant_gen": "[/INST]",
         "assistant_end": "</s>"
     }
 }, {
@@ -168,11 +169,12 @@
     "search": ["<|bom|>","is_last_checked_defined"],
     "name": "Jamba",
     "adapter": {
-        "system_start": "<|bom|><|system|>",
+        "system_start": "<|bom|><|system|> ",
         "system_end": "<|eom|>",
-        "user_start": "<|bom|><|user|>",
+        "user_start": "<|bom|><|user|> ",
         "user_end": "<|eom|>",
-        "assistant_start": "<|bom|><|assistant|>",
+        "assistant_start": "<|bom|><|assistant|> ",
+        "assistant_gen": "<|bom|><|assistant|>",
         "assistant_end": "<|eom|>"
     }
 }, {
@@ -191,7 +193,7 @@
     "name": "OpenAI Harmony",
     "adapter": {
         "system_start": "<|start|>developer<|message|># Instructions\n\n",
-        "system_end": "<|end|>",
+        "system_end": "\n\n<|end|>",
         "user_start": "<|start|>user<|message|>",
         "user_end": "<|end|>",
         "assistant_start": "<|start|>assistant<|channel|>final<|message|>",
@@ -206,6 +208,7 @@
         "user_start": "User: ",
         "user_end": "\n\n",
         "assistant_start": "Assistant: ",
+        "assistant_gen": "Assistant:",
         "assistant_end": "\n\n"
     }
 }, {

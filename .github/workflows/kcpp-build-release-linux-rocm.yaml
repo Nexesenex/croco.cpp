@@ -7,6 +7,11 @@ on:
         description: 'Optional commit hash to build from'
         required: false
         default: ''
+      tag_name:
+        description: 'Optional version tag (e.g. v1.57.1) for stable release file'
+        required: false
+        default: ''
+
 
 env:
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
@@ -77,3 +82,12 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload rocm-rolling dist/koboldcpp-linux-x64-rocm --clobber
+
+      - name: Upload version pinned tagged binary
+        if: ${{ inputs.tag_name != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ inputs.tag_name }}
+        run: |
+          cp dist/koboldcpp-linux-x64-rocm "dist/koboldcpp-linux-x64-rocm-${TAG_NAME}"
+          gh release upload rocm-rolling "dist/koboldcpp-linux-x64-rocm-${TAG_NAME}" --clobber

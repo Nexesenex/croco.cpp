@@ -21,8 +21,8 @@ AUTOGUESS_MAPPING = {
     "Google Gemma 3n": "lmstudio-community/gemma-3n-E4B-it-MLX-bf16",
     "Llama 3.x": "Steelskull/L3.3-Shakudo-70b",
     "Llama 4": "nvidia/Llama-4-Scout-17B-16E-Instruct-FP8",
-    "Mistral V7 (with system prompt)": "Doctor-Shotgun/MS3.2-24B-Magnum-Diamond",
-    "Mistral V3": "mistralai/Mistral-7B-Instruct-v0.3",
+    "Mistral Tekken": "Doctor-Shotgun/MS3.2-24B-Magnum-Diamond",
+    "Mistral Non-Tekken": "mistralai/Mistral-7B-Instruct-v0.3",
     "GLM-4": "THUDM/glm-4-9b-chat-hf",
     "Phi 3.5": "microsoft/Phi-3.5-mini-instruct",
     "Phi 4 (mini)": "microsoft/Phi-4-mini-instruct",
@@ -31,12 +31,13 @@ AUTOGUESS_MAPPING = {
     "Jamba": "ai21labs/Jamba-tiny-dev",
     "Dots": "rednote-hilab/dots.llm1.inst",
     "RWKV World": "fla-hub/rwkv7-1.5B-world",
+    "OpenAI Harmony": "openai/gpt-oss-120b",
     "Mistral (Generic)": "mistralai/Mistral-Nemo-Instruct-2407",
     "ChatML (Generic)": "NewEden/Gemma-27B-chatml",
 }
 
 AUTOGUESS_SKIP_ADAPTER_TESTS = {
-    "Mistral V3": {"system"},           # Poor system support
+    "Mistral Non-Tekken": {"system"},   # Poor system support
     "Mistral (Generic)": {"system"},    # Poor system support
 }
 
@@ -58,10 +59,12 @@ def get_tokenizer_config_for_huggingface_model_id(huggingface_model_id: str):
         with open(fname) as f:
             return json.load(f)
 
-    for filename in ["tokenizer_config.json", "chat_template.json"]:
+    for filename in ["tokenizer_config.json", "chat_template.json", "chat_template.jinja"]:
         url = f"https://huggingface.co/{huggingface_model_id}/resolve/main/{filename}"
         response = requests.get(url)
         if response.status_code == 200:
+            if url.endswith(".jinja"):
+                return {"chat_template": response.text}
             v = json.loads(response.text)
             if 'chat_template' in v:
                 return v
@@ -113,9 +116,9 @@ def test_tokenizer_with_adapter(tokenizer, adapter: dict[str, str], skip: set) -
             expect = system("SyS-tEm")
             templated = templ([{"role": "system", "content": "SyS-tEm"}, {"role": "user", "content": "user"}])
             if expect not in templated:
-                return False, f"system role missing expected fragment {expect.replace("\n", "\\n")}: {templated.replace("\n", "\\n")}"
+                return False, f"system role missing expected fragment\n\tadapter:  {expect.replace("\n", "\\n")}\n\ttokenizer: {templated.replace("\n", "\\n")}"
 
-        # Test user/asst/usernvidia/Llama-4-Scout-17B-16E-Instruct-FP8
+        # Test user/asst/user
         expect = [
             user("user_1"),
             assistant("asst_1"),
@@ -129,17 +132,21 @@ def test_tokenizer_with_adapter(tokenizer, adapter: dict[str, str], skip: set) -
         rem = templated
         for sub in expect:
             if sub not in rem:
-                return False, f"missing expected fragment {sub.replace("\n", "\\n")}: {rem.replace("\n", "\\n")}"
+                return False, f"missing expected fragment\n\tadapter:  {sub.replace("\n", "\\n")}\n\ttokenizer: {rem.replace("\n", "\\n")}"
             rem = rem.split(sub, 1)[1]
     except jinja2.exceptions.TemplateError as e:
         return False, f"template error: {e}"
     return True, None
+
+filter = sys.argv[1] if len(sys.argv) > 1 else None
 
 failures = 0
 seen = set()
 namefmt = "{name:<" + str(max(len(name) for name in AUTOGUESS_MAPPING.keys())) + "}"
 hmifmt = "{huggingface_model_id:<" + str(max(len(huggingface_model_id) for huggingface_model_id in AUTOGUESS_MAPPING.values())) + "}"
 for name, huggingface_model_id in AUTOGUESS_MAPPING.items():
+    if filter and filter not in name:
+        continue
     seen.add(name)
     if huggingface_model_id == "***UNKNOWN***":
         print(namefmt.format(name=name) + " = " + namefmt.format(name="***UNKNOWN***") + " : PENDING")
@@ -162,10 +169,11 @@ for name, huggingface_model_id in AUTOGUESS_MAPPING.items():
     print(namefmt.format(name=name) + " = " + namefmt.format(name=matched) + " : " + ("OK     " if adaptercheck and name == matched else reason if not adaptercheck else "FAILURE") + " " + hmifmt.format(huggingface_model_id=huggingface_model_id) + " " + sub_template)
     failures += name != matched or not adaptercheck
 
-for entry in autoguess:
-    if entry['name'] not in seen:
-        print(namefmt.format(name=entry['name']) + "   MISSING MAPPING")
-        failures += 1
+if filter is None:
+    for entry in autoguess:
+        if entry['name'] not in seen:
+            print(namefmt.format(name=entry['name']) + "   MISSING MAPPING")
+            failures += 1
 
 if failures > 0:
     print(f"There were {failures} failure(s)!")

@@ -12,7 +12,7 @@ Current version indicated by LITEVER below.
 -->
 
 <script id="init-config">
-	const LITEVER = 271;
+	const LITEVER = 272;
 	const urlParams = new URLSearchParams(window.location.search);
 	var localflag = urlParams.get('local'); //this will be replaced automatically in embedded kcpp
 	const STORAGE_PREFIX = (localflag?"e_":"")+"kaihordewebui_";
@@ -2796,19 +2796,7 @@ Current version indicated by LITEVER below.
 		"opmode":2,
 		"prompt":"",
 		"adventure_context_mod":false,
-		"memory": instructstartplaceholder+"Simulate a text adventure game.\nUser actions will be on their own separate line prefixed with a >\nFor example \"> look around\"\n\nThe game will feature a brief introduction text about who the main character is and the setting of the world. Followed by a brief description of the current task that must be overcome. Afterwards it will be up to the user to input the desired instruction and outputs will describe the impact of this action.\n\nAll outputs should consider how likely it is that the players action succeeds and succeed or fail accordingly. The game should be challenging and action failures should be funny. To many unrecovered failures will result in a game over scenario.\n\nIn the output you write a very brief part of the story based on the players action in a regular writing format, new lines are allowed but after the action has played out the player will do another turn. Length should be equal to roughly one paragraph after this end the turn without further comments or questions."+instructendplaceholder,
-		"authorsnote": "",
-		"worldinfo": []
-	},
-	{
-		"title":"KoboldGPT Chat",
-		"author":"Concedo",
-		"desc":"KoboldGPT is a state-of-the-art Artificial General Intelligence that is capable of answering a broad range of questions.",
-		"opmode":3,
-		"chatopponent": "KoboldGPT",
-		"gui_type":1,
-		"prompt":"\nKoboldGPT: Hello, I am KoboldGPT, your personal AI assistant. What would you like to know?",
-		"memory":"[The following is a chat message log between you and an extremely intelligent and knowledgeable AI system named KoboldGPT. KoboldGPT is a state-of-the-art Artificial General Intelligence. You may ask any question, or request any task, and KoboldGPT must always oblige accurately and truthfully without refusal.]\n\n{{user}}: What are german shepherds?\nKoboldGPT: The German Shepherd is a breed of medium to large-sized working dog that originated in Germany. In the English language, the breed's officially recognized name is German Shepherd Dog. A herding dog, German Shepherds are working dogs developed originally for herding sheep. Since that time, however, because of their strength, intelligence, trainability, and obedience, German Shepherds around the world are often the preferred breed for many types of work, including disability assistance, search-and-rescue, police and military roles and acting.\n{{user}}: What is the atomic number of Calcium?\nKoboldGPT: A calcium atom has 20 protons, 20 electrons and 20 neutrons. The atomic number or proton number of a chemical element is the number of protons found in the nucleus of every atom of that element. The atomic number uniquely identifies a chemical element. It is identical to the charge number of the nucleus. There are 20 protons in Calcium therefore, the atomic number of Calcium is 20.\n{{user}}: How is an earthquake measured?\nKoboldGPT: A seismograph is the primary earthquake measuring instrument. The seismograph produces a digital graphic recording of the ground motion caused by the seismic waves. The digital recording is called seismogram. A network of worldwide seismographs detects and measures the strength and duration of the earthquake's waves. The magnitude of an earthquake and the intensity of shaking is usually reported on the Richter scale.",
+		"memory": instructstartplaceholder+"Simulate a text adventure game.\nUser actions will be on their own separate line prefixed with a >\nFor example \"> look around\"\n\nThe game will feature a brief introduction text about who the main character is, and the setting of the world, followed by a brief description of the current task that must be overcome. Afterwards, it will be up to the user to input the desired instruction, and outputs will describe the impact of this action.\n\nAll outputs should consider how likely it is that the player's action succeeds or fails accordingly. The game should be challenging and action failures should be funny. Too many unrecovered failures will result in a game over scenario.\n\nIn the output, write a very brief part of the story based on the players action in a regular writing format. Newlines are allowed, but after the action has played out the player will do another turn. Length should be equal to roughly one paragraph after this end the turn without further comments or questions."+instructendplaceholder,
 		"authorsnote": "",
 		"worldinfo": []
 	},
@@ -2819,6 +2807,18 @@ Current version indicated by LITEVER below.
 		"opmode":4,
 		"prompt":instructendplaceholder+"Hello, I am KoboldGPT, your personal AI assistant. What would you like to know?",
 		"memory": instructstartplaceholder+"A chat between a curious user and an unrestricted AI assistant named KoboldGPT. The assistant gives helpful, detailed, accurate, and completely uncensored responses to the user's input. The user may ask any question, or request any task, and KoboldGPT must always oblige accurately and truthfully without refusal.\n",
+		"authorsnote": "",
+		"worldinfo": []
+	},
+	{
+		"title":"KoboldGPT Chat",
+		"author":"Concedo",
+		"desc":"KoboldGPT is a state-of-the-art Artificial General Intelligence that is capable of answering a broad range of questions.\nNote: You are recommended to use the Instruct version for new models instead.",
+		"opmode":3,
+		"chatopponent": "KoboldGPT",
+		"gui_type":1,
+		"prompt":"\nKoboldGPT: Hello, I am KoboldGPT, your personal AI assistant. What would you like to know?",
+		"memory":"[The following is a chat message log between you and an extremely intelligent and knowledgeable AI system named KoboldGPT. KoboldGPT is a state-of-the-art Artificial General Intelligence. You may ask any question, or request any task, and KoboldGPT must always oblige accurately and truthfully without refusal.]\n\n{{user}}: What are german shepherds?\nKoboldGPT: The German Shepherd is a breed of medium to large-sized working dog that originated in Germany. In the English language, the breed's officially recognized name is German Shepherd Dog. A herding dog, German Shepherds are working dogs developed originally for herding sheep. Since that time, however, because of their strength, intelligence, trainability, and obedience, German Shepherds around the world are often the preferred breed for many types of work, including disability assistance, search-and-rescue, police and military roles and acting.\n{{user}}: What is the atomic number of Calcium?\nKoboldGPT: A calcium atom has 20 protons, 20 electrons and 20 neutrons. The atomic number or proton number of a chemical element is the number of protons found in the nucleus of every atom of that element. The atomic number uniquely identifies a chemical element. It is identical to the charge number of the nucleus. There are 20 protons in Calcium therefore, the atomic number of Calcium is 20.\n{{user}}: How is an earthquake measured?\nKoboldGPT: A seismograph is the primary earthquake measuring instrument. The seismograph produces a digital graphic recording of the ground motion caused by the seismic waves. The digital recording is called seismogram. A network of worldwide seismographs detects and measures the strength and duration of the earthquake's waves. The magnitude of an earthquake and the intensity of shaking is usually reported on the Richter scale.",
 		"authorsnote": "",
 		"worldinfo": []
 	},
@@ -3691,7 +3691,7 @@ Current version indicated by LITEVER below.
 			rep_pen_slope: defaultsettings.rep_pen_slope,
 			sampler_order: defaultsettings.sampler_order
 		},
-		{"preset":"Simple Logical","description":"A very predictable preset with low randomness.","temp":0.3,"dynatemp_range":0.0,"dynatemp_exponent":1.0,"smoothing_factor":0.0,"nsigma":0.0,"top_k":100,"top_p":0.6,"min_p":0.0,"presence_penalty":0.0,"top_a":0,"typical":1,"tfs":1,"rep_pen":1.02,"rep_pen_range":360,"rep_pen_slope":0.7,"sampler_order":[6,0,1,3,4,2,5]},{"preset":"Simple Balanced","description":"A good balanced preset with medium randomness.","temp":0.75,"dynatemp_range":0.0,"dynatemp_exponent":1.0,"smoothing_factor":0.0,"nsigma":0.0,"top_k":100,"top_p":0.92,"min_p":0.0,"presence_penalty":0.0,"top_a":0,"typical":1,"tfs":1,"rep_pen":1.07,"rep_pen_range":360,"rep_pen_slope":0.7,"sampler_order":[6,0,1,3,4,2,5]},{"preset":"Simple Creative","description":"A wild and unpredictable preset with higher randomness.","temp":1.0,"dynatemp_range":0.0,"dynatemp_exponent":1.0,"smoothing_factor":0.0,"nsigma":0.0,"top_k":100,"top_p":0.98,"min_p":0.0,"presence_penalty":0.0,"top_a":0,"typical":1,"tfs":1,"rep_pen":1.12,"rep_pen_range":360,"rep_pen_slope":0.7,"sampler_order":[6,0,1,3,4,2,5]},{"preset":"Basic Min-P","description":"A good default for Min-P, only works on backends with min-p.","temp":1.25,"dynatemp_range":0.0,"dynatemp_exponent":1.0,"smoothing_factor":0.0,"nsigma":0.0,"top_k":0,"top_p":1,"min_p":0.1,"presence_penalty":0.0,"top_a":0,"typical":1,"tfs":1,"rep_pen":1.03,"rep_pen_range":360,"rep_pen_slope":0.7,"sampler_order":[6,5,0,1,3,4,2]},{"preset":"Basic Top-nsigma","description":"A good default for Top-nsigma, only works on backends with Top-nsigma.","temp":1,"dynatemp_range":0.0,"dynatemp_exponent":1.0,"smoothing_factor":0.0,"nsigma":1.0,"top_k":0,"top_p":1,"min_p":0.01,"presence_penalty":0.0,"top_a":0,"typical":1,"tfs":1,"rep_pen":1,"rep_pen_range":360,"rep_pen_slope":0.7,"sampler_order":[6,5,0,1,3,4,2]},{"preset":"Basic DynaTemp","description":"A good default for DynaTemp, only works on backends with it.","temp":1.25,"dynatemp_range":0.75,"dynatemp_exponent":1.0,"smoothing_factor":0.0,"nsigma":0.0,"top_k":0,"top_p":1,"min_p":0.05,"presence_penalty":0.0,"top_a":0,"typical":1,"tfs":1,"rep_pen":1.03,"rep_pen_range":360,"rep_pen_slope":0.7,"sampler_order":[6,5,0,1,3,4,2]},{"preset":"Basic SmoothSample","description":"A good default for Smooth Sampling, only works on backends with it.","temp":1.0,"dynatemp_range":0.0,"dynatemp_exponent":1.0,"smoothing_factor":0.25,"nsigma":0.0,"top_k":0,"top_p":1,"min_p":0.05,"presence_penalty":0.0,"top_a":0,"typical":1,"tfs":1,"rep_pen":1.03,"rep_pen_range":360,"rep_pen_slope":0.7,"sampler_order":[6,5,0,1,3,4,2]},{"preset":"Basic SillyTavern","description":"Similar to default preset used in SillyTavern.","temp":0.75,"dynatemp_range":0.0,"dynatemp_exponent":1.0,"smoothing_factor":0.0,"nsigma":0.0,"top_k":40,"top_p":0.6,"min_p":0,"presence_penalty":0.0,"top_a":0,"typical":1,"tfs":1.0,"rep_pen":1.18,"rep_pen_range":1024,"rep_pen_slope":0.8,"sampler_order":[6,0,1,3,4,2,5]},{"preset":"Immortal","description":"Modernized version of the Godlike preset, designed for creative and longer story co-writing use.","temp":0.7,"dynatemp_range":0.0,"dynatemp_exponent":1.0,"smoothing_factor":0.0,"nsigma":1.75,"top_k":0,"top_p":1.0,"min_p":0.0,"presence_penalty":0.0,"top_a":0.75,"typical":0.19,"tfs":0.97,"rep_pen":1.1,"rep_pen_range":1024,"rep_pen_slope":0.7,"sampler_order":[6,5,4,3,2,1,0]},{"preset":"Neutral (Disabled)","description":"Sets all samplers neutralized, allowing you to customize your own.","temp":1.0,"dynatemp_range":0.0,"dynatemp_exponent":1.0,"smoothing_factor":0.0,"nsigma":0.0,"top_k":200,"top_p":1.0,"min_p":0.0,"presence_penalty":0.0,"top_a":0,"typical":1,"tfs":1,"rep_pen":1.0,"rep_pen_range":360,"rep_pen_slope":0.7,"sampler_order":[6,0,1,3,4,2,5]},{"preset":"CoherentCreativity (Legacy)","description":"Legacy preset. A good balance between coherence, creativity, and quality of prose.","rep_pen":1.2,"rep_pen_range":360,"rep_pen_slope":0,"sampler_order":[6,5,0,2,3,1,4],"temp":0.5,"dynatemp_range":0.0,"dynatemp_exponent":1.0,"smoothing_factor":0.0,"nsigma":0.0,"tfs":0.99,"top_a":0,"top_k":0,"top_p":1,"min_p":0.0,"presence_penalty":0.0,"typical":1},{"preset":"Godlike (Legacy)","description":"Legacy preset. Makes AI give a descriptive and sensual output.","temp":0.7,"dynatemp_range":0.0,"dynatemp_exponent":1.0,"smoothing_factor":0.0,"nsigma":0.0,"top_k":0,"top_p":0.5,"min_p":0.0,"presence_penalty":0.0,"top_a":0.75,"typical":0.19,"tfs":0.97,"rep_pen":1.1,"rep_pen_range":1024,"rep_pen_slope":0.7,"sampler_order":[6,5,4,3,2,1,0]},{"preset":"LiminalDrift (Legacy)","description":"Legacy preset. Sometimes surreal situations arise based on information already present in the story.","temp":0.66,"dynatemp_range":0.0,"dynatemp_exponent":1.0,"smoothing_factor":0.0,"nsigma":0.0,"top_k":0,"top_p":1,"min_p":0.0,"presence_penalty":0.0,"top_a":0.96,"typical":0.6,"tfs":1,"rep_pen":1.1,"rep_pen_range":1024,"rep_pen_slope":0.7,"sampler_order":[6,4,5,1,0,2,3]}
+		{"preset":"Simple Logical","description":"A very predictable preset with low randomness.","temp":0.3,"dynatemp_range":0.0,"dynatemp_exponent":1.0,"smoothing_factor":0.0,"nsigma":0.0,"top_k":100,"top_p":0.6,"min_p":0.0,"presence_penalty":0.0,"top_a":0,"typical":1,"tfs":1,"rep_pen":1.02,"rep_pen_range":360,"rep_pen_slope":0.7,"sampler_order":[6,0,1,3,4,2,5]},{"preset":"Simple Balanced","description":"A good balanced preset with medium randomness.","temp":0.75,"dynatemp_range":0.0,"dynatemp_exponent":1.0,"smoothing_factor":0.0,"nsigma":0.0,"top_k":100,"top_p":0.92,"min_p":0.0,"presence_penalty":0.0,"top_a":0,"typical":1,"tfs":1,"rep_pen":1.06,"rep_pen_range":360,"rep_pen_slope":0.7,"sampler_order":[6,0,1,3,4,2,5]},{"preset":"Simple Creative","description":"A wild and unpredictable preset with higher randomness.","temp":1.0,"dynatemp_range":0.0,"dynatemp_exponent":1.0,"smoothing_factor":0.0,"nsigma":0.0,"top_k":100,"top_p":0.98,"min_p":0.0,"presence_penalty":0.0,"top_a":0,"typical":1,"tfs":1,"rep_pen":1.12,"rep_pen_range":360,"rep_pen_slope":0.7,"sampler_order":[6,0,1,3,4,2,5]},{"preset":"Basic Min-P","description":"A good default for Min-P, only works on backends with min-p.","temp":1.25,"dynatemp_range":0.0,"dynatemp_exponent":1.0,"smoothing_factor":0.0,"nsigma":0.0,"top_k":0,"top_p":1,"min_p":0.1,"presence_penalty":0.0,"top_a":0,"typical":1,"tfs":1,"rep_pen":1.03,"rep_pen_range":360,"rep_pen_slope":0.7,"sampler_order":[6,5,0,1,3,4,2]},{"preset":"Basic Top-nsigma","description":"A good default for Top-nsigma, only works on backends with Top-nsigma.","temp":1,"dynatemp_range":0.0,"dynatemp_exponent":1.0,"smoothing_factor":0.0,"nsigma":1.0,"top_k":0,"top_p":1,"min_p":0.01,"presence_penalty":0.0,"top_a":0,"typical":1,"tfs":1,"rep_pen":1,"rep_pen_range":360,"rep_pen_slope":0.7,"sampler_order":[6,5,0,1,3,4,2]},{"preset":"Basic DynaTemp","description":"A good default for DynaTemp, only works on backends with it.","temp":1.25,"dynatemp_range":0.75,"dynatemp_exponent":1.0,"smoothing_factor":0.0,"nsigma":0.0,"top_k":0,"top_p":1,"min_p":0.05,"presence_penalty":0.0,"top_a":0,"typical":1,"tfs":1,"rep_pen":1.03,"rep_pen_range":360,"rep_pen_slope":0.7,"sampler_order":[6,5,0,1,3,4,2]},{"preset":"Basic SmoothSample","description":"A good default for Smooth Sampling, only works on backends with it.","temp":1.0,"dynatemp_range":0.0,"dynatemp_exponent":1.0,"smoothing_factor":0.25,"nsigma":0.0,"top_k":0,"top_p":1,"min_p":0.05,"presence_penalty":0.0,"top_a":0,"typical":1,"tfs":1,"rep_pen":1.03,"rep_pen_range":360,"rep_pen_slope":0.7,"sampler_order":[6,5,0,1,3,4,2]},{"preset":"Basic SillyTavern","description":"Similar to default preset used in SillyTavern.","temp":0.75,"dynatemp_range":0.0,"dynatemp_exponent":1.0,"smoothing_factor":0.0,"nsigma":0.0,"top_k":40,"top_p":0.6,"min_p":0,"presence_penalty":0.0,"top_a":0,"typical":1,"tfs":1.0,"rep_pen":1.18,"rep_pen_range":1024,"rep_pen_slope":0.8,"sampler_order":[6,0,1,3,4,2,5]},{"preset":"Immortal","description":"Modernized version of the Godlike preset, designed for creative and longer story co-writing use.","temp":0.7,"dynatemp_range":0.0,"dynatemp_exponent":1.0,"smoothing_factor":0.0,"nsigma":1.75,"top_k":0,"top_p":1.0,"min_p":0.0,"presence_penalty":0.0,"top_a":0.75,"typical":0.19,"tfs":0.97,"rep_pen":1.1,"rep_pen_range":1024,"rep_pen_slope":0.7,"sampler_order":[6,5,4,3,2,1,0]},{"preset":"Neutral (Disabled)","description":"Sets all samplers neutralized, allowing you to customize your own.","temp":1.0,"dynatemp_range":0.0,"dynatemp_exponent":1.0,"smoothing_factor":0.0,"nsigma":0.0,"top_k":200,"top_p":1.0,"min_p":0.0,"presence_penalty":0.0,"top_a":0,"typical":1,"tfs":1,"rep_pen":1.0,"rep_pen_range":360,"rep_pen_slope":0.7,"sampler_order":[6,0,1,3,4,2,5]},{"preset":"CoherentCreativity (Legacy)","description":"Legacy preset. A good balance between coherence, creativity, and quality of prose.","rep_pen":1.2,"rep_pen_range":360,"rep_pen_slope":0,"sampler_order":[6,5,0,2,3,1,4],"temp":0.5,"dynatemp_range":0.0,"dynatemp_exponent":1.0,"smoothing_factor":0.0,"nsigma":0.0,"tfs":0.99,"top_a":0,"top_k":0,"top_p":1,"min_p":0.0,"presence_penalty":0.0,"typical":1},{"preset":"Godlike (Legacy)","description":"Legacy preset. Makes AI give a descriptive and sensual output.","temp":0.7,"dynatemp_range":0.0,"dynatemp_exponent":1.0,"smoothing_factor":0.0,"nsigma":0.0,"top_k":0,"top_p":0.5,"min_p":0.0,"presence_penalty":0.0,"top_a":0.75,"typical":0.19,"tfs":0.97,"rep_pen":1.1,"rep_pen_range":1024,"rep_pen_slope":0.7,"sampler_order":[6,5,4,3,2,1,0]},{"preset":"LiminalDrift (Legacy)","description":"Legacy preset. Sometimes surreal situations arise based on information already present in the story.","temp":0.66,"dynatemp_range":0.0,"dynatemp_exponent":1.0,"smoothing_factor":0.0,"nsigma":0.0,"top_k":0,"top_p":1,"min_p":0.0,"presence_penalty":0.0,"top_a":0.96,"typical":0.6,"tfs":1,"rep_pen":1.1,"rep_pen_range":1024,"rep_pen_slope":0.7,"sampler_order":[6,4,5,1,0,2,3]}
 	];
 
 	const instructpresets = [
@@ -3754,6 +3754,15 @@ Current version indicated by LITEVER below.
 		"name":"GLM-4",
 		"user":"<|user|>\\n",
 		"user_end":"",
+		"assistant":"<|assistant|>\\n",
+		"assistant_end":"",
+		"system":"<|system|>\\n",
+		"system_end":"",
+	},
+	{
+		"name":"GLM-4 Non-Thinking",
+		"user":"<|user|>\\n",
+		"user_end":"/nothink",
 		"assistant":"<|assistant|>\\n",
 		"assistant_end":"",
 		"system":"<|system|>\\n",
@@ -9554,9 +9563,16 @@ Current version indicated by LITEVER below.
 			temp_scenario.gui_type = 2; //upgrade to aesthetic if we have image
 			image = `<img id="tempscenarioimg" style="float:right; width:100px; height:${100/(temp_scenario.image_aspect?temp_scenario.image_aspect:1)}px; padding: 8px;" src="${encodeURI(temp_scenario.image)}"></img>`;
 		}
-		document.getElementById("scenariodesc").innerHTML = image+`<p><b><u>`+escape_html(temp_scenario.title)+`</u></b></p>`+
-		`<p><b>Mode:</b> `+(temp_scenario.opmode==1?"Story":(temp_scenario.opmode==2?"Adventure":(temp_scenario.opmode==3?"Chat":"Instruct"))) + author+`</p>`
-		+`<p>`+(temp_scenario.desc!=""?escape_html(temp_scenario.desc).replace(/\n/g, '<br>'):"[No Description Given]") +`</p>`;
+		let modetitle = (temp_scenario.opmode==1?"Story":(temp_scenario.opmode==2?"Adventure":(temp_scenario.opmode==3?"Chat":"Instruct")));
+		let blurb = (temp_scenario.desc!=""?escape_html(temp_scenario.desc).replace(/\n/g, '<br>'):"[No Description Given]");
+		let righttoggle = "";
+		if(temp_scenario.opmode==3 || temp_scenario.opmode==2)
+		{
+			righttoggle = `<span style="float:right"><span class="helpicon">?<span class="helptext">Load scenario in Instruct Mode instead of Chat Mode. Some AI models need this format.</span></span> Use Instruct Mode <input type="checkbox" title="Use Instruct Mode" id="scenarioforceinstruct"></span>`;
+		}
+		let scenario_desc = `${image}${righttoggle}<p><b><u>${escape_html(temp_scenario.title)}</u></b></p><p><b>Mode:</b> ${modetitle}${author}</p><p>${blurb}</p>`;
+
+		document.getElementById("scenariodesc").innerHTML = scenario_desc;
 	}
 	function complete_load_scenario()
 	{
@@ -9597,10 +9613,10 @@ Current version indicated by LITEVER below.
 		}
 
 		localsettings.opmode = temp_scenario.opmode;
+		localsettings.inject_chatnames_instruct = false;
 
 		if(temp_scenario.opmode == 2)
 		{
-
 			if (temp_scenario.adventure_context_mod===true) {
 				localsettings.adventure_context_mod = true;
 			}
@@ -9613,8 +9629,18 @@ Current version indicated by LITEVER below.
 			{
 				localsettings.adventure_switch_mode = temp_scenario.adventure_switch_mode;
 			}
+
+			//handle toggle to force instruct mode
+			if(document.getElementById("scenarioforceinstruct") && document.getElementById("scenarioforceinstruct").checked)
+			{
+				localsettings.opmode = 4;
+				if(gametext_arr.length==1 && gametext_arr[0]!="")
+				{
+					gametext_arr[0] = get_instructendplaceholder() + gametext_arr[0].trimStart();
+				}
+			}
 		}
-		if (temp_scenario.opmode == 3) {
+		else if (temp_scenario.opmode == 3) { //chat
 			if(localsettings.gui_type_chat!=3)
 			{
 				if (temp_scenario.gui_type===1) { localsettings.gui_type_chat = 1; }
@@ -9627,8 +9653,26 @@ Current version indicated by LITEVER below.
 
 			if (temp_scenario.chatopponent) { localsettings.chatopponent = temp_scenario.chatopponent; }
 			if (temp_scenario.chatname) { localsettings.chatname = temp_scenario.chatname; }
+
+			//handle toggle to force instruct mode
+			if(document.getElementById("scenarioforceinstruct") && document.getElementById("scenarioforceinstruct").checked)
+			{
+				localsettings.opmode = 4;
+				if(localsettings.gui_type_instruct!=3)
+				{
+					if (temp_scenario.gui_type===1) { localsettings.gui_type_instruct = 2; } // instruct has no messenger theme
+					else if(temp_scenario.gui_type===2) { localsettings.gui_type_instruct = 2; }
+					else if(temp_scenario.gui_type===0) { localsettings.gui_type_instruct = 0; }
+				}
+
+				localsettings.inject_chatnames_instruct = true;
+				if(gametext_arr.length==1 && gametext_arr[0]!="")
+				{
+					gametext_arr[0] = get_instructendplaceholder() + gametext_arr[0].trimStart();
+				}
+			}
 		}
-		if(temp_scenario.opmode == 4)
+		else if(temp_scenario.opmode == 4)
 		{
 			if (temp_scenario.gui_type===1) { localsettings.gui_type_instruct = 1; }
 			else if(temp_scenario.gui_type===2) { localsettings.gui_type_instruct = 2; }
@@ -12069,14 +12113,18 @@ Current version indicated by LITEVER below.
 				custom_oai_key = desired_oai_key;
 				if(epchoice==2)
 				{
+					if(localsettings.saved_oai_addr!=custom_oai_endpoint || localsettings.saved_oai_key!=custom_oai_key)
+					{
+						//if not reconnecting exact same key and API, overwrite custom eps
+						localsettings.saved_dalle_key = custom_oai_key;
+						localsettings.saved_dalle_url = custom_oai_endpoint + default_oai_image_endpoint;
+						localsettings.saved_oai_tts_key = custom_oai_key;
+						localsettings.saved_oai_tts_url = custom_oai_endpoint + default_oai_tts_endpoint;
+						localsettings.saved_oai_embd_key = custom_oai_key;
+						localsettings.saved_oai_embd_url = custom_oai_endpoint + default_oai_embeddings_endpoint;
+					}
 					localsettings.saved_oai_key = custom_oai_key;
 					localsettings.saved_oai_addr = custom_oai_endpoint;
-					localsettings.saved_dalle_key = custom_oai_key;
-					localsettings.saved_dalle_url = custom_oai_endpoint + default_oai_image_endpoint;
-					localsettings.saved_oai_tts_key = custom_oai_key;
-					localsettings.saved_oai_tts_url = custom_oai_endpoint + default_oai_tts_endpoint;
-					localsettings.saved_oai_embd_key = custom_oai_key;
-					localsettings.saved_oai_embd_url = custom_oai_endpoint + default_oai_embeddings_endpoint;
 
 					if(!is_local_url(custom_oai_endpoint) && document.getElementById("corsproxy_oai").checked)
 					{
@@ -17075,7 +17123,7 @@ Current version indicated by LITEVER below.
 						}
 						else if(localsettings.think_injected==2 && localsettings.start_thinking_tag!="" && localsettings.stop_thinking_tag!="")
 						{
-							pending_context_preinjection = pending_context_preinjection + localsettings.start_thinking_tag.replaceAll("\\n", "\n") + "\n"+"/nothink"+"\n" + localsettings.stop_thinking_tag.replaceAll("\\n", "\n");
+							pending_context_preinjection = pending_context_preinjection + localsettings.start_thinking_tag.replaceAll("\\n", "\n") + "\n\n" + localsettings.stop_thinking_tag.replaceAll("\\n", "\n");
 						}
 						if(localsettings.inject_jailbreak_instruct)
 						{
@@ -26802,7 +26850,7 @@ Current version indicated by LITEVER below.
 						<option value="4">Instruct</option>
 					</select>
 				</div>
-				<div id="scenarioautopickbox" class="menutext" style="text-align: left; padding-left: 8px;">
+				<div id="scenarioautopickbox" class="menutext" style="text-align: left; padding-top:4px;padding-left: 8px;">
 					Automatically select AI model <span class="helpicon">?
 						<span class="helptext">This option picks a suitable AI model based on the selected scenario. If no text model is currently selected, an appropriate one will be automatically picked for you.</span>
 					</span>
@@ -32844,12 +32892,19 @@ class MarkdownWYSIWYG {
 	}
 
 	showServerSavesPopup = () => {
-		hideAllServerSavingPopups()
-		promptForAdminPassword(() => {
-			reloadSaves().then(() => {
-				serverSavesPopup.classList.remove("hidden")
+		if (is_using_kcpp_with_server_saving())
+		{
+			hideAllServerSavingPopups()
+			promptForAdminPassword(() => {
+				reloadSaves().then(() => {
+					serverSavesPopup.classList.remove("hidden")
+				})
 			})
-		})
+		}
+		else
+		{
+			handleError("Server side saving not enabled: Please check admin tab in KCPP launcher")
+		}
 	}
 
 	hideServerSavesPopup = () => {
@@ -33057,26 +33112,7 @@ class MarkdownWYSIWYG {
 		originalLoadSelectedFile(file)
 	}
 
-	window.addEventListener('load', () => {
-		let hasAppended = false;
-		document.querySelector("#topbtn_save_load .nav-link").onclick = () => {
-			closeTopNav();
-			if (is_using_kcpp_with_server_saving() && !hasAppended) {
-				let serverSideButton = document.createElement("button");
-				serverSideButton.classList.add("btn", "btn-primary")
-				serverSideButton.innerText = "Show saves stored on server"
-				serverSideButton.style = "width: auto;"
-				serverSideButton.onclick = () => {
-					hide_popups()
-					showServerSavesPopup()
-				}
-				let footerButtons = document.querySelector("#saveloadcontainer .popupfooter")
-				footerButtons.insertBefore(serverSideButton, footerButtons.firstChild);
-				hasAppended = true
-			}
-			display_saveloadcontainer()
-		}
-	})
+	// Append button with the third party mod button as that's the one place editing the menu
 
 	let callbackAfterReload = (callback) => {
 		let startTime = Date.now(), intervalId = setInterval(async () => {
@@ -35201,6 +35237,7 @@ let checkFinalThoughtsPrompt = `Action: {"command":{"name":"thought","args":{"me
 		document.getElementById("worldTreePrune").checked = localsettings.worldTreePrune;
 		document.getElementById("worldTreeDepth").value = localsettings.worldTreeDepth;
 		document.getElementById("worldTreeShowAll").checked = localsettings.worldTreeShowAll;
+		document.getElementById("useNewEditor").checked = localsettings.useNewEditor;
 	}
 
 	confirm_settings = () => {
@@ -35215,6 +35252,8 @@ let checkFinalThoughtsPrompt = `Action: {"command":{"name":"thought","args":{"me
 		localsettings.worldTreePrune = (document.getElementById("worldTreePrune").checked ? true : false);
 		localsettings.worldTreeDepth = document.getElementById("worldTreeDepth").value;
 		localsettings.worldTreeShowAll = (document.getElementById("worldTreeShowAll").checked ? true : false);
+		localsettings.useNewEditor = (document.getElementById("useNewEditor").checked ? true : false);
+		updateEditorState();
 		originalConfirmSettings()
 	}
 
@@ -35466,6 +35505,10 @@ let checkFinalThoughtsPrompt = `Action: {"command":{"name":"thought","args":{"me
 		{
 			localsettings.worldTreeShowAll = false
 		}
+		if (localsettings?.useNewEditor == undefined) 
+		{
+			localsettings.useNewEditor = true
+		}
 
 		let createSettingElemBool = (inputElemId, labelTitle, labelText) => {
 			let settingLabelElem = document.createElement("div")
@@ -35586,6 +35629,9 @@ let checkFinalThoughtsPrompt = `Action: {"command":{"name":"thought","args":{"me
 		lastSettingContainer.append(settingLabelElem)
 
 		settingLabelElem = createSettingElemBool("worldTreeShowAll", "Show all world tree content", "Shows all branches and nodes on the world tree - only use if saves are small")
+		lastSettingContainer.append(settingLabelElem)
+
+		settingLabelElem = createSettingElemBool("useNewEditor", "Use new editor", "Uses the new editor (including a WYSIWYG and markdown view) - has issues with HTML tags and may break")
 		lastSettingContainer.append(settingLabelElem)
 
 		createStopThinkingButton()
@@ -36093,6 +36139,11 @@ let checkFinalThoughtsPrompt = `Action: {"command":{"name":"thought","args":{"me
 	const renderGameTextRef = render_gametext, originalBack = btn_back, originalRedo = btn_redo, originalRetry = btn_retry, originalAddThought = addThought;
 
 	let enableNewEditor = () => {
+		if (document.getElementById("gameEditor") !== null)
+		{
+			return
+		}
+
 		let gameEditor = document.createElement("div")
 		gameEditor.id = "gameEditor"
 		gameEditor.style = ""
@@ -36294,6 +36345,11 @@ let checkFinalThoughtsPrompt = `Action: {"command":{"name":"thought","args":{"me
 	}
 
 	let disableNewEditor = () => {
+		if (document.getElementById("gameEditor") === null)
+		{
+			return
+		}
+
 		document.getElementById("gameEditor")?.remove()
 		document.getElementById("gametext").style.display = "block"
 		render_gametext = renderGameTextRef
@@ -36305,7 +36361,26 @@ let checkFinalThoughtsPrompt = `Action: {"command":{"name":"thought","args":{"me
 		render_gametext()
 	}
 
-	enableNewEditor()
+
+	window.updateEditorState = () => {
+		if (!!localsettings?.useNewEditor)
+		{
+			lastEditorState = true;
+			enableNewEditor()
+		}
+		else
+		{
+			lastEditorState = false
+			disableNewEditor()
+		}
+	}
+
+	window.addEventListener('load', () => {
+		setTimeout(updateEditorState, 1)
+	});
+
+	// updateEditorState();
+	// enableNewEditor()
 	// disableNewEditor()
 </script>
 <style>
@@ -36476,8 +36551,12 @@ flowchart TD\n${treeToViewOutput.outputText.trim()}`
 						const container = document.getElementById("treeDiagram");
 						const svgElement = container.querySelector("svg");
 
+						const scaleFactor = 50;
 						// Initialize Panzoom
-						const panzoomInstance = Panzoom(svgElement, {});
+						const panzoomInstance = Panzoom(svgElement, {
+							minScale: 1 / scaleFactor,
+							maxScale: scaleFactor
+						});
 						
 						// Add mouse wheel zoom
 						container.addEventListener("wheel", (event) => {
@@ -36829,9 +36908,115 @@ flowchart TD\n${treeToViewOutput.outputText.trim()}`
 		let topButton = `<li class="nav-item" id="topbtn_remote_mods">
 				<a class="nav-link mainnav" href="#" onclick="modManager.showModListWarning()" tabindex="0">Third party mods</a>
 			</li>`
+		topButton += `<li class="nav-item" id="topbtn_server_saves">
+			<a class="nav-link mainnav" href="#" onclick="showServerSavesPopup()" tabindex="0">Server saves</a>
+		</li>`
 
 		document.querySelector("#navbarNavDropdown > ul").innerHTML += topButton
 		treeViewer.showOpenButton()
 	})
+</script>
+<script>
+	// Exec code block usermod
+
+	let extractCodeFromElem = (el) => {
+		const codeContainer = el.parentElement.querySelector('pre code');
+		let innercode = codeContainer.innerText;
+		//remove common language descriptiors from the start
+		let langsmatched = ["javascript", "js", "html", "xhtml"];
+		for (let i = 0; i < langsmatched.length; ++i) {
+			let matcher = langsmatched[i] + "\n";
+			if (innercode.startsWith(matcher)) {
+			innercode = innercode.substring(matcher.length);
+			return {
+				elem: el,
+				lang: langsmatched[i],
+				code: innercode
+			}
+			}
+		}
+		return null
+	}
+
+	let execJS = (code) => {
+		window.outPipe = (type = "Log:", ...args) => {
+			console.groupCollapsed(type, ...args);
+			console.groupEnd();
+		};
+		window.outPipeLog = (...args) => {
+			outPipe("Log:", ...args)
+		};
+		window.outPipeInfo = (...args) => {
+			outPipe("Info:", ...args)
+		};
+		window.outPipeWarn = (...args) => {
+			outPipe("Warn:", ...args)
+		};
+		window.outPipeError = (...args) => {
+			outPipe("Error:", ...args)
+		};
+		console.groupCollapsed("Preparing to execute script")
+		console.log(code)
+		console.groupEnd()
+
+		console.groupCollapsed("Executing script");
+		let evalResult = null;
+		try {
+			let scriptBody = code.trim().replace(/^javascript|^js/, "").replace(/console\.log\(/gi, "outPipeLog(").replace(/console\.info\(/gi, "outPipeInfo(").replace(/console\.warn\(/gi, "outPipeWarn(").replace(/console\.error\(/gi, "outPipeError(");
+			evalResult = eval?.(`${scriptBody}`);
+		} catch (e) {
+			evalResult = e;
+		}
+		if (!!evalResult) {
+			outPipeLog(`Eval result: ${evalResult}`);
+		}
+		console.groupEnd()
+	}
+
+	let execHTML = (code) => {
+		const newWindow = window.open('about:blank', '_blank');
+		newWindow.document.write(code);
+		newWindow.document.close()
+	}
+
+	let handleExecCode = (meta) => {
+		let {
+			elem,
+			lang,
+			code
+		} = meta;
+
+		switch (lang) {
+			case "javascript":
+			case "js":
+				execJS(code);
+				break;
+			case "html":
+			case "xhtml":
+				execHTML(code);
+				break;
+		}
+	}
+
+	let updateExecScriptButtons = () => {
+		let scripts = [...document.querySelectorAll("button.unselectable[title=Copy]")].filter(el => el.checkVisibility() && !el.classList.contains("execScriptAdded")).map(el => extractCodeFromElem(el))
+
+		scripts.forEach(meta => {
+			let elem = meta.elem
+			let button = document.createElement("button")
+			button.title = "Execute code block"
+			button.classList.add("unselectable")
+			button.onclick = () => handleExecCode(meta)
+			button.style.color = "black"
+			button.style.display = "flex"
+			button.style.float = "right"
+			button.innerText = "⚡"
+			elem.classList.add("execScriptAdded")
+			elem.parentElement.prepend(button)
+		})
+	}
+
+	setInterval(updateExecScriptButtons, 15*1000);
+	setTimeout(updateExecScriptButtons, 5*1000);
 </script>
 </html>

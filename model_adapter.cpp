@@ -82,6 +82,39 @@ void print_tok_vec(std::vector<float> &embd)
     std::cout << "]\n";
 }
 
+bool gguf_tensor_exists(const std::string & gguf_filename, std::string tensor_name, bool exactmatch)
+{
+    struct gguf_init_params ggufparams;
+    ggufparams.no_alloc = true;
+    ggufparams.ctx = NULL;
+    struct gguf_context * ctx = gguf_init_from_file(gguf_filename.c_str(), ggufparams);
+    if (!ctx) return false;
+
+    bool found = false;
+
+    int n_tensors = gguf_get_n_tensors(ctx);
+    for (int i = 0; i < n_tensors; i++) {
+        std::string curr_name = gguf_get_tensor_name(ctx, i);
+        if(exactmatch)
+        {
+            if (curr_name == tensor_name) {
+                found = true;
+                break;
+            }
+        }
+        else
+        {
+            if (curr_name.find(tensor_name) != std::string::npos) {
+                found = true;
+                break;
+            }
+        }
+    }
+
+    gguf_free(ctx);
+    return found;
+}
+
 //return val: 0=fail, 1=(original ggml, alpaca), 2=(ggmf), 3=(ggjt)
  FileFormat check_file_format(const std::string & fname, FileFormatExtraMeta * fileformatmeta)
  {
