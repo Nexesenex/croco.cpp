@@ -36,7 +36,7 @@ void runner_context::set_threads() {
     if (backend != nullptr) {
 #ifdef GGML_USE_METAL
         // this is form copied from llama.cpp, but has since been removed. I don't know if this should be tuned.
-        ggml_backend_metal_set_n_cb(backend, 1);
+        // ggml_backend_metal_set_n_cb(backend, 1);
 #endif
     }
     if (backend_cpu != nullptr) {

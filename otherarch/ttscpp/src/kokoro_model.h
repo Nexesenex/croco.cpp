@@ -318,7 +318,7 @@ struct kokoro_duration_context : runner_context {
         ggml_backend_buffer_free(buf_len_output);
     }
 
-    std::string voice = "af_alloy";
+    std::string voice = "af_heart";
     struct kokoro_model * model;
     ggml_backend_buffer_t buf_len_output = nullptr;
 
@@ -396,7 +396,7 @@ struct kokoro_context : runner_context {
         }
     }
 
-    std::string voice = "af_alloy";
+    std::string voice = "af_heart";
 
     struct kokoro_model * model;
 
@@ -442,7 +442,7 @@ struct kokoro_runner : tts_runner {
     kokoro_duration_runner * drunner;
     phonemizer * phmzr;
 
-    std::string default_voice = "af_alloy";
+    std::string default_voice = "af_heart";
 
     void init_build() {
         tts_runner::init_build(&kctx->buf_compute_meta);

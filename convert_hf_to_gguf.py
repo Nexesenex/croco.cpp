@@ -1542,6 +1542,55 @@ class TextModel(ModelBase):
                 raise NotImplementedError("Only MEAN, CLS, and LAST pooling types supported")
             self.gguf_writer.add_pooling_type(pooling_type)
 
+    def _set_vocab_interns1(self):
+        tokens: list[str] = []
+        toktypes: list[int] = []
+
+        from transformers import AutoTokenizer
+        tokenizer = AutoTokenizer.from_pretrained(self.dir_model, trust_remote_code=True)
+        vocab = getattr(tokenizer, 'vocab', tokenizer.get_vocab())
+        vocab_size = self.hparams.get("vocab_size", len(vocab))
+        assert max(vocab.values()) < vocab_size
+
+        tokpre = self.get_vocab_base_pre(tokenizer)
+
+        reverse_vocab = {id_: encoded_tok for encoded_tok, id_ in vocab.items()}
+        added_vocab = tokenizer.get_added_vocab()
+
+        added_tokens_decoder = tokenizer.added_tokens_decoder
+
+        for i in range(vocab_size):
+            if i not in reverse_vocab:
+                tokens.append(f"[PAD{i}]")
+                toktypes.append(gguf.TokenType.UNUSED)
+            else:
+                token: str = reverse_vocab[i]
+                if token in added_vocab:
+                    # The tokenizer in llama.cpp assumes the CONTROL and USER_DEFINED tokens are pre-normalized.
+                    # To avoid unexpected issues - we make sure to normalize non-normalized tokens
+                    if not added_tokens_decoder[i].normalized:
+                        previous_token = token
+                        token = tokenizer.decode(tokenizer.encode(token, add_special_tokens=False))
+                        if previous_token != token:
+                            logger.info(f"{repr(previous_token)} is encoded and decoded back to {repr(token)} using AutoTokenizer")
+
+                    if added_tokens_decoder[i].special or self.does_token_look_special(token):
+                        toktypes.append(gguf.TokenType.CONTROL)
+                    else:
+                        toktypes.append(gguf.TokenType.USER_DEFINED)
+                else:
+                    toktypes.append(gguf.TokenType.NORMAL)
+                tokens.append(token)
+
+        self.gguf_writer.add_tokenizer_model("gpt2")
+        self.gguf_writer.add_tokenizer_pre(tokpre)
+        self.gguf_writer.add_token_list(tokens)
+        self.gguf_writer.add_token_types(toktypes)
+
+        special_vocab = gguf.SpecialVocab(self.dir_model, load_merges=True)
+        special_vocab._set_special_token("bos", 151643)
+        special_vocab.add_to_gguf(self.gguf_writer)
+
 
 class MmprojModel(ModelBase):
     model_type = ModelType.MMPROJ
@@ -1665,6 +1714,12 @@ class MmprojModel(ModelBase):
         if optional:
             return None
         raise KeyError(f"could not find any of: {keys}")
+
+    def tensor_force_quant(self, name, new_name, bid, n_dims):
+        del bid, name, n_dims  # unused
+        if ".patch_embd.weight" in new_name:
+            return gguf.GGMLQuantizationType.F16 if self.ftype == gguf.LlamaFileType.MOSTLY_F16 else gguf.GGMLQuantizationType.F32
+        return False
 
 
 @ModelBase.register("GPTNeoXForCausalLM")
@@ -2637,10 +2692,9 @@ class SmolVLMModel(MmprojModel):
         self.gguf_writer.add_vision_use_gelu(True)
 
     def tensor_force_quant(self, name, new_name, bid, n_dims):
-        del bid, new_name, n_dims  # unused
         if ".embeddings." in name:
             return gguf.GGMLQuantizationType.F32
-        return False
+        return super().tensor_force_quant(name, new_name, bid, n_dims)
 
     def modify_tensors(self, data_torch: Tensor, name: str, bid: int | None) -> Iterable[tuple[str, Tensor]]:
         del bid  # unused
@@ -3244,7 +3298,8 @@ class Qwen2Model(TextModel):
         if "language_model." in name:
             name = name.replace("language_model.", "") # for InternVL
         if name.startswith("mlp") or name.startswith("multi_modal_projector") \
-                or name.startswith("vision_model") or name.startswith("audio_tower"):
+                or name.startswith("vision_model") or name.startswith("audio_tower") \
+                or name.startswith("model.vision_tower") or name.startswith("model.multi_modal_projector"):
             # skip vision and audio tensors
             return []
         yield from super().modify_tensors(data_torch, name, bid)
@@ -3628,12 +3683,9 @@ class Qwen2VLVisionModel(MmprojModel):
         self.gguf_writer.add_vision_attention_layernorm_eps(self.global_config.get("rms_norm_eps", 1e-6))
 
     def tensor_force_quant(self, name, new_name, bid, n_dims):
-        del bid, name, n_dims  # unused
-        if ".patch_embd." in new_name:
-            return gguf.GGMLQuantizationType.F16
         if ".position_embd." in new_name:
             return gguf.GGMLQuantizationType.F32
-        return False
+        return super().tensor_force_quant(name, new_name, bid, n_dims)
 
     def modify_tensors(self, data_torch: Tensor, name: str, bid: int | None) -> Iterable[tuple[str, Tensor]]:
         del bid  # unused
@@ -3706,10 +3758,9 @@ class Qwen25OmniModel(Qwen2VLVisionModel):
         yield ("audio_tower.embed_positions.weight", pos_embd)
 
     def tensor_force_quant(self, name, new_name, bid, n_dims):
-        del bid, new_name, n_dims  # unused
         if ".conv" in name and ".weight" in name:
             return gguf.GGMLQuantizationType.F16
-        return False
+        return super().tensor_force_quant(name, new_name, bid, n_dims)
 
     def modify_tensors(self, data_torch: Tensor, name: str, bid: int | None) -> Iterable[tuple[str, Tensor]]:
         if name.startswith("thinker."):
@@ -3755,12 +3806,9 @@ class InternVisionModel(MmprojModel):
         self.gguf_writer.add_vision_projector_scale_factor(int(1.0 / downsample_ratio))
 
     def tensor_force_quant(self, name, new_name, bid, n_dims):
-        del bid, name, n_dims  # unused
-        if ".patch_embd." in new_name:
-            return gguf.GGMLQuantizationType.F16
         if ".position_embd." in new_name:
             return gguf.GGMLQuantizationType.F32
-        return False
+        return super().tensor_force_quant(name, new_name, bid, n_dims)
 
     def _mapping_interns1_name(self, name):
         names_map = {
@@ -3923,6 +3971,19 @@ class Qwen2MoeModel(TextModel):
 class Qwen3Model(Qwen2Model):
     model_arch = gguf.MODEL_ARCH.QWEN3
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        hparams = ModelBase.load_hparams(self.dir_model, is_mistral_format=False)
+        self.origin_hf_arch = hparams.get('architectures', [None])[0]
+
+    def set_vocab(self):
+        # deal with intern-s1-mini
+        if self.origin_hf_arch == 'InternS1ForConditionalGeneration':
+            self._set_vocab_interns1()
+            return
+
+        super().set_vocab()
+
 
 @ModelBase.register("Qwen3MoeForCausalLM")
 class Qwen3MoeModel(Qwen2MoeModel):
@@ -3939,73 +4000,7 @@ class Qwen3MoeModel(Qwen2MoeModel):
             self._set_vocab_interns1()
             return
 
-        try:
-            self._set_vocab_sentencepiece()
-        except FileNotFoundError:
-            self._set_vocab_gpt2()
-
-    def _set_vocab_interns1(self):
-        tokens: list[str] = []
-        toktypes: list[int] = []
-
-        from transformers import AutoTokenizer
-        tokenizer = AutoTokenizer.from_pretrained(self.dir_model, trust_remote_code=True)
-        vocab = getattr(tokenizer, 'vocab', tokenizer.get_vocab())
-        vocab_size = self.hparams.get("vocab_size", len(vocab))
-        assert max(vocab.values()) < vocab_size
-
-        tokpre = self.get_vocab_base_pre(tokenizer)
-
-        reverse_vocab = {id_: encoded_tok for encoded_tok, id_ in vocab.items()}
-        added_vocab = tokenizer.get_added_vocab()
-
-        added_tokens_decoder = tokenizer.added_tokens_decoder
-
-        for i in range(vocab_size):
-            if i not in reverse_vocab:
-                tokens.append(f"[PAD{i}]")
-                toktypes.append(gguf.TokenType.UNUSED)
-            else:
-                token: str = reverse_vocab[i]
-                if token in added_vocab:
-                    # The tokenizer in llama.cpp assumes the CONTROL and USER_DEFINED tokens are pre-normalized.
-                    # To avoid unexpected issues - we make sure to normalize non-normalized tokens
-                    if not added_tokens_decoder[i].normalized:
-                        previous_token = token
-                        token = tokenizer.decode(tokenizer.encode(token, add_special_tokens=False))
-                        if previous_token != token:
-                            logger.info(f"{repr(previous_token)} is encoded and decoded back to {repr(token)} using AutoTokenizer")
-
-                    if added_tokens_decoder[i].special or self.does_token_look_special(token):
-                        toktypes.append(gguf.TokenType.CONTROL)
-                    else:
-                        toktypes.append(gguf.TokenType.USER_DEFINED)
-                else:
-                    toktypes.append(gguf.TokenType.NORMAL)
-                tokens.append(token)
-
-        self.gguf_writer.add_tokenizer_model("gpt2")
-        self.gguf_writer.add_tokenizer_pre(tokpre)
-        self.gguf_writer.add_token_list(tokens)
-        self.gguf_writer.add_token_types(toktypes)
-
-        special_vocab = gguf.SpecialVocab(self.dir_model, load_merges=True)
-        special_tokens_map_file = self.dir_model / 'special_tokens_map.json'
-        additional_special_tokens = []
-        if special_tokens_map_file.is_file():
-            with open(special_tokens_map_file, encoding = 'utf-8') as f:
-                additional_special_tokens = json.load(f).get('additional_special_tokens', [])
-        tokenizer_cfg_file = self.dir_model / 'special_tokens_map.json'
-        if tokenizer_cfg_file.is_file():
-            with open(tokenizer_cfg_file, encoding = 'utf-8') as f:
-                added_tokens_decoder = json.load(f).get('added_tokens_decoder', {})
-                token2ids_map = {data['content'] : int(token) for token, data in added_tokens_decoder.items() if data['special']}
-                for token in additional_special_tokens:
-                    if token in token2ids_map:
-                        special_vocab._set_special_token(token, token2ids_map[token])
-        special_vocab._set_special_token('eos', 151645)
-        special_vocab._set_special_token("bos", 151643)
-        special_vocab.add_to_gguf(self.gguf_writer)
+        super().set_vocab()
 
 
 @ModelBase.register("GPT2LMHeadModel")
@@ -5394,13 +5389,12 @@ class Gemma3VisionModel(MmprojModel):
             self.gguf_writer.add_vision_projector_scale_factor(proj_scale_factor)
 
     def tensor_force_quant(self, name, new_name, bid, n_dims):
-        del bid, new_name, n_dims  # unused
         # related to https://github.com/ggml-org/llama.cpp/issues/13025
         if "input_projection" in name:
             return gguf.GGMLQuantizationType.F16
         if ".embeddings." in name:
             return gguf.GGMLQuantizationType.F32
-        return False
+        return super().tensor_force_quant(name, new_name, bid, n_dims)
 
     def modify_tensors(self, data_torch: Tensor, name: str, bid: int | None) -> Iterable[tuple[str, Tensor]]:
         del bid  # unused
@@ -8059,10 +8053,9 @@ class WhisperEncoderModel(MmprojModel):
         self.gguf_writer.add_audio_attention_layernorm_eps(self.hparams.get("layer_norm_eps", 1e-5))
 
     def tensor_force_quant(self, name, new_name, bid, n_dims):
-        del bid, new_name, n_dims  # unused
         if ".conv" in name and ".weight" in name:
             return gguf.GGMLQuantizationType.F16
-        return False
+        return super().tensor_force_quant(name, new_name, bid, n_dims)
 
     def modify_tensors(self, data_torch: Tensor, name: str, bid: int | None) -> Iterable[tuple[str, Tensor]]:
         del bid  # unused
@@ -8583,8 +8576,7 @@ class GptOssModel(TextModel):
         self.gguf_writer.add_rope_scaling_orig_ctx_len(rope_scaling.get("original_max_position_embeddings", 4096))
 
 
-@ModelBase.register("Lfm2ForCausalLM")
-@ModelBase.register("LFM2ForCausalLM")
+@ModelBase.register("Lfm2ForCausalLM", "LFM2ForCausalLM")
 class LFM2Model(TextModel):
     model_arch = gguf.MODEL_ARCH.LFM2
 
@@ -8619,11 +8611,53 @@ class LFM2Model(TextModel):
         self._add_feed_forward_length()
 
     def modify_tensors(self, data_torch: Tensor, name: str, bid: int | None) -> Iterable[tuple[str, Tensor]]:
+        is_vision_tensor = "vision_tower" in name or "multi_modal_projector" in name
+        if is_vision_tensor:
+            # skip vision tensors
+            return []
+
+        name = name.replace("language_model.", "")
+
         # conv op requires 2d tensor
         if 'conv.conv' in name:
             data_torch = data_torch.squeeze(1)
 
         return [(self.map_tensor_name(name), data_torch)]
+
+
+@ModelBase.register("Lfm2VlForConditionalGeneration")
+class LFM2VLModel(MmprojModel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        assert self.hparams_vision is not None
+        # TODO(tarek): for dynamic resolution image_size is not specified, setting here for compatibility
+        self.hparams_vision["image_size"] = 256
+
+    def set_gguf_parameters(self):
+        super().set_gguf_parameters()
+        self.gguf_writer.add_clip_projector_type(gguf.VisionProjectorType.LFM2)
+        self.gguf_writer.add_vision_attention_layernorm_eps(self.find_vparam(["layer_norm_eps"]))
+        self.gguf_writer.add_vision_projector_scale_factor(self.global_config.get("downsample_factor", 2))
+        self.gguf_writer.add_vision_use_gelu(True)
+        # python notation, e.g. for vision_feature_layer == -1, we pick last layer -> vision_feature_layers_to_drop = 0
+        vision_feature_layers_to_drop = -(self.global_config.get("vision_feature_layer", -1) + 1)
+        self.gguf_writer.add_vision_block_count(self.find_vparam(self.n_block_keys) - vision_feature_layers_to_drop)
+
+    def modify_tensors(self, data_torch: Tensor, name: str, bid: int | None) -> Iterable[tuple[str, Tensor]]:
+        del bid  # unused
+        is_vision_tensor = "vision_tower" in name or "multi_modal_projector" in name
+
+        if is_vision_tensor:
+            # remove "model." prefix
+            name = name.replace("model.vision_tower.", "vision_tower.")
+            name = name.replace("model.multi_modal_projector.", "multi_modal_projector.")
+
+            if "patch_embedding.weight" in name:
+                data_torch = data_torch.view(data_torch.shape[0], 16, 16, 3).permute(0, 3, 1, 2)
+
+            return [(self.map_tensor_name(name), data_torch)]
+
+        return [] # skip other tensors
 
 
 @ModelBase.register("SmallThinkerForCausalLM")

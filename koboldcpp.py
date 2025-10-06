@@ -77,8 +77,8 @@ extra_images_max = 4
 # extra_images_max = 4
 
 # global vars
-KcppVersion = "1.98000"
-LcppVersion = "b6140"
+KcppVersion = "1.98100"
+LcppVersion = "b6267-40"
 IKLcppVersion = "IKLpr624"
 EsoboldVersion = "RMv1.15.9m"
 CudaSpecifics = "Cu128_Ar86_SMC2_DmmvX32Y1"
@@ -273,6 +273,7 @@ class generation_inputs(ctypes.Structure):
                 ("sampler_len", ctypes.c_int),
                 ("allow_eos_token", ctypes.c_bool),
                 ("bypass_eos_token", ctypes.c_bool),
+                ("tool_call_fix", ctypes.c_bool),
                 ("render_special", ctypes.c_bool),
                 ("stream_sse", ctypes.c_bool),
                 ("grammar", ctypes.c_char_p),
@@ -309,6 +310,8 @@ class sd_load_model_inputs(ctypes.Structure):
                 ("threads", ctypes.c_int),
                 ("quant", ctypes.c_int),
                 ("flash_attention", ctypes.c_bool),
+                ("diffusion_conv_direct", ctypes.c_bool),
+                ("vae_conv_direct", ctypes.c_bool),
                 ("taesd", ctypes.c_bool),
                 ("tiled_vae_threshold", ctypes.c_int),
                 ("t5xxl_filename", ctypes.c_char_p),
@@ -1625,12 +1628,13 @@ def autoset_gpu_layers(ctxsize, sdquanted, blasbatchsize, quantkv_var, flashatte
                             showmultigpuwarning = False
                             print("Multi-Part GGUF detected. Layer estimates may not be very accurate - recommend setting layers manually.")
                         fsize *= total_parts
+            sdquantsavings = sdquanted
             if modelfile_extracted_meta[3] > 1024*1024*1024*5: #sdxl tax
-                mem -= 1024*1024*1024*(6 if sdquanted else 9)
+                mem -= 1024*1024*1024*(9 - sdquantsavings * 1.5) # 9, 7.5, 6
                 print(f"GPUs total VRAM available after SDXL tax: {int(mem/1024/1024)} MiB")
                 print("***")
             elif modelfile_extracted_meta[3] > 1024*1024*512: #normal sd tax
-                mem -= 1024*1024*1024*(3.25 if sdquanted else 4.25)
+                mem -= 1024*1024*1024*(4.25 - sdquantsavings * 0.5) # 4.25, 3.75, 3.25
                 print(f"GPUs total VRAM available after SD normal tax: {int(mem/1024/1024)} MiB")
                 print("***")
             if modelfile_extracted_meta[4] > 1024*1024*10: #whisper tax
@@ -2290,6 +2294,7 @@ def generate(genparams, stream_flag=False):
     banned_strings = genparams.get('banned_strings', []) # SillyTavern uses that name
     banned_tokens = genparams.get('banned_tokens', banned_strings)
     bypass_eos_token = genparams.get('bypass_eos', False)
+    tool_call_fix = genparams.get('using_openai_tools', False)
     custom_token_bans = genparams.get('custom_token_bans', '')
 
     for tok in custom_token_bans.split(','):
@@ -2348,6 +2353,7 @@ def generate(genparams, stream_flag=False):
     inputs.grammar_retain_state = grammar_retain_state
     inputs.allow_eos_token = not ban_eos_token
     inputs.bypass_eos_token = bypass_eos_token
+    inputs.tool_call_fix = tool_call_fix
     inputs.render_special = render_special
     if mirostat in (1, 2):
         inputs.mirostat = mirostat
@@ -2452,24 +2458,46 @@ def generate(genparams, stream_flag=False):
                     outstr = outstr[:sindex]
         return {"text":outstr,"status":ret.status,"stopreason":ret.stopreason,"prompt_tokens":ret.prompt_tokens, "completion_tokens": ret.completion_tokens}
 
+sd_convdirect_choices = ['off', 'vaeonly', 'full']
+
+def sd_convdirect_option(value):
+    if not value:
+        value = ''
+    value = value.lower()
+    if value in ['disabled', 'disable', 'none', 'off', '0', '']:
+        return 'off'
+    elif value in ['vae', 'vaeonly']:
+        return 'vaeonly'
+    elif value in ['enabled', 'enable', 'on', 'full']:
+        return 'full'
+    raise argparse.ArgumentTypeError(f"Invalid sdconvdirect option \"{value}\". Must be one of {sd_convdirect_choices}.")
+
+sd_quant_choices = ['off','q8','q4']
+
+def sd_quant_option(value):
+    try:
+        lvl = sd_quant_choices.index(value)
+        return lvl
+    except Exception:
+        return 0
 
 def sd_load_model(model_filename,vae_filename,lora_filename,t5xxl_filename,clipl_filename,clipg_filename,photomaker_filename):
     global args
     inputs = sd_load_model_inputs()
     inputs.model_filename = model_filename.encode("UTF-8")
     thds = args.threads
-    quant = 0
 
     if args.sdthreads and args.sdthreads > 0:
         sdt = int(args.sdthreads)
         if sdt > 0:
             thds = sdt
-    if args.sdquant:
-        quant = 1
 
     inputs.threads = thds
-    inputs.quant = quant
-    inputs.flash_attention = args.flashattention
+    inputs.quant = args.sdquant
+    inputs.flash_attention = args.sdflashattention
+    sdconvdirect = sd_convdirect_option(args.sdconvdirect)
+    inputs.diffusion_conv_direct = sdconvdirect == 'full'
+    inputs.vae_conv_direct = sdconvdirect in ['vaeonly', 'full']
     inputs.taesd = True if args.sdvaeauto else False
     inputs.tiled_vae_threshold = args.sdtiledvae
     inputs.vae_filename = vae_filename.encode("UTF-8")
@@ -4353,8 +4381,8 @@ class KcppServerRequestHandler(http.server.SimpleHTTPRequestHandler):
                 if boundary:
                     fparts = body.split(boundary)
                     for fpart in fparts:
-                        detected_upload_filename = re.findall(r'Content-Disposition.*name="file"; filename="(.*)"', fpart.decode('utf-8',errors='ignore'))
-                        detected_upload_filename_comfy = re.findall(r'Content-Disposition.*name="image"; filename="(.*)"', fpart.decode('utf-8',errors='ignore'))
+                        detected_upload_filename = re.findall(r'Content-Disposition[^;]*;\s*name=(?:"file"|file)\s*;\s*filename=(?:"([^"]+)"|([^\s";]+))', fpart.decode('utf-8',errors='ignore'),flags=re.IGNORECASE)
+                        detected_upload_filename_comfy = re.findall(r'Content-Disposition[^;]*;\s*name=(?:"image"|image)\s*;\s*filename=(?:"([^"]+)"|([^\s";]+))', fpart.decode('utf-8',errors='ignore'),flags=re.IGNORECASE)
                         if detected_upload_filename and len(detected_upload_filename)>0:
                             utfprint(f"Detected uploaded file: {detected_upload_filename[0]}")
                             file_content_start = fpart.find(b'\r\n\r\n') + 4  # Position after headers
@@ -5856,7 +5884,7 @@ Change Mode<br>
                     trunc_len = 32000
 
                 printablegenparams_raw = truncate_long_json(genparams,trunc_len)
-                utfprint("\nInput: " + json.dumps(printablegenparams_raw),1)
+                utfprint("\nInput: " + json.dumps(printablegenparams_raw,ensure_ascii=False),1)
 
                 # transform genparams (only used for text gen) first
                 genparams = transform_genparams(genparams, api_format)
@@ -6369,6 +6397,7 @@ def show_gui():
     blasubatchsize_text = ["Same as logical BBS","1","2","4","8","16","20","24","28","32 - Lowest recommended.","40","48","56","64 - Optimal to save VRAM while retaining viable speed.","80","96","112","128 - Best and most reliable compromise.","160 - Can fail with SWA on.","192 - Can fail with SWA on.","224 - Can fail with SWA on.","256 - Can fail with SWA on.","384 - Can fail with SWA on.","512 - Can fail with SWA on.","768 - Can fail with SWA on.","1024 - Can fail with SWA on.","1536 - Can fail with SWA on.","2048 - Can fail with SWA on.","3072 - Can fail with SWA on.","4096 - Can fail with SWA on."]
 
     contextsize_text = ["256", "512", "768", "1024", "1280", "1536", "1792", "2048", "2304", "2560", "2816", "3072", "3328", "3584", "3840", "4096", "4352", "4608", "4864", "5120", "5376", "5632", "5888", "6144", "6400", "6656", "6912", "7168", "7424", "7680", "7936", "8192", "8448", "8704", "8960", "9216", "9472", "9728", "9984", "10240", "10496", "10752", "11008", "11264", "11520", "11776", "12032", "12288", "12544", "12800", "13056", "13312", "13568", "13824", "14080", "14336", "14592", "14848", "15104", "15360", "15616", "15872", "16128", "16384", "16896", "17408", "17920", "18432", "18944", "19456", "19968", "20480", "20992", "21504", "22016", "22528", "23040", "23552", "24064", "24576", "25088", "25600", "26112", "26624", "27136", "27648", "28160", "28672", "29184", "29696", "30208", "30720", "31232", "31744", "32256", "32768", "33792", "34816", "35840", "36864", "37888", "38912", "39936", "40960", "41984", "43008", "44032", "45056", "46080", "47104", "48128", "49152", "50176", "51200", "52224", "53248", "54272", "55296", "56320", "57344", "58368", "59392", "60416", "61440", "62464", "63488", "64512", "65536", "67584", "69632", "71680", "73728", "75776", "77824", "79872", "81920", "83968", "86016", "88064", "90112", "92160", "94208", "96256", "98304", "100352", "102400", "104448", "106496", "108544", "110592", "112640", "114688", "116736", "118784", "120832", "122880", "124928", "126976", "129024", "131072", "135168", "139264", "143360", "147456", "151552", "155648", "159744", "163840", "167936", "172032", "176128", "180224", "184320", "188416", "192512", "196608", "200704", "204800", "208896", "212992", "217088", "221184", "225280", "229376", "233472", "237568", "241664", "245760", "249856", "253952", "258048", "262144", "270336", "278528", "286720", "294912", "303104", "311296", "319488", "327680", "335872", "344064", "352256", "360448", "368640", "376832", "385024", "393216", "401408", "409600", "417792", "425984", "434176", "442368", "450560", "458752", "466944", "475136", "483328", "491520", "499712", "507904", "516096", "524288", "540672", "557056", "573440", "589824", "606208", "622592", "638976", "655360", "671744", "688128", "704512", "720896", "737280", "753664", "770048", "786432", "802816", "819200", "835584", "851968", "868352", "884736", "901120", "917504", "933888", "950272", "966656", "983040", "999424", "1015808", "1032192", "1048576", "1081344", "1114112", "1146880", "1179648", "1212416", "1245184", "1277952", "1310720", "1343488", "1376256", "1409024", "1441792", "1474560", "1507328", "1540096", "1572864", "1605632", "1638400", "1671168", "1703936", "1736704", "1769472", "1802240", "1835008", "1867776", "1900544", "1933312", "1966080", "1998848", "2031616", "2064384", "2097152", "2162688", "2228224", "2293760", "2359296", "2424832", "2490368", "2555904", "2621440", "2686976", "2752512", "2818048", "2883584", "2949120", "3014656", "3080192", "3145728", "3211264", "3276800", "3342336", "3407872", "3473408", "3538944", "3604480", "3670016", "3735552", "3801088", "3866624", "3932160", "3997696", "4063232", "4128768", "4194304", "4325376", "4456448", "4587520", "4718592", "4849664", "4980736", "5111808", "5242880", "5373952", "5505024", "5636096", "5767168", "5898240", "6029312", "6160384", "6291456", "6422528", "6553600", "6684672", "6815744", "6946816", "7077888", "7208960", "7340032", "7471104", "7602176", "7733248", "7864320",  "7995392", "8126464", "8257536", "8388608", "8650752", "8912896", "9175040", "9437184", "9699328", "9961472", "10223616", "10485760"]
+
     antirunopts = [opt.replace("Use ", "") for lib, opt in lib_option_pairs if opt not in runopts]
     quantkv_values = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24"]
     quantkv_text = ["0 - F16 (16BPW) - FA or not. Very reliable.",
@@ -6528,12 +6557,14 @@ def show_gui():
     sd_clipl_var = ctk.StringVar()
     sd_clipg_var = ctk.StringVar()
     sd_photomaker_var = ctk.StringVar()
+    sd_flash_attention_var = ctk.IntVar(value=0)
     sd_vaeauto_var = ctk.IntVar(value=0)
     sd_tiled_vae_var = ctk.StringVar(value=str(default_vae_tile_threshold))
+    sd_convdirect_var = ctk.StringVar(value=str(sd_convdirect_choices[0]))
     sd_clamped_var = ctk.StringVar(value="0")
     sd_clamped_soft_var = ctk.StringVar(value="0")
     sd_threads_var = ctk.StringVar(value=str(default_threads))
-    sd_quant_var = ctk.IntVar(value=0)
+    sd_quant_var = ctk.StringVar(value=sd_quant_choices[0])
 
     whisper_model_var = ctk.StringVar()
     tts_model_var = ctk.StringVar()
@@ -6596,6 +6627,18 @@ def show_gui():
             temp.bind("<Enter>", lambda event: show_tooltip(event, tooltiptxt))
             temp.bind("<Leave>", hide_tooltip)
         return temp
+
+    def makelabelcombobox(parent, text, variable=None, row=0, width=50, command=None, padx=8,tooltiptxt="", values=[], labelpadx=8):
+        label = makelabel(parent, text, row, 0, tooltiptxt, padx=labelpadx)
+        label=None
+        combo = ctk.CTkComboBox(parent, variable=variable, width=width, values=values, state="readonly")
+        if command is not None and variable is not None:
+            variable.trace_add("write", command)
+        combo.grid(row=row,column=0, padx=padx, sticky="nw")
+        if tooltiptxt!="":
+            combo.bind("<Enter>", lambda event: show_tooltip(event, tooltiptxt))
+            combo.bind("<Leave>", hide_tooltip)
+        return combo, label
 
     def makelabel(parent, text, row, column=0, tooltiptxt="", columnspan=1, padx=8):
         temp = ctk.CTkLabel(parent, text=text)
@@ -6873,9 +6916,11 @@ def show_gui():
         pass
 
     def changed_gpulayers_estimate(*args):
-        predicted_gpu_layers = autoset_gpu_layers(int(contextsize_text[context_var.get()]),(sd_quant_var.get()==1),int(blasbatchsize_values[int(blas_size_var.get())]),int(quantkv_values[int(quantkv_var.get())]),flashattention_var.get(),mmq_var.get(),lowvram_var.get(),int(poslayeroffset_values[int(poslayeroffset_var.get())]),int(neglayeroffset_values[int(neglayeroffset_var.get())]))
+        predicted_gpu_layers = autoset_gpu_layers(int(contextsize_text[context_var.get()]),sd_quant_option(sd_quant_var.get()),int(blasbatchsize_values[int(blas_size_var.get())]),int(quantkv_values[int(quantkv_var.get())]),flashattention_var.get(),mmq_var.get(),lowvram_var.get(),int(poslayeroffset_values[int(poslayeroffset_var.get())]),int(neglayeroffset_values[int(neglayeroffset_var.get())]))
 
         # predicted_gpu_layers = autoset_gpu_layers(int(contextsize_text[context_var.get()]),(sd_quant_var.get()==1),int(blasbatchsize_values[int(blas_size_var.get())]),(quantkv_var.get() if flashattention_var.get()==1 else 0))
+
+        # predicted_gpu_layers = autoset_gpu_layers(int(contextsize_text[context_var.get()]),sd_quant_option(sd_quant_var.get()),int(blasbatchsize_values[int(blas_size_var.get())]),(quantkv_var.get() if flashattention_var.get()==1 else 0))
 
         max_gpu_layers = (f"/{modelfile_extracted_meta[1][0]+3}" if (modelfile_extracted_meta and modelfile_extracted_meta[1] and modelfile_extracted_meta[1][0]!=0) else "")
         index = runopts_var.get()
@@ -7324,7 +7369,7 @@ def show_gui():
     makelabelentry(images_tab, "(Soft):", sd_clamped_soft_var, 4, 50, padx=290,singleline=True,tooltip="Square image size restriction, to protect the server against memory crashes.\nAllows width-height tradeoffs, eg. 640 allows 640x640 and 512x768\nLeave at 0 for the default value: 832 for SD1.5/SD2, 1024 otherwise.",labelpadx=250)
     makelabelentry(images_tab, "Image Threads:" , sd_threads_var, 8, 50,padx=290,singleline=True,tooltip="How many threads to use during image generation.\nIf left blank, uses same value as threads.")
     sd_model_var.trace_add("write", gui_changed_modelfile)
-    makecheckbox(images_tab, "Compress Weights (Saves Memory)", sd_quant_var, 10,tooltiptxt="Quantizes the SD model weights to save memory. May degrade quality.")
+    makelabelcombobox(images_tab, "Compress Weights (Saves Memory): ", sd_quant_var, 10, width=60, padx=220, labelpadx=8, tooltiptxt="Quantizes the SD model weights to save memory.\nHigher levels save more memory, and cause more quality degradation.", values=sd_quant_choices)
     sd_quant_var.trace_add("write", changed_gpulayers_estimate)
 
     makefileentry(images_tab, "Image LoRA (safetensors/gguf):", "Select SD lora file",sd_lora_var, 20, width=280, singlecol=True, filetypes=[("*.safetensors *.gguf", "*.safetensors *.gguf")],tooltiptxt="Select a .safetensors or .gguf SD LoRA model file to be loaded. Should be unquantized!")
@@ -7346,8 +7391,10 @@ def show_gui():
                 sdvaeitem1.grid()
                 sdvaeitem2.grid()
                 sdvaeitem3.grid()
-    makecheckbox(images_tab, "Use TAE SD (AutoFix Broken VAE)", sd_vaeauto_var, 42,command=toggletaesd,tooltiptxt="Replace VAE with TAESD. May fix bad VAE.")
+    makecheckbox(images_tab, "TAE SD (AutoFix Broken VAE)", sd_vaeauto_var, 42,command=toggletaesd,tooltiptxt="Replace VAE with TAESD. May fix bad VAE.")
+    makelabelcombobox(images_tab, "Conv2D Direct:", sd_convdirect_var, row=42, labelpadx=220, padx=310, width=90, tooltiptxt="Use Conv2D Direct operation. May save memory or improve performance.\nMight crash if not supported by the backend.\n", values=sd_convdirect_choices)
     makelabelentry(images_tab, "VAE Tiling Threshold:", sd_tiled_vae_var, 44, 50, padx=144,singleline=True,tooltip="Enable VAE Tiling for images above this size, to save memory.\nSet to 0 to disable VAE tiling.")
+    makecheckbox(images_tab, "SD Flash Attention", sd_flash_attention_var, 46, tooltiptxt="Enable Flash Attention for image diffusion. May save memory or improve performance.")
 
     # audio tab
     audio_tab = tabcontent["Audio"]
@@ -7620,6 +7667,8 @@ def show_gui():
         if sd_model_var.get() != "":
             args.sdmodel = sd_model_var.get()
 
+        if sd_flash_attention_var.get()==1:
+            args.sdflashattention = True
         args.sdthreads = (0 if sd_threads_var.get()=="" else int(sd_threads_var.get()))
         args.sdclamped = (0 if int(sd_clamped_var.get())<=0 else int(sd_clamped_var.get()))
         args.sdclampedsoft = (0 if int(sd_clamped_soft_var.get())<=0 else int(sd_clamped_soft_var.get()))
@@ -7632,6 +7681,7 @@ def show_gui():
             args.sdvae = ""
             if sd_vae_var.get() != "":
                 args.sdvae = sd_vae_var.get()
+        args.sdconvdirect = sd_convdirect_option(sd_convdirect_var.get())
         if sd_t5xxl_var.get() != "":
             args.sdt5xxl = sd_t5xxl_var.get()
         if sd_clipl_var.get() != "":
@@ -7640,8 +7690,7 @@ def show_gui():
             args.sdclipg = sd_clipg_var.get()
         if sd_photomaker_var.get() != "":
             args.sdphotomaker = sd_photomaker_var.get()
-        if sd_quant_var.get()==1:
-            args.sdquant = True
+        args.sdquant = sd_quant_option(sd_quant_var.get())
         if sd_lora_var.get() != "":
             args.sdlora = sd_lora_var.get()
             args.sdloramult = float(sd_loramult_var.get())
@@ -7872,7 +7921,9 @@ def show_gui():
         sd_clamped_var.set(int(dict["sdclamped"]) if ("sdclamped" in dict and dict["sdclamped"]) else 0)
         sd_clamped_soft_var.set(int(dict["sdclampedsoft"]) if ("sdclampedsoft" in dict and dict["sdclampedsoft"]) else 0)
         sd_threads_var.set(str(dict["sdthreads"]) if ("sdthreads" in dict and dict["sdthreads"]) else str(default_threads))
-        sd_quant_var.set(1 if ("sdquant" in dict and dict["sdquant"]) else 0)
+        sd_quant_var.set(sd_quant_choices[(dict["sdquant"] if ("sdquant" in dict and dict["sdquant"]>=0 and dict["sdquant"]<len(sd_quant_choices)) else 0)])
+        sd_flash_attention_var.set(1 if ("sdflashattention" in dict and dict["sdflashattention"]) else 0)
+        sd_convdirect_var.set(sd_convdirect_option(dict.get("sdconvdirect")))
         sd_vae_var.set(dict["sdvae"] if ("sdvae" in dict and dict["sdvae"]) else "")
         sd_t5xxl_var.set(dict["sdt5xxl"] if ("sdt5xxl" in dict and dict["sdt5xxl"]) else "")
         sd_clipl_var.set(dict["sdclipl"] if ("sdclipl" in dict and dict["sdclipl"]) else "")
@@ -8234,7 +8285,7 @@ def convert_invalid_args(args):
         if dict["sdconfig"] and len(dict["sdconfig"]) > 2:
             dict["sdthreads"] = int(dict["sdconfig"][2])
         if dict["sdconfig"] and len(dict["sdconfig"]) > 3:
-            dict["sdquant"] = (True if dict["sdconfig"][3]=="quant" else False)
+            dict["sdquant"] = (2 if dict["sdconfig"][3]=="quant" else 0)
     if "hordeconfig" in dict and dict["hordeconfig"] and dict["hordeconfig"][0]!="":
         dict["hordemodelname"] = dict["hordeconfig"][0]
         if len(dict["hordeconfig"]) > 1:
@@ -8260,6 +8311,8 @@ def convert_invalid_args(args):
             dict["model_param"] = model_value[0]  # Take the first file in the list
     if "sdnotile" in dict and "sdtiledvae" not in dict:
         dict["sdtiledvae"] = (0 if (dict["sdnotile"]) else default_vae_tile_threshold) # convert legacy option
+    if 'sdquant' in dict and type(dict['sdquant']) is bool:
+        dict['sdquant'] = 2 if dict['sdquant'] else 0
     return args
 
 def setuptunnel(global_memory, has_sd):
@@ -9728,6 +9781,9 @@ def kcpp_main_process(launch_args, g_memory=None, gui_launcher=False):
                                 # file.write("Timestamp,Backend,Layers,Model,MaxCtx,GenAmount,ProcessingTime,ProcessingSpeed,GenerationTime,GenerationSpeed,TotalTime,Output,Flags")
                             # file.write(f"\n{datetimestamp},{libname},{args.gpulayers},{benchmodel},{benchmaxctx},{benchlen},{t_pp:.2f},{s_pp:.2f},{t_gen:.2f},{s_gen:.2f},{(t_pp+t_gen):.2f},{result},{benchflagstr}")
 
+                                # file.write("Timestamp,Backend,Layers,Model,MaxCtx,GenAmount,ProcessingTime,ProcessingSpeed,GenerationTime,GenerationSpeed,TotalTime,Output,Flags")
+                            # file.write(f"\n{datetimestamp},{libname},{args.gpulayers},{benchmodel},{benchmaxctx},{benchlen},{t_pp:.2f},{s_pp:.2f},{t_gen:.2f},{s_gen:.2f},{(t_pp+t_gen):.2f},{result},\"{benchflagstr}\"")
+
                     except Exception as e:
                         print(f"Error writing benchmark to file: {e}")
                 if global_memory and using_gui_launcher and not save_to_file:
@@ -9881,11 +9937,13 @@ if __name__ == '__main__':
     sdparsergroup.add_argument("--sdclipl", metavar=('[filename]'), help="Specify a Clip-L safetensors model for use in SD3 or Flux. Leave blank if prebaked or unused.", default="")
     sdparsergroup.add_argument("--sdclipg", metavar=('[filename]'), help="Specify a Clip-G safetensors model for use in SD3. Leave blank if prebaked or unused.", default="")
     sdparsergroup.add_argument("--sdphotomaker", metavar=('[filename]'), help="PhotoMaker is a model that allows face cloning. Specify a PhotoMaker safetensors model which will be applied replacing img2img. SDXL models only. Leave blank if unused.", default="")
+    sdparsergroup.add_argument("--sdflashattention", help="Enables Flash Attention for image generation.", action='store_true')
+    sdparsergroup.add_argument("--sdconvdirect", help="Enables Conv2D Direct. May improve performance or reduce memory usage. Might crash if not supported by the backend. Can be 'off' (default) to disable, 'full' to turn it on for all operations, or 'vaeonly' to enable only for the VAE.", type=sd_convdirect_option, choices=sd_convdirect_choices, default=sd_convdirect_choices[0])
     sdparsergroupvae = sdparsergroup.add_mutually_exclusive_group()
     sdparsergroupvae.add_argument("--sdvae", metavar=('[filename]'), help="Specify an image generation safetensors VAE which replaces the one in the model.", default="")
     sdparsergroupvae.add_argument("--sdvaeauto", help="Uses a built-in VAE via TAE SD, which is very fast, and fixed bad VAEs.", action='store_true')
     sdparsergrouplora = sdparsergroup.add_mutually_exclusive_group()
-    sdparsergrouplora.add_argument("--sdquant", help="If specified, loads the model quantized to save memory.", action='store_true')
+    sdparsergrouplora.add_argument("--sdquant",  metavar=('[quantization level 0/1/2]'), help="If specified, loads the model quantized to save memory. 0=off, 1=q8, 2=q4", type=int, choices=[0,1,2], nargs="?", const=2, default=0)
     sdparsergrouplora.add_argument("--sdlora", metavar=('[filename]'), help="Specify an image generation LORA safetensors model to be applied.", default="")
     sdparsergroup.add_argument("--sdloramult", metavar=('[amount]'), help="Multiplier for the image LORA model to be applied.", type=float, default=1.0)
     sdparsergroup.add_argument("--sdtiledvae", metavar=('[maxres]'), help="Adjust the automatic VAE tiling trigger for images above this size. 0 disables vae tiling.", type=int, default=default_vae_tile_threshold)

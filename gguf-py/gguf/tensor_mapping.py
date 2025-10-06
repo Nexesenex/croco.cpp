@@ -1267,6 +1267,7 @@ class TensorNameMap:
 
         MODEL_TENSOR.V_MM_INP_NORM: (
             "multi_modal_projector.norm",
+            "multi_modal_projector.layer_norm",
             "pre_mm_projector_norm",
         ),
 

@@ -478,6 +478,32 @@ std::string trim_words(const std::string& input, const std::string& separator, s
     return result.str();
 }
 
+static std::string TruncateToFirstNumberWords(const std::string& input, int limit) {
+    static const std::regex wordRegex(R"(\b[\w'-]+\b)");
+    std::sregex_iterator words_begin(input.begin(), input.end(), wordRegex);
+    std::sregex_iterator words_end;
+    int count = 0;
+    std::size_t cutoffPos = std::string::npos;
+    if(limit<=0)
+    {
+        return "";
+    }
+    for (auto it = words_begin; it != words_end; ++it) {
+        ++count;
+        if (count >= limit) {
+            // position AFTER the last matched word
+            cutoffPos = it->position() + it->length();
+            break;
+        }
+    }
+    if (cutoffPos == std::string::npos) {
+        // fewer than N words, return original
+        return input;
+    }
+    // Preserve everything up to and including the Nth word
+    return input.substr(0, cutoffPos);
+}
+
 static llama_context * ttc_ctx = nullptr; //text to codes ctx
 static llama_context * cts_ctx = nullptr; //codes to speech
 
@@ -562,6 +588,7 @@ bool ttstype_load_model(const tts_load_model_inputs inputs)
     }
 
     ttsdebugmode = inputs.debugmode;
+    tts_max_len = inputs.ttsmaxlen;
 
     // tts init
     if (is_ttscpp_file) {
@@ -576,8 +603,6 @@ bool ttstype_load_model(const tts_load_model_inputs inputs)
         llama_context_params tts_ctx_params = llama_context_default_params();
 
         nthreads = inputs.threads;
-
-        tts_max_len = inputs.ttsmaxlen;
 
         tts_model_params.use_mmap = false;
         tts_model_params.use_mlock = false;
@@ -670,7 +695,7 @@ static tts_generation_outputs ttstype_generate_ttscpp(const tts_generation_input
 
     if(detectedarch=="kokoro")
     {
-        vmapper = {"am_echo","af_heart","af_alloy","bm_daniel","bf_isabella"};
+        vmapper = {"am_echo","af_heart","af_nicole","bm_fable","bf_isabella"};
         vpermitted = {"af_alloy", "af_aoede", "af_bella", "af_heart", "af_jessica", "af_kore", "af_nicole", "af_nova", "af_river", "af_sarah", "af_sky", "am_adam", "am_echo", "am_eric", "am_fenrir", "am_liam", "am_michael", "am_onyx", "am_puck", "am_santa", "bf_alice", "bf_emma", "bf_isabella", "bf_lily", "bm_daniel", "bm_fable", "bm_george", "bm_lewis"};
     }
     else if(detectedarch=="dia")
@@ -690,6 +715,11 @@ static tts_generation_outputs ttstype_generate_ttscpp(const tts_generation_input
         if (std::find(vpermitted.begin(), vpermitted.end(), cspeaker) != vpermitted.end()) {
             voiceused = cspeaker;
         }
+    }
+
+    if(tts_max_len>0)
+    {
+        prompt = TruncateToFirstNumberWords(prompt,tts_max_len);
     }
 
     if(ttsdebugmode==1 && !tts_is_quiet)

@@ -1,4 +1,5 @@
 #include "kokoro_model.h"
+#include <regex>
 
 static struct ggml_tensor * build_albert_attn_mask(ggml_context * ctx, struct kokoro_duration_context *kctx, const kokoro_ubatch & batch) {
     kctx->attn_mask = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, (int64_t) batch.n_tokens, (int64_t) batch.n_tokens);
@@ -1422,8 +1423,10 @@ int kokoro_runner::generate(std::string prompt, struct tts_response * response, 
     }
     // replace all non-sentence terminating characters with '--' which espeak will treat as a pause.
     // We preserve the other punctuation for cleaner chunking pre-tokenization
-    prompt = replace_any(prompt, ",;:", "--");
-    prompt = replace_any(prompt, "\n", " ");
+    prompt = replace_any(prompt, ";:", "--");
+    prompt = replace_any(prompt, "\n", "--");
+	kokoro_str_replace_all(prompt,"’","'");
+	prompt = std::regex_replace(prompt, std::regex("(\\w)([.!?]) "), "$1$2, ");
 	kokoro_str_replace_all(prompt," - "," -- ");
 	kokoro_str_replace_all(prompt,"he's ","he is ");
 	kokoro_str_replace_all(prompt,"'s ","s ");
