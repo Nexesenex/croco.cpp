@@ -1707,13 +1707,8 @@ static const ggml::cpu::tensor_traits * ggml_repack_get_optimal_repack_type(cons
     // instance for IQ4
     static const ggml::cpu::repack::tensor_traits<block_iq4_nl, 4, 4, GGML_TYPE_Q8_0> iq4_nl_4x4_q8_0;
 
-    bool permit_repack = true;
-#if defined(GGML_USE_CLBLAST)
-    permit_repack = false; //kcpp: clblast cannot handle repacking
-#endif
-
     if (cur->type == GGML_TYPE_Q4_0) {
-        if ((ggml_cpu_has_avx2() && permit_repack) || (ggml_cpu_has_sve() && ggml_cpu_has_matmul_int8() && ggml_cpu_get_sve_cnt() == QK8_0)) {
+        if (ggml_cpu_has_avx2() || (ggml_cpu_has_sve() && ggml_cpu_has_matmul_int8() && ggml_cpu_get_sve_cnt() == QK8_0)) {
             if (cur->ne[1] % 8 == 0) {
                 return &q4_0_8x8_q8_0;
             }
@@ -1729,13 +1724,13 @@ static const ggml::cpu::tensor_traits * ggml_repack_get_optimal_repack_type(cons
             }
         }
     } else if (cur->type == GGML_TYPE_Q4_K) {
-        if (ggml_cpu_has_avx2() && permit_repack) {
+        if (ggml_cpu_has_avx2()) {
             if (cur->ne[1] % 8 == 0) {
                 return &q4_K_8x8_q8_K;
             }
         }
     } else if (cur->type == GGML_TYPE_Q2_K) {
-        if (ggml_cpu_has_avx512() && permit_repack) {
+        if (ggml_cpu_has_avx512()) {
             if (cur->ne[1] % 8 == 0) {
                 return &q2_K_8x8_q8_K;
             }
