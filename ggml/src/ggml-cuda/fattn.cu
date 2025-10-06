@@ -396,9 +396,9 @@ static best_fattn_kernel ggml_cuda_get_best_fattn_kernel(const int device, const
         }
 
         //kcpp: use wmma to fix cu11 incoherence
-        if (fp16_mma_available(cc) && (ggml_cuda_highest_compiled_arch(cc) <= GGML_CUDA_CC_TURING || cc == GGML_CUDA_CC_TURING)) {
-            return BEST_FATTN_KERNEL_WMMA_F16;
-        }
+        // if (fp16_mma_available(cc) && (ggml_cuda_highest_compiled_arch(cc) <= GGML_CUDA_CC_TURING || cc == GGML_CUDA_CC_TURING)) {
+        //     return BEST_FATTN_KERNEL_WMMA_F16;
+        // }
         return BEST_FATTN_KERNEL_MMA_F16;
     }
 
