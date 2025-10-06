@@ -2066,7 +2066,6 @@ static void ggml_cuda_mul_mat(ggml_backend_cuda_context & ctx, const ggml_tensor
         //kcpp: https://github.com/ggml-org/llama.cpp/pull/14361 broke oldpc mode without this.
         use_batched_cublas_bf16 = false;
         use_batched_cublas_f32 = false;
-        use_batched_cublas_f16 = false;
     }
 
     if (!split && use_mul_mat_vec_f) {
