@@ -1550,11 +1550,11 @@ common_params_context common_params_parser_init(common_params & params, llama_ex
         {"-fa", "--flash-attn"}, "FA",
         string_format("set Flash Attention use ('on', 'off', or 'auto', default: '%s')", llama_flash_attn_type_name(params.flash_attn_type)),
         [](common_params & params, const std::string & value) {
-            if (value == "on" || value == "enabled" || value == "1") {
+            if (value == "on" || value == "enabled") {
                 params.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_ENABLED;
-            } else if (value == "off" || value == "disabled" || value == "0") {
+            } else if (value == "off" || value == "disabled") {
                 params.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_DISABLED;
-            } else if (value == "auto" || value == "-1") {
+            } else if (value == "auto") {
                 params.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_AUTO;
             } else {
                 throw std::runtime_error(string_format("error: unkown value for --flash-attn: '%s'\n", value.c_str()));
