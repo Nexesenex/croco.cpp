@@ -5754,7 +5754,7 @@ Current version indicated by LITEVER below.
 		try
 		{
 			bufferToBase64(data).then(async (b64) => {
-				b64Url = `data:image/png;base64,${b64}`
+				let b64Url = `data:image/png;base64,${b64}`
 				let charData = !!decoded?.data ? decoded.data : decoded;
 				let rawName = !!charData?.name ? charData?.name : (!!filename ? filename : "No character name"), charName = rawName.replaceAll(/[^\w()_\-'",!\[\].]/g, " ").replaceAll(/\s+/g, " ").trim();
 				charData.name = charName;
@@ -5776,12 +5776,13 @@ Current version indicated by LITEVER below.
 		}
 	}
 
-	function saveLorebookToIndexDB(filename, data)
+	function saveLorebookToIndexDB(filename, data, originalData)
 	{
 		let charName = filename.replaceAll(/[^\w()_\-'",!\[\].]/g, " ").replaceAll(/\s+/g, " ").trim();
 		let dataToSave = {
 			name: charName,
-			data: data
+			data: data,
+			originalData: originalData
 		}
 		indexeddb_save(`character_${charName}`, JSON.stringify(dataToSave)).then(() => {
 			allCharacterNames.push({name: charName,	type: "World Info"})
@@ -24690,11 +24691,11 @@ Current version indicated by LITEVER below.
 		{
 			return imageFromIndexDB;
 		}
-		if (name === localsettings.chatname && !!aestheticInstructUISettings?.you_portrait)
+		if (name === localsettings.chatname && !!aestheticInstructUISettings?.you_portrait && aestheticInstructUISettings.you_portrait !== "default")
 		{
 			return `url(${aestheticInstructUISettings.you_portrait})`
 		}
-		if (localsettings?.chatopponent?.split("||$||").includes(name) && !!aestheticInstructUISettings?.AI_portrait)
+		if (localsettings?.chatopponent?.split("||$||").includes(name) && !!aestheticInstructUISettings?.AI_portrait && aestheticInstructUISettings.AI_portrait !== "default")
 		{
 			return `url(${aestheticInstructUISettings.AI_portrait})`
 		}
@@ -36795,11 +36796,14 @@ let checkFinalThoughtsPrompt = `Action: {"command":{"name":"thought","args":{"me
 	}
 
 	let getEmbeddingPresetFromModel = () => {
-		let embeddingPreset = embeddingPresets[Object.keys(embeddingPresets).filter(presetName => !!get_kcpp_embedding_model()?.includes(presetName))]
-		if (!!embeddingPreset && (!documentdb_sqPrefix && !documentdb_cPrefix))
+		if (get_kcpp_embedding_model() !== false)
 		{
-			documentdb_sqPrefix = embeddingPreset.query_prompt
-			documentdb_cPrefix = embeddingPreset.document_prompt
+			let embeddingPreset = embeddingPresets[Object.keys(embeddingPresets).filter(presetName => !!get_kcpp_embedding_model()?.includes(presetName))]
+			if (!!embeddingPreset && (!documentdb_sqPrefix && !documentdb_cPrefix))
+			{
+				documentdb_sqPrefix = embeddingPreset.query_prompt
+				documentdb_cPrefix = embeddingPreset.document_prompt
+			}
 		}
 	}
 
@@ -37594,13 +37598,13 @@ flowchart TD\n${treeToViewOutput.outputText.trim()}`
 
 	window.addEventListener('load', () => {
 		let topButton = `<li class="nav-item" id="topbtn_remote_mods">
-				<a class="nav-link mainnav" href="#" onclick="modManager.showModListWarning()" tabindex="0">Third party mods</a>
+				<a class="nav-link mainnav" href="#" onclick="closeTopNav(); modManager.showModListWarning();" tabindex="0">Third party mods</a>
 			</li>`
 		topButton += `<li class="nav-item" id="topbtn_server_saves">
-			<a class="nav-link mainnav" href="#" onclick="showServerSavesPopup()" tabindex="0">Server saves</a>
+			<a class="nav-link mainnav" href="#" onclick="closeTopNav(); showServerSavesPopup();" tabindex="0">Server saves</a>
 		</li>`
 		topButton += `<li class="nav-item" id="topbtn_server_saves">
-			<a class="nav-link mainnav" href="#" onclick="showCharacterList()" tabindex="0">Characters</a>
+			<a class="nav-link mainnav" href="#" onclick="closeTopNav(); showCharacterList();" tabindex="0">Characters</a>
 		</li>`
 
 		document.querySelector("#navbarNavDropdown > ul").innerHTML += topButton
@@ -37740,7 +37744,11 @@ flowchart TD\n${treeToViewOutput.outputText.trim()}`
 		overflow-y: auto;
 		overflow-x: hidden;
 		height: calc(100% - 40px);
-		width: 70vw;
+	}
+
+	#popupContainer .popupfooter
+	{
+		display: block;
 	}
 
 	#popupContainer .popupfooter button
@@ -37864,6 +37872,7 @@ flowchart TD\n${treeToViewOutput.outputText.trim()}`
 		window.popupUtils = new PopupUtils()
 	})
 
+	let maxLengthForSection = 500, halfMaxLengthForSection = Math.floor(maxLengthForSection / 2);
 	let showCharacterList = async () => {
 		let containers = []
 
@@ -37931,15 +37940,30 @@ flowchart TD\n${treeToViewOutput.outputText.trim()}`
 						sectionElem = document.createElement("ul");
 						text.forEach(listContent => {
 							let listElem = document.createElement("li");
-							let summaryOfKey = listContent.length > 100 ? `${listContent.substr(0, 50).trim()}...${listContent.substr(-50).trim()}` : listContent.trim();
+							let summaryOfKey = listContent.length > maxLengthForSection ? `${listContent.substr(0, halfMaxLengthForSection).trim()}...${listContent.substr(-halfMaxLengthForSection).trim()}` : listContent.trim();
 							listElem.innerText = summaryOfKey
+							if (listContent.length !== summaryOfKey.length)
+							{
+								listElem.onclick = () => {
+									listElem.innerText = listElem.innerText === summaryOfKey ? listContent : summaryOfKey
+								}
+								listElem.title = "Click to show / hide full content"
+							}
 							sectionElem.appendChild(listElem)
 						})
 					}
 					else
 					{
 						sectionElem = document.createElement("span");
-						sectionElem.innerText = text.trim();
+						let summaryOfKey = text.length > maxLengthForSection ? `${text.substr(0, halfMaxLengthForSection).trim()}...${text.substr(-halfMaxLengthForSection).trim()}` : text.trim();
+						sectionElem.innerText = summaryOfKey
+						if (text.length !== summaryOfKey.length)
+						{
+							sectionElem.onclick = () => {
+								sectionElem.innerText = sectionElem.innerText === summaryOfKey ? text : summaryOfKey
+							}
+							sectionElem.title = "Click to show / hide full content"
+						}
 					}
 					sectionContainer.appendChild(sectionElem);
 					containerElem.appendChild(sectionContainer);
@@ -37958,29 +37982,37 @@ flowchart TD\n${treeToViewOutput.outputText.trim()}`
 				charIcon.onclick = async () => {
 					if (type === "Character")
 					{
-						let data = await getCharacterData(name), {image} = data;
-						let {description, first_mes, alternate_greetings, character_book, tags, creator, creator_notes, personality } = (data)?.data;
-						let contents = createDetailsContent(name);
-						if (!!image)
+						let contents = document.createElement("span");
+						try
 						{
-							let imageContainer = document.createElement("span"), imageElem = document.createElement("img");
-							imageElem.src = image;
-							imageElem.style = "height: 30%; width: 30%; border-radius: 10px;"
-							imageContainer.style = "width: 100%; display: flex; justify-content: space-around; padding: 10px;";
-							imageContainer.appendChild(imageElem);
-							contents.appendChild(imageContainer);
+							let data = await getCharacterData(name), {image} = data;
+							let {description, first_mes, alternate_greetings, character_book, tags, creator, creator_notes, personality } = (data)?.data;
+							contents = createDetailsContent(name);
+							if (!!image)
+							{
+								let imageContainer = document.createElement("span"), imageElem = document.createElement("img");
+								imageElem.src = image;
+								imageElem.style = "height: 30%; width: 30%; border-radius: 10px;"
+								imageContainer.style = "width: 100%; display: flex; justify-content: space-around; padding: 10px;";
+								imageContainer.appendChild(imageElem);
+								contents.appendChild(imageContainer);
+							}
+							createSection(contents, "Creator", creator);
+							createSection(contents, "Tags", tags);
+							createSection(contents, "Creators notes", creator_notes);
+							createSection(contents, "Memory", description);
+							createSection(contents, "Alternative greetings", [first_mes, ...(alternate_greetings || [])]);
+							createSection(contents, "Personality", personality);
+							createSection(contents, "World info", character_book?.entries?.map(entry => {
+								return lorebookEntryToString(entry);
+							}));
 						}
-						createSection(contents, "Creator", creator);
-						createSection(contents, "Tags", tags);
-						createSection(contents, "Creators notes", creator_notes);
-						createSection(contents, "Memory", description);
-						createSection(contents, "Alternative greetings", [first_mes, ...alternate_greetings]);
-						createSection(contents, "Personality", personality);
-						createSection(contents, "World info", character_book?.entries?.map(entry => {
-							return lorebookEntryToString(entry);
-						}));
+						catch (e)
+						{
+							console.error(e)
+						}
 
-						popupUtils.reset().title("Character Options").content(contents).button("Load character", async () => {
+						popupUtils.reset().title("Character Options").content(contents).button("Back", showCharacterList).button("Load character", async () => {
 							popupUtils.reset()
 							let charData = await getCharacterData(name)
 							load_tavern_obj(charData.data);
@@ -37998,12 +38030,21 @@ flowchart TD\n${treeToViewOutput.outputText.trim()}`
 					}
 					else if (type === "World Info")
 					{
-						let data = await getCharacterData(name);
-						let contents = createDetailsContent(name);
-						createSection(contents, "World info", data?.data?.map(entry => {
-							return wiEntryToString(entry);
-						}));
-						popupUtils.reset().title("World Info Options").content(contents).button("Add to WI", async () => {
+						let contents = document.createElement("span");
+						try
+						{
+							let data = await getCharacterData(name);
+							contents = createDetailsContent(name);
+							createSection(contents, "World info", data?.data?.map(entry => {
+								return wiEntryToString(entry);
+							}));
+						}
+						catch (e)
+						{
+							console.error(e)
+						}
+
+						popupUtils.reset().title("World Info Options").content(contents).button("Back", showCharacterList).button("Add to WI", async () => {
 							popupUtils.reset()
 							let charData = await getCharacterData(name)
 							let wiToAdd = charData.data;
@@ -38044,13 +38085,36 @@ flowchart TD\n${treeToViewOutput.outputText.trim()}`
 				else
 				{
 					let wiToAdd = JSON.parse(plaintext);
-					let has_tav_wi_check = has_tavern_wi_check(wiToAdd);
+					let has_tav_wi_check = has_tavern_wi_check(wiToAdd), wiName = fileName;
 					if(has_tav_wi_check)
 					{
+						if (wiToAdd?.name !== undefined && wiToAdd.name.trim().length > 0)
+						{
+							wiName = wiToAdd.name
+						}
 						wiToAdd = load_tavern_wi(wiToAdd);
 						if(wiToAdd && wiToAdd.length > 0)
 						{
 							wiToAdd.forEach(wi => wi.wigroup = fileName.replace("'", ""))
+						}
+					}
+					else
+					{
+						try
+						{
+							let hasNoGeneralWI = wiToAdd.length === 0 || wiToAdd.find(wi => wi?.wigroup === undefined || wi.wigroup.trim() === null || wi.wigroup === "" || wi.wigroup === "General") === undefined;
+							if (hasNoGeneralWI)
+							{
+								let wiAllHaveSameGroup = wiToAdd.find((e, p, a) => a.find(c => c?.wigroup !== e.wigroup)) === undefined
+								if (wiAllHaveSameGroup)
+								{
+									wiName = wiToAdd[0].wigroup
+								}
+							}
+						}
+						catch (e)
+						{
+							console.error(e)
 						}
 					}
 					if (Array.isArray(wiToAdd))
@@ -38058,7 +38122,7 @@ flowchart TD\n${treeToViewOutput.outputText.trim()}`
 						wiToAdd = wiToAdd.filter(wi => wi?.key !== undefined)
 						if (wiToAdd.length > 0)
 						{
-							saveLorebookToIndexDB(fileName, wiToAdd)
+							saveLorebookToIndexDB(wiName, wiToAdd, JSON.parse(plaintext))
 						}
 					}
 				}
