@@ -33799,6 +33799,7 @@ class MarkdownWYSIWYG {
 			} 
 		}, 1000);
 	}
+
 </script>
 <script>
 	/**
@@ -37756,6 +37757,24 @@ flowchart TD\n${treeToViewOutput.outputText.trim()}`
 		width: unset;
 	}
 
+	/* Ensure form fields are readable inside popups */
+	#popupContainer .popupContent input[type="text"],
+	#popupContainer .popupContent input[type="file"],
+	#popupContainer .popupContent textarea,
+	#popupContainer .popupContent select {
+		color: #000;
+		background-color: #fff;
+		border: 1px solid var(--colgrey, #ccc);
+		border-radius: 6px;
+		padding: 6px 8px;
+		box-sizing: border-box;
+	}
+
+	#popupContainer .popupContent input::placeholder,
+	#popupContainer .popupContent textarea::placeholder {
+		color: #666;
+	}
+
 	.containAndScaleImage.tile
 	{
 		height: 128px;
@@ -37944,8 +37963,10 @@ flowchart TD\n${treeToViewOutput.outputText.trim()}`
 							listElem.innerText = summaryOfKey
 							if (listContent.length !== summaryOfKey.length)
 							{
+								let isShown = false
 								listElem.onclick = () => {
-									listElem.innerText = listElem.innerText === summaryOfKey ? listContent : summaryOfKey
+									isShown = !isShown
+									listElem.innerText = isShown ? listContent : summaryOfKey
 								}
 								listElem.title = "Click to show / hide full content"
 							}
@@ -37959,8 +37980,10 @@ flowchart TD\n${treeToViewOutput.outputText.trim()}`
 						sectionElem.innerText = summaryOfKey
 						if (text.length !== summaryOfKey.length)
 						{
+							let isShown = false
 							sectionElem.onclick = () => {
-								sectionElem.innerText = sectionElem.innerText === summaryOfKey ? text : summaryOfKey
+								isShown = !isShown
+								sectionElem.innerText = isShown ? text : summaryOfKey
 							}
 							sectionElem.title = "Click to show / hide full content"
 						}
@@ -38066,7 +38089,9 @@ flowchart TD\n${treeToViewOutput.outputText.trim()}`
 		}
 		popupUtils.reset().title(`Character List (${allCharacterNames.length})`)
 		containers.forEach(container => popupUtils.content(container))
-		popupUtils.button("Upload characters, lorebooks and world info", () => {
+		popupUtils
+			.button("New character", () => { try { showCharacterCreator(); } catch(e){ console.error(e); } })
+			.button("Upload characters, lorebooks and world info", () => {
 			popupUtils.reset()
 			promptUserForLocalFile(async (result) => {
 				let { file, fileName, ext, content, plaintext, dataArr } = result;
@@ -38136,6 +38161,260 @@ flowchart TD\n${treeToViewOutput.outputText.trim()}`
 			await updateCharacterListFromAll()
 			waitingToast.hide()
 		}).button("Close", () => popupUtils.reset()).show();
+	}
+
+	// Native character creator popup for esobold
+	function showCharacterCreator() {
+		const form = document.createElement('div');
+		form.style.color = 'white';
+		form.style.padding = '10px';
+		form.style.display = 'grid';
+		form.style.gridTemplateColumns = '1fr 1fr';
+		form.style.gap = '8px';
+
+		const makeLabel = (text) => { 
+			const l = document.createElement('label'); 
+			l.innerText = text;
+			return l; 
+		};
+		const makeInput = (type='text') => { 
+			const i = document.createElement('input'); 
+			i.type = type; 
+			i.classList.add('textbox'); 
+			return i; 
+		};
+		const makeArea = () => { 
+			const a = document.createElement('textarea'); 
+			a.classList.add('textbox'); 
+			a.rows = 4; 
+			return a; 
+		};
+		const addOption = (select, value, text) => { 
+			const o = document.createElement('option'); 
+			o.value = value; 
+			o.text = text; 
+			select.appendChild(o); 
+		};
+
+		const nameInp = makeInput();
+		const creatorInp = makeInput();
+		const versionInp = makeInput(); 
+		versionInp.placeholder = '1.0';
+		const tagsInp = makeInput(); 
+		tagsInp.placeholder = 'comma,separated,tags';
+		const personalityArea = makeArea();
+		const descriptionArea = makeArea();
+		const mesExampleArea = makeArea();
+		const firstMesArea = makeArea(); 
+		firstMesArea.rows = 3;
+		const altGreetingsArea = makeArea(); 
+		altGreetingsArea.placeholder = 'One greeting per line';
+		const creatorNotesArea = makeArea();
+		const systemPromptArea = makeArea();
+		const postHistoryArea = makeArea();
+
+		// World Info group selector
+		const wiGroupSelect = document.createElement('select'); 
+		wiGroupSelect.classList.add('textbox');
+		const wiCustomGroup = makeInput(); 
+		wiCustomGroup.placeholder = 'Or enter custom WI group (optional)';
+		addOption(wiGroupSelect, '', '— No WI group —');
+		try {
+			const potentialWIGroups = (current_wi || []).map(w => {
+				return (w?.wigroup || '').trim()
+			}).filter(x => x.length > 0);
+			const distinctWIGroups = [...new Set(potentialWIGroups)].sort();
+			distinctWIGroups.forEach(g => addOption(wiGroupSelect, g, g));
+		}
+		catch(e) {
+			handleError(e)
+		}
+
+		// Image upload and preview
+		let imageFile = null, imagePreview = document.createElement('img');
+		imagePreview.style.maxHeight = '120px'; 
+		imagePreview.style.borderRadius = '8px'; 
+		imagePreview.style.display = 'none';
+		const imageInp = makeInput('file'); 
+		imageInp.accept = 'image/*';
+		imageInp.onchange = () => {
+			const f = imageInp.files?.[0];
+			if (!f) {
+				return;
+			}
+			imageFile = f;
+			try {
+				const url = URL.createObjectURL(f);
+				imagePreview.src = url;
+				imagePreview.style.display = '';
+				// best-effort revoke after load
+				imagePreview.onload = () => { 
+					try {
+						URL.revokeObjectURL(url); 
+					}
+					catch(e) {
+						handleError(e)
+					}
+				};
+			}
+			catch(e) {
+				handleError(e)
+			}
+		};
+
+		// Layout: two columns
+		const col = () => {
+			const d=document.createElement('div'); 
+			d.style.display='flex'; 
+			d.style.flexDirection='column'; 
+			d.style.gap='8px'; 
+			return d; 
+		};
+		const leftCol = col();
+		const rightCol = col();
+		const add = (container, label, control, extra=null) => {
+			container.append(label, control);
+			if(extra) {
+				container.append(extra); 
+			}
+		};
+
+		// Left (primary)
+		add(leftCol, makeLabel('Name'), nameInp);
+		add(leftCol, makeLabel('Creator'), creatorInp);
+		add(leftCol, makeLabel('Version'), versionInp);
+		add(leftCol, makeLabel('Tags'), tagsInp);
+		add(leftCol, makeLabel('Personality'), personalityArea);
+		add(leftCol, makeLabel('Memory / Description'), descriptionArea);
+		add(leftCol, makeLabel('First message'), firstMesArea);
+
+		// Right (secondary)
+		add(rightCol, makeLabel('Example dialogue'), mesExampleArea);
+		add(rightCol, makeLabel('Alternate greetings (one per line)'), altGreetingsArea);
+		add(rightCol, makeLabel('Creator notes'), creatorNotesArea);
+		add(rightCol, makeLabel('System prompt'), systemPromptArea);
+		add(rightCol, makeLabel('Post history instructions'), postHistoryArea);
+		add(rightCol, makeLabel('World Info group'), wiGroupSelect, wiCustomGroup);
+		add(rightCol, makeLabel('Avatar image'), imageInp, imagePreview);
+
+		form.append(leftCol, rightCol);
+
+		const doSave = async () => {
+			const name = (nameInp.value||'').trim();
+			if (!name) { 
+				alert('Character must have a name.'); 
+				return; 
+			}
+			if (!imageFile) { 
+				alert('Please choose an avatar image.'); 
+				return; 
+			}
+
+			// Confirm overwrite if needed
+			const exists = (allCharacterNames || []).some(c => c?.name === name);
+			if (exists && !confirm(`Character "${name}" exists. Overwrite?`)) {
+				return;
+			}
+
+			// Build Tavern v2-compatible inner data object (esobold stores inner fields)
+			const tags = (tagsInp.value||'')
+				.split(',')
+				.map(s => s.trim())
+				.filter(s => s.length>0);
+			const altGreetings = (altGreetingsArea.value||'')
+				.split(/\r?\n/)
+				.map(s => s.trim())
+				.filter(s => s.length>0);
+
+			const selectedGroup = (wiCustomGroup.value||'').trim() || wiGroupSelect.value;
+			let character_book = null;
+			if (selectedGroup) {
+				try {
+					const entries = (current_wi||[]).filter(e => (e?.wigroup||'') === selectedGroup);
+					let id = 0, convertedEntries = entries.map(entry => {
+						let convertedEntry = Object.assign(entry, {
+							keys: entry?.key?.split(",").filter(k => k !== "") || [], 
+							secondary_keys: entry?.keysecondary?.split(",").filter(k => k !== "") || [],
+							uid: id++
+						}); 
+						delete convertedEntry?.key; 
+						delete convertedEntry?.keysecondary;
+						delete convertedEntry?.wigroup;
+						return convertedEntry;
+					})
+					character_book = { name: selectedGroup, entries: convertedEntries };
+				}
+				catch(e) {
+					handleError(e)
+				}
+			}
+
+			const charInner = {
+				name,
+				description: descriptionArea.value||'',
+				personality: personalityArea.value||'',
+				mes_example: mesExampleArea.value||'',
+				first_mes: firstMesArea.value||'',
+				creator: creatorInp.value||'',
+				creator_notes: creatorNotesArea.value||'',
+				system_prompt: systemPromptArea.value||'',
+				post_history_instructions: postHistoryArea.value||'',
+				alternate_greetings: altGreetings,
+				character_book,
+				tags,
+				character_version: (versionInp.value||'1.0')
+			};
+
+			try {
+				waitingToast.setText(`Saving character ${name}`);
+				waitingToast.show();
+
+				// Thumbnail and full image
+				const thumbUrl = await generateThumbnail(imageFile, [256,256]);
+				const dataUrl = await new Promise((resolve, reject) => {
+					const fr = new FileReader();
+					fr.onerror = reject;
+					fr.onload = () => resolve(fr.result);
+					fr.readAsDataURL(imageFile);
+				});
+
+				const toSave = { name, data: charInner, image: String(dataUrl) };
+				await indexeddb_save(`character_${name}`, JSON.stringify(toSave));
+
+				// Update list
+				allCharacterNames = (allCharacterNames||[]).filter(c => c?.name !== name);
+				allCharacterNames.push({ name, thumbnail: thumbUrl, type: 'Character' });
+				await updateCharacterListFromAll();
+
+				waitingToast.hide();
+				popupUtils.reset();
+				showCharacterList();
+			} 
+			catch (e) {
+				handleError(e);
+				waitingToast.hide();
+			}
+		};
+
+		popupUtils.reset()
+			.title('New Character')
+			.content(form)
+			.button('Back', showCharacterList)
+			.button('Save', doSave)
+			.button('Close', () => popupUtils.reset())
+			.show();
+	}
+
+	// Backwards-compat for existing button in scenarios
+	function character_creator() { 
+		try
+		{
+			showCharacterCreator(); 
+		}
+		catch(e) 
+		{
+			handleError(e);
+		}
 	}
 </script>
 </html>
