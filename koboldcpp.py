@@ -182,12 +182,12 @@ saved_stderr_py = None
 stdout_nullfile = None
 stdout_nullfile_py = None
 
-CUDevices = ["1","2","3","4","All"]
-CUDevicesNames = ["","","","",""]
-VKDevicesNames = ["","","",""]
-VKIsDGPU = [0,0,0,0]
-MaxMemory = [0]
-MaxFreeMemory = [0]
+CUDevices = ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","All"]
+CUDevicesNames = ["","","","","","","","","","","","","","","","",""]
+VKDevicesNames = ["","","","","","","","","","","","","","","",""]
+VKIsDGPU = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+MaxMemory = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
+MaxFreeMemory = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
 
 configAfterRestart = ""
 
@@ -954,6 +954,54 @@ def set_backend_props(inputs):
             os.environ["CUDA_VISIBLE_DEVICES"] = "3"
             os.environ["HIP_VISIBLE_DEVICES"] = "3"
             inputs.kcpp_main_gpu = 0
+        elif (args.usecuda and "4" in args.usecuda):
+            os.environ["CUDA_VISIBLE_DEVICES"] = "4"
+            os.environ["HIP_VISIBLE_DEVICES"] = "4"
+            inputs.kcpp_main_gpu = 0
+        elif (args.usecuda and "5" in args.usecuda):
+            os.environ["CUDA_VISIBLE_DEVICES"] = "5"
+            os.environ["HIP_VISIBLE_DEVICES"] = "5"
+            inputs.kcpp_main_gpu = 0
+        elif (args.usecuda and "6" in args.usecuda):
+            os.environ["CUDA_VISIBLE_DEVICES"] = "6"
+            os.environ["HIP_VISIBLE_DEVICES"] = "6"
+            inputs.kcpp_main_gpu = 0
+        elif (args.usecuda and "7" in args.usecuda):
+            os.environ["CUDA_VISIBLE_DEVICES"] = "7"
+            os.environ["HIP_VISIBLE_DEVICES"] = "7"
+            inputs.kcpp_main_gpu = 0
+        elif (args.usecuda and "8" in args.usecuda):
+            os.environ["CUDA_VISIBLE_DEVICES"] = "8"
+            os.environ["HIP_VISIBLE_DEVICES"] = "8"
+            inputs.kcpp_main_gpu = 0
+        elif (args.usecuda and "9" in args.usecuda):
+            os.environ["CUDA_VISIBLE_DEVICES"] = "9"
+            os.environ["HIP_VISIBLE_DEVICES"] = "9"
+            inputs.kcpp_main_gpu = 0
+        elif (args.usecuda and "10" in args.usecuda):
+            os.environ["CUDA_VISIBLE_DEVICES"] = "10"
+            os.environ["HIP_VISIBLE_DEVICES"] = "10"
+            inputs.kcpp_main_gpu = 0
+        elif (args.usecuda and "11" in args.usecuda):
+            os.environ["CUDA_VISIBLE_DEVICES"] = "11"
+            os.environ["HIP_VISIBLE_DEVICES"] = "11"
+            inputs.kcpp_main_gpu = 0
+        elif (args.usecuda and "12" in args.usecuda):
+            os.environ["CUDA_VISIBLE_DEVICES"] = "12"
+            os.environ["HIP_VISIBLE_DEVICES"] = "12"
+            inputs.kcpp_main_gpu = 0
+        elif (args.usecuda and "13" in args.usecuda):
+            os.environ["CUDA_VISIBLE_DEVICES"] = "13"
+            os.environ["HIP_VISIBLE_DEVICES"] = "13"
+            inputs.kcpp_main_gpu = 0
+        elif (args.usecuda and "14" in args.usecuda):
+            os.environ["CUDA_VISIBLE_DEVICES"] = "14"
+            os.environ["HIP_VISIBLE_DEVICES"] = "14"
+            inputs.kcpp_main_gpu = 0
+        elif (args.usecuda and "15" in args.usecuda):
+            os.environ["CUDA_VISIBLE_DEVICES"] = "15"
+            os.environ["HIP_VISIBLE_DEVICES"] = "15"
+            inputs.kcpp_main_gpu = 0
     else:
         if(args.maingpu is None or args.maingpu<0):
             if (args.usecuda and "0" in args.usecuda):
@@ -964,6 +1012,30 @@ def set_backend_props(inputs):
                 inputs.kcpp_main_gpu = 2
             elif (args.usecuda and "3" in args.usecuda):
                 inputs.kcpp_main_gpu = 3
+            elif (args.usecuda and "4" in args.usecuda):
+                inputs.kcpp_main_gpu = 4
+            elif (args.usecuda and "5" in args.usecuda):
+                inputs.kcpp_main_gpu = 5
+            elif (args.usecuda and "6" in args.usecuda):
+                inputs.kcpp_main_gpu = 6
+            elif (args.usecuda and "7" in args.usecuda):
+                inputs.kcpp_main_gpu = 7
+            elif (args.usecuda and "8" in args.usecuda):
+                inputs.kcpp_main_gpu = 8
+            elif (args.usecuda and "9" in args.usecuda):
+                inputs.kcpp_main_gpu = 9
+            elif (args.usecuda and "10" in args.usecuda):
+                inputs.kcpp_main_gpu = 10
+            elif (args.usecuda and "11" in args.usecuda):
+                inputs.kcpp_main_gpu = 11
+            elif (args.usecuda and "12" in args.usecuda):
+                inputs.kcpp_main_gpu = 12
+            elif (args.usecuda and "13" in args.usecuda):
+                inputs.kcpp_main_gpu = 13
+            elif (args.usecuda and "14" in args.usecuda):
+                inputs.kcpp_main_gpu = 14
+            elif (args.usecuda and "15" in args.usecuda):
+                inputs.kcpp_main_gpu = 15
 
     if args.usevulkan: #is an empty array if using vulkan without defined gpu
         s = ""
