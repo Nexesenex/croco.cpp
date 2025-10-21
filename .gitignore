@@ -153,3 +153,5 @@ CMakeFiles/*
 cmake_install.cmake
 .gitignore
 CMakeCache.txt
+
+/koboldcpp_cublas*.dll
