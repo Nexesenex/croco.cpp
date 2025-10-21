@@ -148,3 +148,5 @@ conda/
 
 # Cloudflare files
 cloudflared.*
+
+/koboldcpp_cublas*.dll
