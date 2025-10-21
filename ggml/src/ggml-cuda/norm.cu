@@ -298,9 +298,10 @@ static void rms_norm_f32_cuda(
         const float * x, float * dst, const int ncols, const int nrows, const int nchannels, const int nsamples,
         const int64_t stride_row, const int64_t stride_channel, const int64_t stride_sample, const float eps, cudaStream_t stream) {
     const dim3 blocks_num(nrows, nchannels, nsamples);
+    constexpr int kBlockSize = 256;
     if (ncols < 1024) {
-        const dim3 block_dims(256, 1, 1);
-        rms_norm_f32<256, false><<<blocks_num, block_dims, block_dims.x > WARP_SIZE ? 32 * sizeof(float): 0, stream>>>(x, dst, ncols, stride_row, stride_channel, stride_sample, eps);
+        const dim3 block_dims(kBlockSize, 1, 1);
+        rms_norm_f32<kBlockSize, false><<<blocks_num, block_dims, block_dims.x > WARP_SIZE ? 32 * sizeof(float): 0, stream>>>(x, dst, ncols, stride_row, stride_channel, stride_sample, eps);
     } else {
         const dim3 block_dims(1024, 1, 1);
         rms_norm_f32<1024, false><<<blocks_num, block_dims, block_dims.x > WARP_SIZE ? 32 * sizeof(float): 0, stream>>>(x, dst, ncols, stride_row, stride_channel, stride_sample, eps);
@@ -344,9 +345,34 @@ static void rms_norm_mul_f32_cuda(const float *  x,
         const uint3 mul_nrows_packed     = init_fastdiv_values(mul_nrows);
         const uint3 mul_nchannels_packed = init_fastdiv_values(mul_nchannels);
         const uint3 mul_nsamples_packed  = init_fastdiv_values(mul_nsamples);
-        if (ncols < 1024) {
-            const dim3 block_dims(256, 1, 1);
-            rms_norm_f32<256, true><<<blocks_num, block_dims, block_dims.x > WARP_SIZE ? 32 * sizeof(float): 0, stream>>>(
+        constexpr int kBlockSize = 256;
+        if (ncols < kBlockSize) {
+            switch (ncols) {
+                case  32: rms_norm_f32< 32><<<blocks_num, 32, 32 > WARP_SIZE ? 32 * sizeof(float): 0, stream>>>(
+                x, dst, ncols, stride_row, stride_channel, stride_sample, eps, mul, mul_stride_row, mul_stride_channel,
+                mul_stride_sample, mul_ncols_packed, mul_nrows_packed, mul_nchannels_packed, mul_nsamples_packed); break;
+                case  64: rms_norm_f32< 64><<<blocks_num, 64, 64 > WARP_SIZE ? 32 * sizeof(float): 0, stream>>>(
+                x, dst, ncols, stride_row, stride_channel, stride_sample, eps, mul, mul_stride_row, mul_stride_channel,
+                mul_stride_sample, mul_ncols_packed, mul_nrows_packed, mul_nchannels_packed, mul_nsamples_packed); break;
+                case  96: rms_norm_f32< 96><<<blocks_num, 96, 96 > WARP_SIZE ? 32 * sizeof(float): 0, stream>>>(
+                x, dst, ncols, stride_row, stride_channel, stride_sample, eps, mul, mul_stride_row, mul_stride_channel,
+                mul_stride_sample, mul_ncols_packed, mul_nrows_packed, mul_nchannels_packed, mul_nsamples_packed); break;
+                case 128: rms_norm_f32<128><<<blocks_num, 128, 128 > WARP_SIZE ? 32 * sizeof(float): 0, stream>>>(
+                x, dst, ncols, stride_row, stride_channel, stride_sample, eps, mul, mul_stride_row, mul_stride_channel,
+                mul_stride_sample, mul_ncols_packed, mul_nrows_packed, mul_nchannels_packed, mul_nsamples_packed); break;
+                case 160: rms_norm_f32<160><<<blocks_num, 160, 160 > WARP_SIZE ? 32 * sizeof(float): 0, stream>>>(
+                x, dst, ncols, stride_row, stride_channel, stride_sample, eps, mul, mul_stride_row, mul_stride_channel,
+                mul_stride_sample, mul_ncols_packed, mul_nrows_packed, mul_nchannels_packed, mul_nsamples_packed); break;
+                case 192: rms_norm_f32<192><<<blocks_num, 192, 192 > WARP_SIZE ? 32 * sizeof(float): 0, stream>>>(
+                x, dst, ncols, stride_row, stride_channel, stride_sample, eps, mul, mul_stride_row, mul_stride_channel,
+                mul_stride_sample, mul_ncols_packed, mul_nrows_packed, mul_nchannels_packed, mul_nsamples_packed); break;
+                default : rms_norm_f32<224><<<blocks_num, 224, 224 > WARP_SIZE ? 32 * sizeof(float): 0, stream>>>(
+                x, dst, ncols, stride_row, stride_channel, stride_sample, eps, mul, mul_stride_row, mul_stride_channel,
+                mul_stride_sample, mul_ncols_packed, mul_nrows_packed, mul_nchannels_packed, mul_nsamples_packed); break;
+            }
+        } else if (ncols < 1024) {
+            const dim3 block_dims(kBlockSize, 1, 1);
+            rms_norm_f32<kBlockSize, true><<<blocks_num, block_dims, block_dims.x > WARP_SIZE ? 32 * sizeof(float): 0, stream>>>(
                 x, dst, ncols, stride_row, stride_channel, stride_sample, eps, mul, mul_stride_row, mul_stride_channel,
                 mul_stride_sample, mul_ncols_packed, mul_nrows_packed, mul_nchannels_packed, mul_nsamples_packed);
         } else {
