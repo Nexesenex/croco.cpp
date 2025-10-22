@@ -3,6 +3,7 @@
 #include "common.cuh"
 #include "vecdotq.cuh"
 #include "mma.cuh"
+#include "iqk_cuda_common.h"
 
 #include <climits>
 #include <cstdint>
