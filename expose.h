@@ -55,7 +55,7 @@ struct load_model_inputs
     const bool use_contextshift = false;
     const bool use_fastforward = false;
     const int kcpp_main_gpu = -1;
-    const int batchsize = 512;
+    const int blasbatchsize = 512;
     const int forceversion = 0;
     const bool autofit = false;
     const int autofit_tax_mb = 0;

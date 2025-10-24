@@ -2355,7 +2355,7 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
     kcpp_data->n_blasthreads = inputs.blasthreads;
     bool isGguf = (file_format == FileFormat::GGUF_GENERIC);
     kcpp_pipeline_parallelism = inputs.pipelineparallel;
-    kcpp_data->n_batch = GetBatchSize(inputs.batchsize, in_file_format);
+    kcpp_data->n_batch = GetBatchSize(inputs.blasbatchsize, in_file_format);
     kcpp_data->n_ubatch = kcpp_data->n_batch;
     continuous_batching_slots = (isGguf && inputs.continuous_batching_slots > 1) ? inputs.continuous_batching_slots : 0;
     if(continuous_batching_slots > 0)
