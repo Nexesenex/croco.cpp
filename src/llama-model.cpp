@@ -11200,8 +11200,7 @@ struct llm_build_gemma_embedding_iswa : public llm_graph_context {
         // inp_pos - contains the positions
         ggml_tensor * inp_pos = build_inp_pos();
 
-        // TODO: support cacheless iSWA embeddings [TAG_NO_CACHE_ISWA]
-        auto * inp_attn = build_attn_inp_kv_iswa();
+        auto * inp_attn = build_attn_inp_no_cache();
 
         ggml_tensor * inp_out_ids = build_inp_out_ids();
 
@@ -18751,7 +18750,7 @@ llama_memory_i * llama_model::create_memory(const llama_memory_params & params, 
         case LLM_ARCH_NOMIC_BERT_MOE:
         case LLM_ARCH_NEO_BERT:
         case LLM_ARCH_WAVTOKENIZER_DEC:
-        //case LLM_ARCH_GEMMA_EMBEDDING: // TODO: disabled until the cacheless SWA logic is fixed [TAG_NO_CACHE_ISWA]
+        case LLM_ARCH_GEMMA_EMBEDDING:
         case LLM_ARCH_DREAM:
         case LLM_ARCH_LLADA:
             {
@@ -18800,7 +18799,6 @@ llama_memory_i * llama_model::create_memory(const llama_memory_params & params, 
                         /* attn_kv_size      */ cparams.n_ctx,
                         /* attn_n_pad        */ padding,
                         /* attn_n_swa        */ hparams.n_swa,
-                        /* attn_swa_type     */ hparams.swa_type,
                         /* recurrent_type_k  */ GGML_TYPE_F32,
                         /* recurrent_type_v  */ GGML_TYPE_F32,
                         /* recurrent_kv_size */ std::max((uint32_t) 1, cparams.n_seq_max),
@@ -18870,7 +18868,6 @@ llama_memory_i * llama_model::create_memory(const llama_memory_params & params, 
                                 cparams.n_seq_max,
                                 padding,
                                 hparams.n_swa,
-                                hparams.swa_type,
                                 nullptr,
                                 nullptr);
                     }
