@@ -271,7 +271,6 @@ class load_model_inputs(ctypes.Structure):
                 ("overridenativecontext", ctypes.c_int),
                 ("moe_experts", ctypes.c_int),
                 ("moecpu", ctypes.c_int),
-                ("norm_rms_eps", ctypes.c_float),
                 ("no_bos_token", ctypes.c_bool),
                 ("load_guidance", ctypes.c_bool),
                 ("override_kv", ctypes.c_char_p * overridekv_max),
@@ -2108,7 +2107,6 @@ def load_model(model_filename):
             inputs.tensor_split[n] = 0
 
     inputs.moe_experts = args.moeexperts
-    inputs.norm_rms_eps = args.normrmseps
     inputs.no_bos_token = args.nobostoken
     inputs.load_guidance = args.enableguidance
     okv = []
@@ -11194,7 +11192,6 @@ def show_gui():
     defaultgenamt_var = ctk.StringVar(value=str(default_genlen))
     genlimit_var = ctk.StringVar(value=str(0))
     nobostoken_var = ctk.IntVar(value=0)
-    normrmseps_var = ctk.StringVar(value=str(-1.0))
     override_kv_var = ctk.StringVar(value="")
     override_tensors_var = ctk.StringVar(value="")
     enableguidance_var = ctk.IntVar(value=0)
@@ -11994,7 +11991,6 @@ def show_gui():
     makelabelentry(context_tab, "MoE Experts:", moeexperts_var, row=55, padx=(86), singleline=True, tooltip="Override number of MoE experts.")
     moecpu_box,moecpu_box_lbl = makelabelentry(context_tab, "MoE CPU Layers:", moecpu_var, row=55, padx=(334), singleline=True, tooltip="Force Mixture of Experts (MoE) weights of the first N layers to the CPU.\nSetting it higher than GPU layers has no effect.", labelpadx=(230))
     makelabelentry(context_tab, "Override KV:", override_kv_var, row=57, padx=(86), singleline=True, width=130, tooltip="Override metadata value by key. Separate multiple values with commas. Format is name=type:value. Types: int, float, bool, str")
-    makelabelentry(context_tab, "Norm RMS Epsilon:", normrmseps_var, row=57, padx=(420), singleline=True, width=150, tooltip="Override Norm RMS Epsilon value to use for the model.\nUseful for <2bpw quants mainly.\nExample of format: 1.95e-05", labelpadx=(280))  
     tenos_box,tenos_box_lbl = makelabelentry(context_tab, "Override Tensors:", override_tensors_var, row=57, padx=(334), singleline=True, width=130, tooltip="Override selected backend for specific tensors matching tensor_name_regex_pattern=buffer_type, same as in llama.cpp.", labelpadx=(230))
 
     # Model Tab
@@ -12425,7 +12421,6 @@ def show_gui():
         args.jinja_kwargs = jinja_kwargs_var.get()  if jinja_kwargs_var.get() != "" else ""
         args.jinjatemplate = jinjatemplate_var.get() if jinjatemplate_var.get() != "" else ""
         args.enableguidance = (enableguidance_var.get()==1)
-        args.normrmseps = float(normrmseps_var.get()) if normrmseps_var.get()!="" else -1.0
         args.overridekv = None if override_kv_var.get() == "" else override_kv_var.get()
         args.overridetensors = None if override_tensors_var.get() == "" else override_tensors_var.get()
         args.chatcompletionsadapter = "AutoGuess" if chatcompletionsadapter_var.get() == "" else chatcompletionsadapter_var.get()
@@ -12714,8 +12709,6 @@ def show_gui():
         jinjatemplate_var.set(mydict["jinjatemplate"] if ("jinjatemplate" in mydict and mydict["jinjatemplate"]) else "")
 
         enableguidance_var.set(mydict["enableguidance"] if ("enableguidance" in mydict) else 0)
-        if "normrmseps" in mydict and mydict["normrmseps"]:
-            normrmseps_var.set(mydict["normrmseps"])
         if "overridekv" in mydict and mydict["overridekv"]:
             override_kv_var.set(mydict["overridekv"])
         if "overridetensors" in mydict and mydict["overridetensors"]:
@@ -15582,7 +15575,6 @@ if __name__ == '__main__':
     advparser.add_argument("--exporttemplate", help="Exports the current selected arguments as a .kcppt template file", metavar=('[filename]'), type=str, default="")
     advparser.add_argument("--nomodel", help="Allows you to launch the GUI alone, without selecting any model.", action='store_true')
     advparser.add_argument("--moeexperts", metavar=('[num of experts]'), help="How many experts to use for MoE models (default=follow gguf)", type=int, default=-1)
-    advparser.add_argument("--normrmseps", metavar=('[norm rms eps]'), help="Override Norm RMS Epsilon value to use for the model. Useful for <2bpw quants mainly. Example of format: 1.95e-05 (default=follow gguf)", type=float, default=-1.0)
     advparser.add_argument("--moecpu","--n-cpu-moe", "-ncmoe", metavar=('[layers affected]'), help="Keep the Mixture of Experts (MoE) weights of the first N layers in the CPU. If no value is provided, applies to all layers.", nargs='?', const=999, type=int, default=0)
     advparser.add_argument("--defaultgenamt", help="How many tokens to generate by default, if not specified. Must be smaller than context size. Usually, your frontend GUI will override this.", type=check_range(int,64,8192), default=default_genlen)
     advparser.add_argument("--nobostoken", help="Prevents BOS token from being added at the start of any prompt. Usually NOT recommended for most models.", action='store_true')
