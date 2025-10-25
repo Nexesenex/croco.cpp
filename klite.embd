@@ -192,7 +192,7 @@ Current version indicated by LITEVER below.
 	/* Viewports */
 	.normal_viewport_height
 	{
-		height: calc(98vh - 240px);
+		height: calc(98vh - 260px);
 	}
 	@media (max-width: 534px) {
 		.normal_viewport_height
@@ -220,19 +220,19 @@ Current version indicated by LITEVER below.
 	}
 	.aesthetic_viewport_height
 	{
-		height: calc(98vh - 160px);
+		height: calc(98vh - 190px);
 	}
 	.aesthetic_viewport_height.withmenu
 	{
-		height: calc(98vh - 198px);
+		height: calc(98vh - 238px);
 	}
 	.aesthetic_viewport_height.withtyping
 	{
-		height: calc(98vh - 210px);
+		height: calc(98vh - 250px);
 	}
 	.aesthetic_viewport_height.withmenu.withtyping
 	{
-		height: calc(98vh - 248px);
+		height: calc(98vh - 288px);
 	}
 
 	/* Top nav menu */
@@ -1908,8 +1908,36 @@ Current version indicated by LITEVER below.
 		padding-left: 8px;
 		padding-right: 8px;
 		transition: transform 0.3s ease;
-		height: calc(100vh - 68px);
 		z-index: 1;
+	}
+	
+	@media (max-width: 700px), (min-width: 1400px) {
+		.aesthetic_viewport_height
+		{
+			height: calc(98vh - 160px);
+		}
+		.aesthetic_viewport_height.withmenu
+		{
+			height: calc(98vh - 198px);
+		}
+		.aesthetic_viewport_height.withtyping
+		{
+			height: calc(98vh - 210px);
+		}
+		.aesthetic_viewport_height.withmenu.withtyping
+		{
+			height: calc(98vh - 248px);
+		}
+
+		.corpoleftpanel, .corporightpanel
+		{
+			height: calc(100vh - 68px);
+		}
+
+		.corpoleftpanelitems
+		{
+			height: calc(100% - 20px);
+		}
 	}
 	body.darkmode .corpoleftpanel
 	{
@@ -1938,7 +1966,7 @@ Current version indicated by LITEVER below.
 		flex-direction: column;
 		margin-top: 10px;
 		padding: 2px;
-		height: calc(100% - 20px);
+		height: calc(100% - 60px);
 	}
 	.corpoleftpanelitemsinner
 	{
@@ -2013,7 +2041,7 @@ Current version indicated by LITEVER below.
 	.corporightpanel
 	{
 		width: 100%;
-		height: calc(100vh - 68px);
+		height: calc(100vh - 120px);
 		display: flex;
 		flex-direction: column;
 		padding-left: 2px;
@@ -3428,6 +3456,7 @@ Current version indicated by LITEVER below.
 	var custom_claude_model = "";
 	var uses_cors_proxy = false; //we start off attempting a direct connection. switch to proxy if that fails
 	var synchro_polled_response = null;
+	var synchro_polled_respimg = null; //sometimes a LLM response can also include an image.
 	var last_stop_reason = ""; //update stop reason if known
 	var synchro_pending_stream = ""; //used for storing incomplete streaming text
 	var streaming_was_thinking = false; //used as a switch to determine when thinking ends, to wrap output in tags
@@ -4013,6 +4042,24 @@ Current version indicated by LITEVER below.
 		"assistant_end":"",
 		"system":"",
 		"system_end":"",
+	},
+	{
+		"name":"OpenAI Harmony",
+		"user":"<|start|>user<|message|>",
+		"user_end":"<|end|>",
+		"assistant":"<|start|>assistant",
+		"assistant_end":"<|end|>",
+		"system":"<|start|>developer<|message|>",
+		"system_end":"<|end|>",
+	},
+	{
+		"name":"OpenAI Harmony Non-Thinking",
+		"user":"<|start|>user<|message|>",
+		"user_end":"<|end|>",
+		"assistant":"<|start|>assistant<|channel|>final<|message|>",
+		"assistant_end":"<|end|>",
+		"system":"<|start|>developer<|message|>",
+		"system_end":"<|end|>",
 	},
 	{
 		"name":"Vicuna-SUA",
@@ -6369,10 +6416,13 @@ Current version indicated by LITEVER below.
 			if(x.ok)
 			{
 				return x;
-			}else{
-				throw new Error('Error occurred while SSE streaming: ' + (x.statusText));
-				return null;
 			}
+			return x.text().then(errorBody => {
+				throw new Error(`Error occurred while SSE streaming: ${x.statusText} - ${errorBody}`);
+			}).catch(bodyReadError => {
+				throw new Error(`${bodyReadError}`);
+			});
+
 		})
 		.then(resp => {
 			resp.body
@@ -6513,8 +6563,13 @@ Current version indicated by LITEVER below.
 				synchro_polled_response = data.candidates[0].output;
 			}else if (custom_gemini_key != "" && data.candidates != null && data.candidates.length>0 && data.candidates[0].content && data.candidates[0].content.parts != null && data.candidates[0].content.parts.length>0) {
 				synchro_polled_response = "";
+				synchro_polled_respimg = null;
 				for(let x=0;x<data.candidates[0].content.parts.length;++x)
 				{
+					if(!synchro_polled_respimg && data.candidates[0].content.parts[x].inlineData && data.candidates[0].content.parts[x].inlineData.data)
+					{
+						synchro_polled_respimg = data.candidates[0].content.parts[x].inlineData.data;
+					}
 					if(!data.candidates[0].content.parts[x].text)
 					{
 						continue;
@@ -6678,6 +6733,10 @@ Current version indicated by LITEVER below.
 								{
 									for(let x=0;x<event.data.candidates[0].content.parts.length;++x)
 									{
+										if(!synchro_polled_respimg && event.data.candidates[0].content.parts[x].inlineData && event.data.candidates[0].content.parts[x].inlineData.data)
+										{
+											synchro_polled_respimg = event.data.candidates[0].content.parts[x].inlineData.data;
+										}
 										if(event.data.candidates[0].content.parts[x].thought)
 										{
 											streaming_was_thinking = true;
@@ -15428,6 +15487,7 @@ Current version indicated by LITEVER below.
 		pending_response_id = "";
 		poll_in_progress = false;
 		synchro_polled_response = null;
+		synchro_polled_respimg = null;
 		last_stop_reason = "";
 		synchro_pending_stream = "";
 		streaming_was_thinking = false;
@@ -15453,6 +15513,7 @@ Current version indicated by LITEVER below.
 		nextgeneratedimagemilestone = generateimagesinterval;
 		pending_response_id = "";
 		synchro_polled_response = null;
+		synchro_polled_respimg = null;
 		last_stop_reason = "";
 		synchro_pending_stream = "";
 		streaming_was_thinking = false;
@@ -17177,7 +17238,12 @@ Current version indicated by LITEVER below.
 		retry_in_progress = false;
 
 		//match the request for creating images in instruct modes
-		if(newgen!="" && localsettings.img_gen_from_instruct && localsettings.opmode == 4 && localsettings.generate_images_mode!=0 && localsettings.img_autogen_type!=2 && !newgen.includes("\n"))
+		let model_allow_imggen = localsettings.img_gen_from_instruct;
+		if(custom_gemini_key!="" && document.getElementById("custom_gemini_model").value=="gemini-2.5-flash-image-preview")
+		{
+			model_allow_imggen = false; //nano banana interferes with imggen instructions
+		}
+		if(newgen!="" && model_allow_imggen && localsettings.opmode == 4 && localsettings.generate_images_mode!=0 && localsettings.img_autogen_type!=2 && !newgen.includes("\n"))
 		{
 			let newgenlc = newgen.toLowerCase().trim();
 			if (newgenlc.startsWith("draw ") ||
@@ -18001,6 +18067,8 @@ Current version indicated by LITEVER below.
 				}
 			}
 		}
+		//special case for GPT-OSS, never use it as a stop sequence or stuff gets messed
+		seqs = seqs.filter(itm => !itm.includes("<|start|>assistant"));
 		if(!localsettings.includedefaultstops)
 		{
 			seqs = [];
@@ -18143,6 +18211,7 @@ Current version indicated by LITEVER below.
 			poll_ticks_passed = 0;
 			poll_in_progress = false;
 			synchro_polled_response = null;
+			synchro_polled_respimg = null;
 			last_stop_reason = "";
 			synchro_pending_stream = "";
 			streaming_was_thinking = false;
@@ -18672,7 +18741,7 @@ Current version indicated by LITEVER below.
 					payload["tools"] = [{"google_search": {}}];
 				}
 
-				if(mdlname.includes("gemini-2.5"))
+				if(mdlname.includes("gemini-2.5") && !mdlname.includes("image"))
 				{
 					if(!document.getElementById("usegeminithink").checked)
 					{
@@ -19928,6 +19997,9 @@ Current version indicated by LITEVER below.
 				}
 			}
 
+			//special case for GPT-OSS, never use it as a stop sequence or stuff gets messed
+			stripping_arr = stripping_arr.filter(itm => !itm.includes("<|start|>assistant"));
+
 			//sometimes the OAI type endpoints get confused and repeat the instruct tag, so trim it
 			for(let i=0;i<stripping_arr.length;++i)
 			{
@@ -21050,6 +21122,15 @@ Current version indicated by LITEVER below.
 						render_gametext();
 						sync_multiplayer(false);
 					}
+					if(synchro_polled_respimg)
+					{
+						if(!synchro_polled_respimg.startsWith("data:image"))
+						{
+							synchro_polled_respimg = "data:image/png;base64," + synchro_polled_respimg;
+						}
+						self_upload_img(synchro_polled_respimg,"output_image");
+						synchro_polled_respimg = null;
+					}
 				}
 				else {
 					//horde api needs to constantly poll to see if response is done
@@ -21971,7 +22052,7 @@ Current version indicated by LITEVER below.
 			document.getElementById("gametext").innerHTML = fulltxt;
 		}
 
-		if(localflag && is_using_kcpp_with_admin())
+		if(is_using_kcpp_with_admin())
 		{
 			document.getElementById("topbtn_admin").classList.remove("hidden");
 		}
@@ -24637,7 +24718,7 @@ Current version indicated by LITEVER below.
 	function render_aesthetic_ui(input, isPreview) //class suffix string used to prevent defined styles from leaking into global scope
 	{
 		const avatarImage = function(for_ai, source = undefined, name = undefined) { //todo: this is still bad code, but will keep it for now
-			if((for_ai && !as.AI_portrait) || (!for_ai && !as.you_portrait) || as.border_style == 'None')
+			if(as.border_style == 'None')
 			{
 				return ''; //for no portrait
 			}
@@ -24646,21 +24727,26 @@ Current version indicated by LITEVER below.
 			let width, height;
 			let imgclassname = "";
 			let imageToUse = getImageForSource(source, name);
-			if (imageToUse !== undefined)
+			if (imageToUse === undefined && ((for_ai && !as.AI_portrait) || (!for_ai && !as.you_portrait)))
 			{
-				width = as.portrait_width_AI;
-				height = (as.border_style == 'Circle' ? as.portrait_width_AI : as.portrait_width_AI / as.portrait_ratio_AI);
+				return "";
 			}
 			else if (!for_ai) 
 			{
 				width = as.portrait_width_you;
 				height = (as.border_style == 'Circle' ? as.portrait_width_you : as.portrait_width_you / as.portrait_ratio_you);
-				imgclassname = "you-portrait-image";
+				if (imageToUse === undefined)
+				{
+					imgclassname = "you-portrait-image";
+				}
 			}
 			else {
 				width = as.portrait_width_AI;
 				height = (as.border_style == 'Circle' ? as.portrait_width_AI : as.portrait_width_AI / as.portrait_ratio_AI);
-				imgclassname = "AI-portrait-image";
+				if (imageToUse === undefined)
+				{
+					imgclassname = "AI-portrait-image";
+				}
 			}
 			return `<div class='${imgclassname}${classSuffixStr}${reinvertcolor} containAndScaleImage' style='width:${width}px; height:${height}px; border-radius: ${radius}; ${!!imageToUse ? `background-image:${imageToUse}; margin: 10px 6px; border:none;` : ""}'></div>`;
 		}
@@ -37295,13 +37381,24 @@ flowchart TD\n${treeToViewOutput.outputText.trim()}`
 	}
 
 	#memory_tab_container, #wi_tab_container, #documentdb_tab_container {
-		height: 90%;
-		max-height: 90%;
+		height: calc(90% - 60px);
+		max-height: calc(90% - 60px);
 		overflow-y: auto;
 	}
 
-	#wilist:not(.sidepanelsize) {
-		max-height: 90% !important
+	.popupcontainer {
+		justify-content: space-around;
+	}
+
+	.nspopup, .nspopup.moderate, .nspopup.higher, .nspopup.evenhigher, .nspopup.highest, .saveloadpopup, 
+	.workerpopup, .scenariopopup, #settingscontainerfg {
+		margin-top: unset;
+	}
+	
+	@media (min-width: 600px) {
+		#wilist:not(.sidepanelsize) {
+			max-height: calc(90% - 70px)
+		}
 	}
 </style>
 <script>
@@ -37818,14 +37915,81 @@ flowchart TD\n${treeToViewOutput.outputText.trim()}`
 		}
 		else
 		{
+			let createDetailsContent = (name) => {
+				let contents = document.createElement("div");
+				contents.style.color = "white";
+				contents.style.padding = "5px";
+				let titleElem = document.createElement("span");
+				titleElem.classList.add("popuptitletext");
+				titleElem.innerText = name;
+				titleElem.style.borderBottom = "solid";
+				contents.appendChild(titleElem);
+				return contents;
+			}
+			let createSection = (containerElem, section, text) => {
+				if (!!text && text.length > 0)
+				{
+					let sectionContainer = document.createElement("span");
+					sectionContainer.style = "width: 100%; display: flex; padding: 10px;";
+					let sectionTitle = document.createElement("span"), sectionElem;
+					sectionTitle.innerText = section;
+					sectionTitle.style = "padding-right: 5px; font-weight: bold;"
+					sectionContainer.appendChild(sectionTitle);
+					if (Array.isArray(text))
+					{
+						sectionElem = document.createElement("ul");
+						text.forEach(listContent => {
+							let listElem = document.createElement("li");
+							let summaryOfKey = listContent.length > 100 ? `${listContent.substr(0, 50).trim()}...${listContent.substr(-50).trim()}` : listContent.trim();
+							listElem.innerText = summaryOfKey
+							sectionElem.appendChild(listElem)
+						})
+					}
+					else
+					{
+						sectionElem = document.createElement("span");
+						sectionElem.innerText = text.trim();
+					}
+					sectionContainer.appendChild(sectionElem);
+					containerElem.appendChild(sectionContainer);
+				}
+			}
+			let lorebookEntryToString = (entry) => {
+				return `Primary: ${[...entry?.keys].join(", ")}\nSecondary: ${[...entry?.secondary_keys].join(",")}`;
+			}
+			let wiEntryToString = (entry) => {
+				return `Primary: ${entry?.key}\nSecondary: ${entry?.keysecondary}`;
+			}
 			for (let i = 0; i < allCharacterNames.length; i++)
 			{
 				let {name, thumbnail} = allCharacterNames[i], type = getTypeFromAllCharacterData(allCharacterNames[i]);
 				let charIcon = createIcon(name, !!thumbnail ? `url(${thumbnail})` : undefined)
-				charIcon.onclick = () => {
+				charIcon.onclick = async () => {
 					if (type === "Character")
 					{
-						popupUtils.reset().title("Character Options").button("Load character", async () => {
+						let data = await getCharacterData(name), {image} = data;
+						let {description, first_mes, alternate_greetings, character_book, tags, creator, creator_notes, personality } = (data)?.data;
+						let contents = createDetailsContent(name);
+						if (!!image)
+						{
+							let imageContainer = document.createElement("span"), imageElem = document.createElement("img");
+							imageElem.src = image;
+							imageElem.style = "height: 30%; width: 30%; border-radius: 10px;"
+							imageContainer.style = "width: 100%; display: flex; justify-content: space-around; padding: 10px;";
+							imageContainer.appendChild(imageElem);
+							contents.appendChild(imageContainer);
+						}
+						createSection(contents, "Creator", creator);
+						createSection(contents, "Tags", tags);
+						createSection(contents, "Creators notes", creator_notes);
+						createSection(contents, "Memory", description);
+						createSection(contents, "Alternative greetings", [first_mes, ...alternate_greetings]);
+						createSection(contents, "Personality", personality);
+						createSection(contents, "World info", character_book?.entries?.map(entry => {
+							return lorebookEntryToString(entry);
+						}));
+
+						popupUtils.reset().title("Character Options").content(contents).button("Load character", async () => {
 							popupUtils.reset()
 							let charData = await getCharacterData(name)
 							load_tavern_obj(charData.data);
@@ -37843,7 +38007,12 @@ flowchart TD\n${treeToViewOutput.outputText.trim()}`
 					}
 					else if (type === "World Info")
 					{
-						popupUtils.reset().title("World Info Options").button("Add to WI", async () => {
+						let data = await getCharacterData(name);
+						let contents = createDetailsContent(name);
+						createSection(contents, "World info", data?.data?.map(entry => {
+							return wiEntryToString(entry);
+						}));
+						popupUtils.reset().title("World Info Options").content(contents).button("Add to WI", async () => {
 							popupUtils.reset()
 							let charData = await getCharacterData(name)
 							let wiToAdd = charData.data;

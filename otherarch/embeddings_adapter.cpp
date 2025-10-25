@@ -136,7 +136,7 @@ bool embeddingstype_load_model(const embeddings_load_model_inputs inputs)
     ctx_params.offload_kqv = false;
     ctx_params.n_threads = nthreads;
     ctx_params.n_threads_batch = nthreads;
-    ctx_params.flash_attn = inputs.flash_attention;
+    ctx_params.flash_attn_type = (inputs.flash_attention?LLAMA_FLASH_ATTN_TYPE_ENABLED:LLAMA_FLASH_ATTN_TYPE_DISABLED);
     ctx_params.kv_unified = true;
 
     embeddings_ctx = llama_init_from_model(embeddingsmodel, ctx_params);

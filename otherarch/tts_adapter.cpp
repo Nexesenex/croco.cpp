@@ -695,7 +695,7 @@ bool ttstype_load_model(const tts_load_model_inputs inputs)
         tts_ctx_params.n_ubatch = 512;
         tts_ctx_params.n_threads = nthreads;
         tts_ctx_params.n_threads_batch = nthreads;
-        tts_ctx_params.flash_attn = inputs.flash_attention;
+        tts_ctx_params.flash_attn_type = (inputs.flash_attention?LLAMA_FLASH_ATTN_TYPE_ENABLED:LLAMA_FLASH_ATTN_TYPE_DISABLED);
         tts_ctx_params.kv_unified = true;
 
         llama_model * ttcmodel = llama_model_load_from_file(modelfile_ttc.c_str(), tts_model_params);
@@ -779,7 +779,7 @@ static tts_generation_outputs ttstype_generate_ttscpp(const tts_generation_input
     }
     else if(detectedarch=="dia")
     {
-        vmapper = {"zoe", "zac", "jess", "leo", "mia"};
+        vmapper = {"zac", "zoe", "jess", "leo", "mia"};
         vpermitted = {"zoe", "zac","jess", "leo", "mia", "julia", "leah"};
     }
 
