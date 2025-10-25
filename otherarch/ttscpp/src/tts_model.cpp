@@ -50,9 +50,6 @@ void runner_context::set_threads() {
 void runner_context::build_schedule(size_t max_nodes) {
     backend_cpu_buffer = ggml_backend_cpu_buffer_type();
     if (backend != nullptr) {
-#ifdef GGML_USE_METAL
-        backend_buffer = ggml_backend_metal_buffer_type();
-#endif
         std::vector<ggml_backend_buffer_type_t> bufs = {backend_buffer, backend_cpu_buffer};
         std::vector<ggml_backend_t> backs = {backend, backend_cpu};
         sched = ggml_backend_sched_new(backs.data(), bufs.data(), 2, max_nodes, false, false);
@@ -103,10 +100,6 @@ void tts_model::prep_buffers_and_context(bool cpu_only, float size_offset, uint3
         backend = ggml_backend_cpu_init();
         buffer = ggml_backend_cpu_buffer_type();
     } else {
-#ifdef GGML_USE_METAL
-        backend = ggml_backend_metal_init();
-        buffer = ggml_backend_metal_buffer_type();
-#endif
         // if use metal is not installed then we need to warn here
         if (!backend || !buffer) {
             TTS_ABORT("'GGML_USE_METAL' is not defined either set the model to use CPU only or install ggml with metal support.");

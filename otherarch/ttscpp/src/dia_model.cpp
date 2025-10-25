@@ -264,11 +264,6 @@ void dia_context::reset() {
 
 struct dia_context * build_new_dia_context(struct dia_model * model, int n_threads, bool use_cpu) {
     dia_context * dctx = new dia_context(model, n_threads);
-    if (!use_cpu) {
-#ifdef GGML_USE_METAL
-        dctx->backend = ggml_backend_metal_init();
-#endif
-    }
     dctx->backend_cpu = ggml_backend_cpu_init();
     dctx->set_threads();
     dctx->build_schedule();
@@ -280,9 +275,7 @@ static bool dia_kv_cache_init(struct dia_kv_cache * cache, dia_model * model, di
     ggml_backend_buffer_type_t buft = nullptr;
     // this will only really support cpu or metal for the time being;
     if (dctx->backend != nullptr) {
-#ifdef GGML_USE_METAL
-        buft = ggml_backend_metal_buffer_type();
-#endif
+
     } else {
         buft = ggml_backend_cpu_buffer_type();
     }

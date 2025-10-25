@@ -323,11 +323,6 @@ void parler_context::reset(int32_t n_output_heads) {
 
 struct parler_context * build_new_parler_context(struct parler_tts_model * model, int n_threads, bool use_cpu) {
     parler_context * pctx = new parler_context(model, n_threads);
-    if (!use_cpu) {
-#ifdef GGML_USE_METAL
-        pctx->backend = ggml_backend_metal_init();
-#endif
-    }
     pctx->eos_seen.reserve(model->n_output_heads);
     pctx->backend_cpu = ggml_backend_cpu_init();
     pctx->set_threads();
@@ -343,9 +338,6 @@ static bool parler_kv_cache_init(struct parler_kv_cache * cache, parler_tts_mode
     ggml_backend_buffer_type_t buft = nullptr;
     // this will only really support cpu or metal for the time being;
     if (pctx->backend != nullptr) {
-#ifdef GGML_USE_METAL
-        buft = ggml_backend_metal_buffer_type();
-#endif
     } else {
         buft = ggml_backend_cpu_buffer_type();
     }

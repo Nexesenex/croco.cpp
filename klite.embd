@@ -12,7 +12,7 @@ Current version indicated by LITEVER below.
 -->
 
 <script id="init-config">
-	const LITEVER = 280;
+	const LITEVER = 282;
 	const urlParams = new URLSearchParams(window.location.search);
 	var localflag = urlParams.get('local'); //this will be replaced automatically in embedded kcpp
 	const STORAGE_PREFIX = (localflag?"e_":"")+"kaihordewebui_";
@@ -42,7 +42,7 @@ Current version indicated by LITEVER below.
 	* Modified to remove unneeded components
 	*/
 	/*! normalize.css v3.0.3 | MIT License | github.com/necolas/normalize.css */
-	pre code,td,th{padding:0}pre code,table{background-color:transparent}.table,input[type=range]{width:100%}.btn,img{vertical-align:middle}html{font-family:sans-serif;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%;font-size:10px;-webkit-tap-highlight-color:transparent}body{margin:0;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:14px;line-height:1.42857143;color:#333;background-color:#fff}b,dt,strong{font-weight:700}h1{margin:.67em 0}hr{-webkit-box-sizing:content-box;-moz-box-sizing:content-box;box-sizing:content-box;height:0}textarea{overflow:auto}table{border-collapse:collapse;border-spacing:0}@media print{blockquote,img,pre,tr{page-break-inside:avoid}*,:after,:before{color:#000!important;text-shadow:none!important;background:0 0!important;-webkit-box-shadow:none!important;box-shadow:none!important}a,a:visited{text-decoration:underline}a[href]:after{content:" (" attr(href) ")"}abbr[title]:after{content:" (" attr(title) ")"}a[href^="#"]:after,a[href^="javascript:"]:after{content:""}blockquote,pre{border:1px solid #999}thead{display:table-header-group}img{max-width:100%!important}h2,h3,p{orphans:3;widows:3}h2,h3{page-break-after:avoid}.navbar{display:none}.btn>.caret,.dropup>.btn>.caret{border-top-color:#000!important}.table{border-collapse:collapse!important}.table td,.table th{background-color:#fff!important}.table-bordered td,.table-bordered th{border:1px solid #ddd!important}}.form-control,.table .table{background-color:#fff}.form-control,.nav>li,.nav>li>a,.radio,input[type=file],input[type=range],pre{display:block}*,:after,:before{-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}button,input,select,textarea{font-family:inherit;font-size:inherit;line-height:inherit}a{color:#337ab7;text-decoration:none}a:focus,a:hover{color:#23527c;text-decoration:underline}a:focus,input[type=checkbox]:focus,input[type=file]:focus,input[type=radio]:focus{outline:-webkit-focus-ring-color auto 5px;outline-offset:-2px}hr{margin-top:20px;margin-bottom:20px;border:0;border-top:1px solid #eee}.h1,.h2,.h3,.h4,.h5,.h6,h1,h2,h3,h4,h5,h6{font-family:inherit;font-weight:500;line-height:1.1;color:inherit}.h1 .small,.h1 small,.h2 .small,.h2 small,.h3 .small,.h3 small,.h4 .small,.h4 small,.h5 .small,.h5 small,.h6 .small,.h6 small,h1 .small,h1 small,h2 .small,h2 small,h3 .small,h3 small,h4 .small,h4 small,h5 .small,h5 small,h6 .small,h6 small{font-weight:400;line-height:1;color:#777}.h1,.h2,.h3,h1,h2,h3{margin-top:20px;margin-bottom:10px}.h1 .small,.h1 small,.h2 .small,.h2 small,.h3 .small,.h3 small,h1 .small,h1 small,h2 .small,h2 small,h3 .small,h3 small{font-size:65%}.h4,.h5,.h6,.navbar-btn.btn-sm,h4,h5,h6{margin-top:10px;margin-bottom:10px}.h4 .small,.h4 small,.h5 .small,.h5 small,.h6 .small,.h6 small,h4 .small,h4 small,h5 .small,h5 small,h6 .small,h6 small{font-size:75%}.h1,h1{font-size:36px}.h2,h2{font-size:30px}.h3,h3{font-size:24px}.h4,h4{font-size:18px}.h5,h5{font-size:14px}.h6,h6{font-size:12px}p{margin:0 0 10px}dl,ol,ul{margin-top:0}.btn,.form-control{padding:6px 12px;font-size:14px;background-image:none}.btn,.form-control,.nav-tabs>li>a,blockquote .small,blockquote footer,blockquote small,dd,dt,pre{line-height:1.42857143}ol,ul{margin-bottom:10px}.table,dl{margin-bottom:20px}.btn,.nav,blockquote ol:last-child,blockquote p:last-child,blockquote ul:last-child,ol ol,ol ul,ul ol,ul ul{margin-bottom:0}.btn .caret,dd{margin-left:0}blockquote{padding:10px 20px;margin:0 0 20px;font-size:17.5px;border-left:5px solid #eee}blockquote .small,blockquote footer,blockquote small{display:block;font-size:80%;color:#777}code,kbd,pre,samp{font-family:Menlo,Monaco,Consolas,"Courier New",monospace}code{padding:2px 4px;font-size:90%;color:#c7254e;background-color:#f9f2f4;border-radius:4px}.table>tbody>tr.active>td,.table>tbody>tr.active>th,.table>tbody>tr>td.active,.table>tbody>tr>th.active,.table>tfoot>tr.active>td,.table>tfoot>tr.active>th,.table>tfoot>tr>td.active,.table>tfoot>tr>th.active,.table>thead>tr.active>td,.table>thead>tr.active>th,.table>thead>tr>td.active,.table>thead>tr>th.active,pre{background-color:#f5f5f5}pre{padding:9.5px;margin:0 0 10px;font-size:13px;color:#333;word-break:break-all;word-wrap:break-word;border:1px solid #ccc;border-radius:4px}pre code{font-size:inherit;color:inherit;white-space:pre-wrap;border-radius:0;word-break:break-word}th{text-align:left}.table{max-width:100%}.table>tbody>tr>td,.table>tbody>tr>th,.table>tfoot>tr>td,.table>tfoot>tr>th,.table>thead>tr>td,.table>thead>tr>th{padding:8px;line-height:1.42857143;vertical-align:top;border-top:1px solid #ddd}.table>thead>tr>th{vertical-align:bottom;border-bottom:2px solid #ddd}.table>caption+thead>tr:first-child>td,.table>caption+thead>tr:first-child>th,.table>colgroup+thead>tr:first-child>td,.table>colgroup+thead>tr:first-child>th,.table>thead:first-child>tr:first-child>td,.table>thead:first-child>tr:first-child>th{border-top:0}.table>tbody+tbody{border-top:2px solid #ddd}input[type=search]{-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;-webkit-appearance:none;-moz-appearance:none;appearance:none}input[type=checkbox],input[type=radio]{margin:4px 0 0;line-height:normal}.checkbox.disabled label,.form-control[disabled],.radio.disabled label,fieldset[disabled] .checkbox label,fieldset[disabled] .form-control,fieldset[disabled] .radio label,fieldset[disabled] input[type=checkbox],fieldset[disabled] input[type=radio],input[type=checkbox].disabled,input[type=checkbox][disabled],input[type=radio].disabled,input[type=radio][disabled]{cursor:not-allowed}select[multiple],select[size],textarea.form-control{height:auto}.form-control{width:100%;height:34px;color:#555;border:1px solid #ccc;border-radius:4px;-webkit-box-shadow:inset 0 1px 1px rgba(0,0,0,.075);box-shadow:inset 0 1px 1px rgba(0,0,0,.075);-webkit-transition:border-color .15s ease-in-out,-webkit-box-shadow .15s ease-in-out;-o-transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out,-webkit-box-shadow .15s ease-in-out}.form-control:focus{border-color:#66afe9;outline:0;-webkit-box-shadow:inset 0 1px 1px rgba(0,0,0,.075),0 0 8px rgba(102,175,233,.6);box-shadow:inset 0 1px 1px rgba(0,0,0,.075),0 0 8px rgba(102,175,233,.6)}.form-control::-moz-placeholder{color:#999;opacity:1}.form-control:-ms-input-placeholder{color:#999}.form-control::-webkit-input-placeholder{color:#999}.form-control::-ms-expand{background-color:transparent;border:0}.form-control[disabled],.form-control[readonly],fieldset[disabled] .form-control{background-color:#eee;opacity:1}.btn{text-align:center;white-space:nowrap;display:inline-block;font-weight:400;-ms-touch-action:manipulation;touch-action:manipulation;cursor:pointer;border:1px solid transparent;border-radius:4px;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.btn.active.focus,.btn.active:focus,.btn.focus,.btn:active.focus,.btn:active:focus,.btn:focus{outline:-webkit-focus-ring-color auto 5px;outline-offset:-2px}.btn.focus,.btn:focus,.btn:hover{color:#333;text-decoration:none}.btn.active,.btn:active{background-image:none;outline:0;-webkit-box-shadow:inset 0 3px 5px rgba(0,0,0,.125);box-shadow:inset 0 3px 5px rgba(0,0,0,.125)}.btn.disabled,.btn[disabled],fieldset[disabled] .btn{cursor:not-allowed;opacity:.65;-webkit-box-shadow:none;box-shadow:none}a.btn.disabled,fieldset[disabled] a.btn{pointer-events:none}.btn-primary{color:#fff;background-color:#337ab7;border-color:#2e6da4}.btn-primary.focus,.btn-primary:focus{color:#fff;background-color:#286090;border-color:#122b40}.btn-primary:hover{color:#fff;background-color:#286090;border-color:#204d74}.btn-primary.active,.btn-primary:active,.open>.dropdown-toggle.btn-primary{color:#fff;background-color:#286090;background-image:none;border-color:#204d74}.btn-primary.active.focus,.btn-primary.active:focus,.btn-primary.active:hover,.btn-primary:active.focus,.btn-primary:active:focus,.btn-primary:active:hover,.open>.dropdown-toggle.btn-primary.focus,.open>.dropdown-toggle.btn-primary:focus,.open>.dropdown-toggle.btn-primary:hover{color:#fff;background-color:#204d74;border-color:#122b40}.btn-primary.disabled.focus,.btn-primary.disabled:focus,.btn-primary.disabled:hover,.btn-primary[disabled].focus,.btn-primary[disabled]:focus,.btn-primary[disabled]:hover,fieldset[disabled] .btn-primary.focus,fieldset[disabled] .btn-primary:focus,fieldset[disabled] .btn-primary:hover{background-color:#337ab7;border-color:#2e6da4}.dropup .caret,.navbar-fixed-bottom .dropdown .caret{content:"";border-top:0;border-bottom:4px dashed}.dropup .dropdown-menu,.navbar-fixed-bottom .dropdown .dropdown-menu{top:auto;bottom:100%;margin-bottom:2px}[data-toggle=buttons]>.btn input[type=checkbox],[data-toggle=buttons]>.btn input[type=radio],[data-toggle=buttons]>.btn-group>.btn input[type=checkbox],[data-toggle=buttons]>.btn-group>.btn input[type=radio]{position:absolute;clip:rect(0,0,0,0);pointer-events:none}.nav{padding-left:0;list-style:none}.nav>li>a{padding:10px 15px}.nav>li>a:focus,.nav>li>a:hover{text-decoration:none;background-color:#eee}.nav>li.disabled>a{color:#777}.nav>li.disabled>a:focus,.nav>li.disabled>a:hover{color:#777;text-decoration:none;cursor:not-allowed;background-color:transparent}.nav .open>a,.nav .open>a:focus,.nav .open>a:hover{background-color:#eee;border-color:#337ab7}.nav .nav-divider{height:1px;margin:9px 0;overflow:hidden;background-color:#e5e5e5}.nav>li>a>img{max-width:none}.nav-tabs{border-bottom:1px solid #ddd}.nav-tabs>li{float:left;margin-bottom:-1px}.nav-tabs>li>a{margin-right:2px;border:1px solid transparent;border-radius:4px 4px 0 0}.nav-tabs>li>a:hover{border-color:#eee #eee #ddd}.nav-tabs>li.active>a,.nav-tabs>li.active>a:focus,.nav-tabs>li.active>a:hover{color:#555;cursor:default;background-color:#fff;border:1px solid #ddd;border-bottom-color:transparent}.nav-tabs .dropdown-menu{margin-top:-1px;border-top-left-radius:0;border-top-right-radius:0}.navbar-collapse{padding-right:15px;padding-left:15px;overflow-x:visible;border-top:1px solid transparent;-webkit-box-shadow:inset 0 1px 0 rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.1);-webkit-overflow-scrolling:touch}.navbar-collapse.in{overflow-y:auto}.navbar-nav{margin:7.5px -15px}.navbar-nav>li>a{padding-top:10px;padding-bottom:10px;line-height:20px}.navbar-nav>li>.dropdown-menu{margin-top:0;border-top-left-radius:0;border-top-right-radius:0}@media (min-width:768px){.navbar{border-radius:4px}.navbar-nav>li{float:left}.navbar-collapse{width:auto;border-top:0;-webkit-box-shadow:none;box-shadow:none}.navbar-collapse.collapse{display:block!important;height:auto!important;padding-bottom:0;overflow:visible!important}.navbar-collapse.in{overflow-y:visible}.navbar-nav{float:left;margin:0}.navbar-nav>li>a{padding-top:15px;padding-bottom:15px}}@media (max-width:767px){.navbar-nav .open .dropdown-menu{position:static;float:none;width:auto;margin-top:0;background-color:transparent;border:0;-webkit-box-shadow:none;box-shadow:none}.navbar-nav .open .dropdown-menu .dropdown-header,.navbar-nav .open .dropdown-menu>li>a{padding:5px 15px 5px 25px}.navbar-nav .open .dropdown-menu>li>a{line-height:20px}.navbar-nav .open .dropdown-menu>li>a:focus,.navbar-nav .open .dropdown-menu>li>a:hover{background-image:none}}.collapse{display:none}.hidden,.hide{display:none!important}.container:after,.container:before,.nav:after,.nav:before,.navbar-collapse:after,.navbar-collapse:before,.panel-body:after,.panel-body:before,.row:after,.row:before{display:table;content:" "}.container:after,.nav:after,.navbar-collapse:after,.navbar:after,.pager:after,.panel-body:after,.row:after{clear:both}button,input,select,textarea{color:inherit;font:inherit;margin:0}
+	pre code,td,th{padding:0}pre code,table{background-color:transparent}.table,input[type=range]{width:100%}.btn,img{vertical-align:middle}html{font-family:sans-serif;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%;font-size:10px;-webkit-tap-highlight-color:transparent}body{margin:0;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:14px;line-height:1.42857143;color:#333;background-color:#fff}b,dt,strong{font-weight:700}h1{margin:.67em 0}hr{-webkit-box-sizing:content-box;-moz-box-sizing:content-box;box-sizing:content-box;height:0}textarea{overflow:auto}table{border-collapse:collapse;border-spacing:0}@media print{blockquote,img,pre,tr{page-break-inside:avoid}*,:after,:before{color:#000!important;text-shadow:none!important;background:0 0!important;-webkit-box-shadow:none!important;box-shadow:none!important}a,a:visited{text-decoration:underline}a[href]:after{content:" (" attr(href) ")"}abbr[title]:after{content:" (" attr(title) ")"}a[href^="#"]:after,a[href^="javascript:"]:after{content:""}blockquote,pre{border:1px solid #999}thead{display:table-header-group}img{max-width:100%!important}h2,h3,p{orphans:3;widows:3}h2,h3{page-break-after:avoid}.navbar{display:none}.btn>.caret,.dropup>.btn>.caret{border-top-color:#000!important}.table{border-collapse:collapse!important}.table td,.table th{background-color:#fff!important}.table-bordered td,.table-bordered th{border:1px solid #ddd!important}}.form-control,.table .table{background-color:#fff}.form-control,.nav>li,.nav>li>a,.radio,input[type=file],input[type=range],pre{display:block}*,:after,:before{-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}button,input,select,textarea{font-family:inherit;font-size:inherit;line-height:inherit}a{color:#337ab7;text-decoration:none}a:focus,a:hover{color:#23527c;text-decoration:underline}a:focus,input[type=checkbox]:focus,input[type=file]:focus,input[type=radio]:focus{outline:-webkit-focus-ring-color auto 5px;outline-offset:-2px}hr{margin-top:20px;margin-bottom:20px;border:0;border-top:1px solid #eee}.h1,.h2,.h3,.h4,.h5,.h6,h1,h2,h3,h4,h5,h6{font-family:inherit;font-weight:500;line-height:1.1;color:inherit}.h1 .small,.h1 small,.h2 .small,.h2 small,.h3 .small,.h3 small,.h4 .small,.h4 small,.h5 .small,.h5 small,.h6 .small,.h6 small,h1 .small,h1 small,h2 .small,h2 small,h3 .small,h3 small,h4 .small,h4 small,h5 .small,h5 small,h6 .small,h6 small{font-weight:400;line-height:1;color:#777}.h1,.h2,.h3,h1,h2,h3{margin-top:20px;margin-bottom:10px}.h1 .small,.h1 small,.h2 .small,.h2 small,.h3 .small,.h3 small,h1 .small,h1 small,h2 .small,h2 small,h3 .small,h3 small{font-size:65%}.h4,.h5,.h6,.navbar-btn.btn-sm,h4,h5,h6{margin-top:10px;margin-bottom:10px}.h4 .small,.h4 small,.h5 .small,.h5 small,.h6 .small,.h6 small,h4 .small,h4 small,h5 .small,h5 small,h6 .small,h6 small{font-size:75%}.h1,h1{font-size:36px}.h2,h2{font-size:30px}.h3,h3{font-size:24px}.h4,h4{font-size:18px}.h5,h5{font-size:14px}.h6,h6{font-size:12px}p{margin:0 0 10px}dl,ol,ul{margin-top:0}.btn,.form-control{padding:6px 12px;font-size:14px;background-image:none}.btn,.form-control,.nav-tabs>li>a,blockquote .small,blockquote footer,blockquote small,dd,dt,pre{line-height:1.42857143}ol,ul{margin-bottom:10px}.table,dl{margin-bottom:20px}.btn,.nav,blockquote ol:last-child,blockquote p:last-child,blockquote ul:last-child,ol ol,ol ul,ul ol,ul ul{margin-bottom:0}.btn .caret,dd{margin-left:0}blockquote{padding:10px 20px;margin:0 0 20px;font-size:17.5px;border-left:5px solid #eee}blockquote .small,blockquote footer,blockquote small{display:block;font-size:80%;color:#777}code,kbd,pre,samp{font-family:Menlo,Monaco,Consolas,"Courier New",monospace}code{padding:2px 4px;font-size:90%;color:#c7254e;background-color:#f9f2f4;border-radius:4px}.table>tbody>tr.active>td,.table>tbody>tr.active>th,.table>tbody>tr>td.active,.table>tbody>tr>th.active,.table>tfoot>tr.active>td,.table>tfoot>tr.active>th,.table>tfoot>tr>td.active,.table>tfoot>tr>th.active,.table>thead>tr.active>td,.table>thead>tr.active>th,.table>thead>tr>td.active,.table>thead>tr>th.active,pre{background-color:#f5f5f5}pre{padding:9.5px;margin:0 0 10px;font-size:13px;color:#333;word-break:break-all;word-wrap:break-word;border:1px solid #ccc;border-radius:4px}pre code{font-size:inherit;color:inherit;white-space:pre-wrap;border-radius:0;word-break:break-word}th{text-align:left}.table{max-width:100%}.table>tbody>tr>td,.table>tbody>tr>th,.table>tfoot>tr>td,.table>tfoot>tr>th,.table>thead>tr>td,.table>thead>tr>th{padding:8px;line-height:1.42857143;vertical-align:top;border-top:1px solid #ddd}.table>thead>tr>th{vertical-align:bottom;border-bottom:2px solid #ddd}.table>caption+thead>tr:first-child>td,.table>caption+thead>tr:first-child>th,.table>colgroup+thead>tr:first-child>td,.table>colgroup+thead>tr:first-child>th,.table>thead:first-child>tr:first-child>td,.table>thead:first-child>tr:first-child>th{border-top:0}.table>tbody+tbody{border-top:2px solid #ddd}input[type=search]{-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;-webkit-appearance:none;-moz-appearance:none;appearance:none}input[type=checkbox],input[type=radio]{margin:4px 0 0;line-height:normal}.checkbox.disabled label,.form-control[disabled],.radio.disabled label,fieldset[disabled] .checkbox label,fieldset[disabled] .form-control,fieldset[disabled] .radio label,fieldset[disabled] input[type=checkbox],fieldset[disabled] input[type=radio],input[type=checkbox].disabled,input[type=checkbox][disabled],input[type=radio].disabled,input[type=radio][disabled]{cursor:not-allowed}select[multiple],select[size],textarea.form-control{height:auto}.form-control{width:100%;height:34px;color:#555;border:1px solid #ccc;border-radius:4px;-webkit-box-shadow:inset 0 1px 1px rgba(0,0,0,.075);box-shadow:inset 0 1px 1px rgba(0,0,0,.075);-webkit-transition:border-color .15s ease-in-out,-webkit-box-shadow .15s ease-in-out;-o-transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out,-webkit-box-shadow .15s ease-in-out}.form-control:focus{border-color:#66afe9;outline:0;-webkit-box-shadow:inset 0 1px 1px rgba(0,0,0,.075),0 0 8px rgba(102,175,233,.6);box-shadow:inset 0 1px 1px rgba(0,0,0,.075),0 0 8px rgba(102,175,233,.6)}.form-control::-moz-placeholder{color:#999;opacity:1}.form-control:-ms-input-placeholder{color:#999}.form-control::-webkit-input-placeholder{color:#999}.form-control::-ms-expand{background-color:transparent;border:0}.form-control[disabled],.form-control[readonly],fieldset[disabled] .form-control{background-color:#eee;opacity:1}.btn{text-align:center;white-space:nowrap;display:inline-block;font-weight:400;-ms-touch-action:manipulation;touch-action:manipulation;cursor:pointer;border:1px solid transparent;border-radius:4px;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.btn.active.focus,.btn.active:focus,.btn.focus,.btn:active.focus,.btn:active:focus,.btn:focus{outline:-webkit-focus-ring-color auto 5px;outline-offset:-2px}.btn.focus,.btn:focus,.btn:hover{color:#333;text-decoration:none}.btn.active,.btn:active{background-image:none;outline:0;-webkit-box-shadow:inset 0 3px 5px rgba(0,0,0,.125);box-shadow:inset 0 3px 5px rgba(0,0,0,.125)}.btn.disabled,.btn[disabled],fieldset[disabled] .btn{cursor:not-allowed;opacity:.65;-webkit-box-shadow:none;box-shadow:none}a.btn.disabled,fieldset[disabled] a.btn{pointer-events:none}.btn-primary{color:#fff;background-color:#337ab7;border-color:#2e6da4}.btn-primary.focus,.btn-primary:focus{color:#fff;background-color:#286090;border-color:#122b40}.btn-primary:hover{color:#fff;background-color:#286090;border-color:#204d74}.btn-primary.active,.btn-primary:active,.open>.dropdown-toggle.btn-primary{color:#fff;background-color:#286090;background-image:none;border-color:#204d74}.btn-primary.active.focus,.btn-primary.active:focus,.btn-primary.active:hover,.btn-primary:active.focus,.btn-primary:active:focus,.btn-primary:active:hover,.open>.dropdown-toggle.btn-primary.focus,.open>.dropdown-toggle.btn-primary:focus,.open>.dropdown-toggle.btn-primary:hover{color:#fff;background-color:#204d74;border-color:#122b40}.btn-primary.disabled.focus,.btn-primary.disabled:focus,.btn-primary.disabled:hover,.btn-primary[disabled].focus,.btn-primary[disabled]:focus,.btn-primary[disabled]:hover,fieldset[disabled] .btn-primary.focus,fieldset[disabled] .btn-primary:focus,fieldset[disabled] .btn-primary:hover{background-color:#337ab7;border-color:#2e6da4}.dropup .caret,.navbar-fixed-bottom .dropdown .caret{content:"";border-top:0;border-bottom:4px dashed}.dropup .dropdown-menu,.navbar-fixed-bottom .dropdown .dropdown-menu{top:auto;bottom:100%;margin-bottom:2px}[data-toggle=buttons]>.btn input[type=checkbox],[data-toggle=buttons]>.btn input[type=radio],[data-toggle=buttons]>.btn-group>.btn input[type=checkbox],[data-toggle=buttons]>.btn-group>.btn input[type=radio]{position:absolute;clip:rect(0,0,0,0);pointer-events:none}.nav{padding-left:0;list-style:none}.nav>li>a{padding:10px 15px}.nav>li>a:focus,.nav>li>a:hover{text-decoration:none;background-color:#eee}.nav>li.disabled>a{color:#777}.nav>li.disabled>a:focus,.nav>li.disabled>a:hover{color:#777;text-decoration:none;cursor:not-allowed;background-color:transparent}.nav .open>a,.nav .open>a:focus,.nav .open>a:hover{background-color:#eee;border-color:#337ab7}.nav .nav-divider{height:1px;margin:9px 0;overflow:hidden;background-color:#e5e5e5}.nav>li>a>img{max-width:none}.nav-tabs{border-bottom:1px solid #ddd}.nav-tabs>li{float:left;margin-bottom:-1px}.nav-tabs>li>a{margin-right:2px;border:1px solid transparent;border-radius:4px 4px 0 0}.nav-tabs>li>a:hover{border-color:#eee #eee #ddd}.nav-tabs>li.active>a,.nav-tabs>li.active>a:focus,.nav-tabs>li.active>a:hover{color:#555;cursor:default;background-color:#fff;border:1px solid #ddd;border-bottom-color:transparent}.nav-tabs .dropdown-menu{margin-top:-1px;border-top-left-radius:0;border-top-right-radius:0}.navbar-collapse{padding-right:15px;padding-left:15px;overflow-x:visible;border-top:1px solid transparent;-webkit-overflow-scrolling:touch}.navbar-collapse.in{overflow-y:auto}.navbar-nav{margin:7.5px -15px}.navbar-nav>li>a{padding-top:10px;padding-bottom:10px;line-height:20px}.navbar-nav>li>.dropdown-menu{margin-top:0;border-top-left-radius:0;border-top-right-radius:0}@media (min-width:768px){.navbar{border-radius:4px}.navbar-nav>li{float:left}.navbar-collapse{width:auto;border-top:0;-webkit-box-shadow:none;box-shadow:none}.navbar-collapse.collapse{display:block!important;height:auto!important;padding-bottom:0;overflow:visible!important}.navbar-collapse.in{overflow-y:visible}.navbar-nav{float:left;margin:0}.navbar-nav>li>a{padding-top:15px;padding-bottom:15px}}@media (max-width:767px){.navbar-nav .open .dropdown-menu{position:static;float:none;width:auto;margin-top:0;background-color:transparent;border:0;-webkit-box-shadow:none;box-shadow:none}.navbar-nav .open .dropdown-menu .dropdown-header,.navbar-nav .open .dropdown-menu>li>a{padding:5px 15px 5px 25px}.navbar-nav .open .dropdown-menu>li>a{line-height:20px}.navbar-nav .open .dropdown-menu>li>a:focus,.navbar-nav .open .dropdown-menu>li>a:hover{background-image:none}}.collapse{display:none}.hidden,.hide{display:none!important}.container:after,.container:before,.nav:after,.nav:before,.navbar-collapse:after,.navbar-collapse:before,.panel-body:after,.panel-body:before,.row:after,.row:before{display:table;content:" "}.container:after,.nav:after,.navbar-collapse:after,.navbar:after,.pager:after,.panel-body:after,.row:after{clear:both}button,input,select,textarea{color:inherit;font:inherit;margin:0}
 	</style>
 
 	<style id="styling-lite">
@@ -51,7 +51,7 @@ Current version indicated by LITEVER below.
 	/* base64 encoded image resources used in Lite */
 	:root{
 		--img_nikosquare:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAMAAACdt4HsAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAADxQTFRFS2Si+X5+pmBfHyApLjZSS2SjP057Vzw5EA4Sf1ZT+9Sv1WpqnYx/7qaYw7vUAAAAS2Sj9PPzgnrLS2SjAzrF9gAAABR0Uk5T///////w////////////AKj//yMlHqVpAAAD3klEQVR4nKWXi7KjIAyGFSgxEjhV3/9d90+8onZPd810prWSDwi50fyoTNP7/X79g2D4NJlqo+rvV/Mf8npPM2B6/4+6ihKaB/pGaH4e6IPw00y3+48xhBC3J32Id+NeUzN9UPfer4RoD/eIqbnuwLS7zncLAfqdPvvDmvY9XAE6vuuImEAw8fNT1/kr4Qqw+YhdIocfJl0glxyTvyG8m7MNY1B9diAkmgGUODnH7Km7AF53AGEjUJtWYdUPzn0LyC6AQO0qCUCi1PKXAM5tCwXeAC0ROf36AqA2VACmbQ8yP9DVimeA6lPKkLaW3EPylXAARBXV701OhOVPI6hcAXH1mTyP7e8AMyEc4mQDzP7XrfOfl5D7ndAdfXID6NwMyXACEpEbgPTCLJn1hEGoAep/OKheQiCEEhj1HgBQX1ZxQMPLlyVsABwejkp8EGEQAkxRA4RgIRYhTxme1fkKoBZwAHjLA+b/cgLQ8gZ4gZ+tVtgAnboaa+Lg0IwRhBqAmX0cI0WFqHN3FUAXAOPpzIWhPzZYQgUAu4ljiaKTaKwtZtwAIdv8XkocR9+UYM5/BMTRxzJKsWEu+RPAAsBxKSWWgTHS18cofiwhlCJD4cApUb0CNWKA/5dhwAqKD2UIXAEoFgUMkIJTCCcjzkGE890BQhXA685WQNqD6ujKWDRhhI7EdKUCtKSGxd8ASEr+6sqNApKPeD/iFEpT6nAUcAMgMmBzqwVPgJCd80X3AIlDDcjSzH8PJbD7AGiT020WjfcCN0jI5WwJGk5axP4eikeyvQd4HE5i7I4xEpWANKg0m2p0OUIcQKJnd7uCaABMRebOSOoB1WUVYACzaGSs012NaI5gAC0GcPWD9iLI6/qVdGeXY7R6xu1M0FAhG7s865ctw97Zoz85kuXi5T2EbaZatLileQA+VifrYGrT7ruL+lbZ0orYcXQJpry/tl+26l1s8sOy+BxMqKjr23nf7mhFnktbOgJOGQmnVG0ZVve06VvDUFmEztGIhHAy2YHA+qsCuFNS1T0Edf41AOZ1b7uwH1tYYFA4p3U1owiOOu+AsyxrQ3AIXwrLXtryL4BPpW0rrvMaPgHSx+K6l3cj3Oin1lH6S3nfd+KDa51lAjJhE6ddz7XRu29xUH51O95SgNOahDTB3PPvLc7cZPWYEVlVlp5AkGtJK/63XZoq0jBsvUrPeNDvr/tE1SnD3qxIEVuNfAsY0J9w4Ux2ZKizHPLHFdw127r7HIS2ZpvFTHHbbN+3+2Qm29p9NvXv2v3twkHHCwd9vnA8vvI8vnQ9vvY9v3g+vvo+v3w/u/7/AZoAPJwrbZ1IAAAAAElFTkSuQmCC");
-		--img_humansquare:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgBAMAAACBVGfHAAAAAXNSR0IB2cksfwAAAAlwSFlzAAACTwAAAk8B95E4kAAAAB5QTFRFFIqj/v//V6u9ksnUFIqjx+PpcbjHFIqjFIqjAAAAcfUgXwAAAAp0Uk5T/////9z//5IQAKod7AcAAACKSURBVHicY5hRwoAE3DsZWhhQgAdDAaoAO4MDqgALA/lAOQmVzyooaIAiYCgoKIYiICgoKIouIIhfBYYZGLYwKBuh8oHcVAUkfqKgaKCgMILPJggGCFMUIQIIewIhAnCXMAlCgQKqEQhDmGECAegCBmiGws1gYFICA2SnIgEHVC4LZlRiRDZ6cgAAfnASgWRzByEAAAAASUVORK5CYII=");
+		--img_humansquare:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgBAMAAACBVGfHAAAAAXNSR0IB2cksfwAAAAlwSFlzAAACTwAAAk8B95E4kAAAAB5QTFRFVoes/v7+f6C7rMPVVoes2OXvVoesVoeskazFAAAAcXZmPwAAAAp0Uk5T/////9z/khD/AFgG4xQAAACKSURBVHicY5iewoAE3CoZShhQgDtDAqoAG4MDqgALA/lAuQmVzyooaIAiYCgoKIEiICgoKIouIIhfBYYZGLYwKBuh8oHcVgUkfqOgaKCgMILPIQgGCFMUIQIIewIhAnCXMAlCgQKqEQhDmGECAegCBmiGws1gYFICA2SnIgEHVC4LZlRiRDZ6cgAAalgSYyNZX70AAAAASUVORK5CYII");
 		--img_favicon_busy:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgBAMAAACBVGfHAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAB5QTFRFAAAA459F8vrrV2hQWm5T2M2oeo9zWWtS6P3k1evQZQ2NdgAAAAp0Uk5TAP//7xr/5HYRi6G3mX8AAAEASURBVHicjZGxagMxDIY9GNr1hryAwaGd1frWQEQ8x+HuAXJEpbOPmG4ZkwcopG9byXYuCaHQf5I+0K9ftlKi0zl9/RzUVcdX+ny5Bc/fRGd1C05Ex0uDaaHUE31IOXKpPaDGPdGI2rfIIMLoEwC0CbkU4FIEIhog7QsgAuqM7QegYRSnFbhgWHNwyKZKr6S3TTA9oKzV8d0IaIIVCx6BXQEzs3mTEQ+hgCb0bQZuAhYELMUig9kDMH8BaZr/gWLqnVkXUNdysAsowRC2tlqU6HLcuk7k4/SSszOZzq/ncrYhW+Rnzg9AZUL2RLfrOoK0qIC/RtTi9JPaR4B07e/0C6jPUVuNXWqeAAAAAElFTkSuQmCC");
 		--img_favicon_normal:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAEtQTFRFAAAA+XJ0l09PsVdXcTw842hqw2hmTi4vMCQlb2eUgWtl+tGpBAMDEw4NPCkoFw8PJBgXt5WBVkxW4Nvf7Lia3Z+MpJnAZ05HnJOTYIS/NAAAABl0Uk5TAv////v//vT9//3/Nna08qf+///////a/hkcROQAAAGUSURBVHiclZLRcoQgDEULBAKoIKjI/39pL4i7nbUPbcYZwJyES5Kvr3/YvIx1nn9zL4G4EwuTXX7xs4QFGEklOT6SBENERguhsWHFD2AVRhL8IEgawY8b5L4fYtg+TSl8+NMEu4G2P34Q67r6I+37dLyBfU/4PY/sInG2MR8vIHG01h9mHfq1hUUQtwYcLEcp+ltmwqutdy5HMwAfc8ExKtVSLEZZW13Jxb4Azq7UHFnFrtGItLliS1UDYOfctm3JhEtlEH5zzpZNDsC63AB1VysY3gqC3C2ytsNW6Q3IjCt91Qr9QK8MiFL4nUEpEyNLYmodxYo3RquVHWUmbbRu0QCbKWwNfil5zYeENrRRqtZrGEQYqdtW8FWHLl4bgZDLFLZdbS/UzP2AEGTufkt3xWSvwzJeh4GxHWD5qlgXOZ/n2ULuC/od4Pk8x9xhCekD0Bqd/DmXgbpEumRgrMPn1K6ecs4pJc/V0nE+x35KtfTJTJufpvPTD2DyNZ3e4wP3zDCHevg+yYvf09PfkHuK7/Vv9g2CjBTdqv3bFgAAAABJRU5ErkJggg==");
 		--img_sword:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgBAMAAACBVGfHAAAAAXNSR0IB2cksfwAAAAlwSFlzAAAA7AAAAOwBeShxvQAAAB5QTFRFAAAA/rUT5uvzztXjq1kW5+r14ufw/8YF/8QHr1kWOCO8XQAAAAp0Uk5TAPr+/fwgpBqRPkYi9G8AAAC6SURBVHicjZCxDoIwEIZv0cLmryTiWl/AhOBOcgubcWAmDs5lglEWdWTwgT1MkGvj4A1N+/Xr3Z8S6VpcrXeurN1799baTIOzCMdQyANBg4+QHQIhq2fhMgqqZ/WfcAqE/LfQPR2REgzwoKUSIiB1uoMA3PWIEUCPMD1arHUG08YFvAz0Ymz0T8XMBWpPYMbWE7hs4L49+4R5aGalAbiU/OkEeiAZBGACst1RAFbjqp/IgA63CUQ6gtQbfGErFF7/nE4AAAAASUVORK5CYII=");
@@ -84,18 +84,87 @@ Current version indicated by LITEVER below.
 		--img_gear:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAAAXNSR0IB2cksfwAAAAlwSFlzAAAA7AAAAOwBeShxvQAAADxQTFRFiYmJAAAAiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJ1owGHwAAABR0Uk5T/wAOBObNRLP0Fih22YC+ZVE1n4prfQ+hAAAA7UlEQVR4nJWT2xaEIAhFEbxk2v3//3WsmUCLVmt4It15kCNgXgIkpZ4uSQNgsuDinkUHNuEVmC2UyDPinPfM+hYY4BZbA3R3APoacG/Aet+35h8ArSKxCEBB2QeHP6CfuMTgI3qm8xR3YJJ/0lc28UI3F2Dkz3C2VxTHAmT+OrtrPC/lAkgT2SAUDR2IDSAteJCoiqRbkaEAixg10MV7uxydRF4JHqPnI8NCpxdVsyRWErNIMavD2m7FLde8h/EFQO1N1hJR2YdYS/BFszsPG5oajD/u4cpLxu1o0WVw6tEzqbOJp1MbXkPa8D7FB+prBiyq3W6BAAAAAElFTkSuQmCC');
 		--img_corpo_left:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAAAXNSR0IB2cksfwAAAAlwSFlzAAAAnQAAAJ0Bj3LnbgAAADxQTFRFAAAAmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZa/DskgAAABR0Uk5TAP0C1vSFKA1oFwjrPK3DS6DRtVwhct1aAAAAhUlEQVR4nKWRyRIDIQhEaXfFZdT//9eY68CkkgrH1w3VANF/ZYK3Pv4gHM6wQeGXA/uscD48mBuP9YKz0l9qY8yUFb/Kn/wUuoPdUXAKDPQqN6OYLLBqkUp+K63KWSbuqfeYnCZcG8q0kqbDHEq0Mk7ovrWefZQlz35Sj8VNnJE+vPabegE7dATMPe9UFwAAAABJRU5ErkJggg==');
 		--img_corpo_right:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAAAXNSR0IB2cksfwAAAAlwSFlzAAAAnQAAAJ0Bj3LnbgAAADxQTFRFAAAAmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZa/DskgAAABR0Uk5TAP0C1oUoDfRoFwjqPK3DS6DRtVyphxJ2AAAAg0lEQVR4nJ2RSxLEIAhERVRE/ES9/13H2QYyVRmW/eyiW5z7b1LAEP0bEBHEJBwE6DKIj4eIRY4HCa6atIfzBGm1PJBHD5metBGoR6NO7QCiQakLALNa4mv76my+nzvdO5bRCGbmm+7TOFFnVlHL7ifo0BXiOvrWuuMma+jP+HHBN/MBKVwEvjDYz2QAAAAASUVORK5CYII=');
-		--img_theme_1:url('data:image/png;base64,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');
-		--img_theme_2:url('data:image/png;base64,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');
-		--img_theme_3:url('data:image/png;base64,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');
+		--img_theme_1:url('data:image/png;base64,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');
+		--img_theme_2:url('data:image/png;base64,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');
+		--img_theme_3:url('data:image/png;base64,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');
+
+		--theme_color_bg_dark:#0b141a;
+		--theme_color_bg:#182330;
+		--theme_color_bg_outer:#182330;
+		--theme_color_main: #32496d;
+		--theme_color_footer:#182330;
+		--theme_color_text: #d1d1d1;
+		--theme_color_input_text: #e0e0e0;
+		--theme_color_highlight:#596985;
+		--theme_color_border: #485c6c;
+		--theme_color_border_highlight: #82a1bc;
+		--theme_color_input_bg:#475162;
+		--theme_color_disabled_bg:#484d56;
+		--theme_color_disabled_fg:#616773;
+		--theme_color_topbtn: #415577;
+		--theme_color_topbtn_highlight: #596985;
+		--theme_color_tabs: #32496d;
+		--theme_color_tabs_highlight: #596985;
+		--theme_color_tabs_text: #e0e0e0;
+		--theme_color_glow_text: #94d7ff;
+		--theme_color_placeholder_text:#9e9e9e;
+		--theme_color_topmenu: #32496d;
+	}
+
+	.theme-old {
+		--theme_color_bg_dark:#262626;
+		--theme_color_bg_outer:#303030;
+		--theme_color_bg:#263040;
+		--theme_color_main: #337ab7;
+		--theme_color_footer:#295071;
+		--theme_color_text: #e0e0e0;
+		--theme_color_input_text: #e0e0e0;
+		--theme_color_highlight:#286090;
+		--theme_color_border: #9e9e9e;
+		--theme_color_border_highlight: #cccccc;
+		--theme_color_input_bg:#474747;
+		--theme_color_disabled_bg:#7e7e7e;
+		--theme_color_disabled_fg:#a8a8a8;
+		--theme_color_topbtn: #4787be;
+		--theme_color_topbtn_highlight: #4db4ea;
+		--theme_color_tabs: #464646;
+		--theme_color_tabs_highlight: #7d7d7d;
+		--theme_color_tabs_text: #e0e0e0;
+		--theme_color_glow_text: #7afaff;
+		--theme_color_placeholder_text:#9e9e9e;
+		--theme_color_topmenu: #337ab7;
+	}
+
+	body.connected.corpoui .topmenu {
+		--theme_color_topmenu: #337ab7;
+	}
+	body.connected.darkmode.corpoui .topmenu {
+		--theme_color_topmenu: #32496d;
+	}
+	body.connected.corpoui .nav-link {
+		--theme_color_topbtn: #4787be;
+	}
+	body.connected.corpoui .nav-link:hover {
+		--theme_color_topbtn_highlight: #4db4ea;
+	}
+	body.connected.darkmode.corpoui .nav-link {
+		--theme_color_topbtn: #415577;
+	}
+	body.connected.darkmode.corpoui .nav-link:hover {
+		--theme_color_topbtn_highlight: #596985;
 	}
 
 	/* Global appearances */
 	body {
-		background-color: #303030;
+		background-color: var(--theme_color_bg_outer);
 		background-image: none;
 		background-size: cover;
 		background-position: center center;
 		background-attachment: fixed;
+	}
+	::placeholder {
+		color: var(--theme_color_placeholder_text);
+		opacity: 1;
 	}
 	hr {
 		padding: 0px;
@@ -106,6 +175,22 @@ Current version indicated by LITEVER below.
 		appearance: button;
 		cursor: pointer;
 	}
+	.btn-primary
+	{
+		color: var(--theme_color_text);
+    	background-color: var(--theme_color_main);
+		border-color: var(--theme_color_main);
+	}
+	.btn-primary:hover,.btn-primary:focus,.btn-primary:active,.btn-primary:active:focus
+	{
+    	background-color: var(--theme_color_highlight);
+	}
+	.btn-primary[disabled]:hover
+	{
+		background-color: var(--theme_color_main);
+		border-color: var(--theme_color_main);
+	}
+
 	.invert_colors
 	{
 		filter: invert(1);
@@ -192,18 +277,18 @@ Current version indicated by LITEVER below.
 	/* Viewports */
 	.normal_viewport_height
 	{
-		height: calc(98vh - 260px);
+		height: calc(100vh - 240px);
 	}
-	@media (max-width: 534px) {
+	@media (max-width: 432px) {
 		.normal_viewport_height
 		{
-			height: calc(98vh - 260px);
+			height: calc(100vh - 260px);
 		}
 	}
-	@media (max-width: 342px) {
+	@media (max-width: 274px) {
 		.normal_viewport_height
 		{
-			height: calc(98vh - 280px);
+			height: calc(100vh - 280px);
 		}
 	}
 	@media print {
@@ -220,19 +305,19 @@ Current version indicated by LITEVER below.
 	}
 	.aesthetic_viewport_height
 	{
-		height: calc(98vh - 190px);
+		height: calc(100vh - 160px);
 	}
 	.aesthetic_viewport_height.withmenu
 	{
-		height: calc(98vh - 238px);
+		height: calc(100vh - 206px);
 	}
 	.aesthetic_viewport_height.withtyping
 	{
-		height: calc(98vh - 250px);
+		height: calc(100vh - 210px);
 	}
 	.aesthetic_viewport_height.withmenu.withtyping
 	{
-		height: calc(98vh - 288px);
+		height: calc(100vh - 256px);
 	}
 
 	/* Top nav menu */
@@ -248,40 +333,46 @@ Current version indicated by LITEVER below.
 		color:#cccccc
 	}
 	.topmenu {
-		background-color: #757575;
-		padding: 8px;
+		background-color: var(--theme_color_disabled_bg);
+		padding: 6px;
 		display: flex;
 		line-height: normal;
 	}
 	body.connected .topmenu {
-		background-color: #337ab7;
+		background-color: var(--theme_color_topmenu);
 	}
+
 	.nav-link {
 		color: #f2f2f2;
 		font-weight: bold;
 		margin-right: 5px;
-		background-color: #828282;
-		border-radius: 5px;
+		background-color: var(--theme_color_disabled_bg);
+		border-radius: 10px;
+	}
+	body:not(.connected) .nav-link:hover, body:not(.connected) .nav-link:focus, body:not(.connected) .nav-link:active
+	{
+		color: #f2f2f2;
+		background-color: var(--theme_color_disabled_fg);
 	}
 	body.connected .nav-link{
 		color: #f2f2f2;
-		background-color: #4787be;
+		background-color: var(--theme_color_topbtn);
+		border-color: var(--theme_color_border);
 	}
 	body.connected .nav-link:hover {
-		background-color: #4db4ea;
+		background-color: var(--theme_color_topbtn_highlight);
 	}
 	body.connected .nav-link:focus {
-		background-color: #98bcdb;
+		background-color: var(--theme_color_topbtn_highlight);
+		border-color: var(--theme_color_border);
 	}
+
 	.navtoggler {
-		background-color: #337ab7;
-		border: 1px solid #bababa;
-		height: 45px;
-		width: 60px;
+		background-color: var(--theme_color_topbtn);
+		border: 0px solid #bababa;
+		height: 44px;
+		width: 56px;
 		border-radius: 6px;
-	}
-	.navtoggler:hover {
-		background-color: #4db4ea;
 	}
 	@media (min-width: 768px) {
 		.navtoggler {
@@ -296,9 +387,9 @@ Current version indicated by LITEVER below.
 	/* Hamburger decoration */
 	.navbar-button-bar {
 		display: block;
-		height: 2px;
-		width: 42px;
-		border: 1px solid #fff;
+		height: 1px;
+		width: 36px;
+		border: 2px solid #d8d8d8;
 		margin: auto;
 	}
 	.navbar-button-bar+.navbar-button-bar {
@@ -306,44 +397,44 @@ Current version indicated by LITEVER below.
 	}
 
 	/* Buttons disabled modifier */
-	body:not(.connected) .btn-primary {
-		background-color: #757575;
-		border-color: #4a4a4a;
+	/* body:not(.connected) .btn-primary {
+		background-color: var(--theme_color_main);
+		border-color: var(--theme_color_main);
 	}
-	body:not(.connected) .btn-primary.focus,
 	body:not(.connected) .btn-primary:focus {
-		background-color: #5c5c5c;
-		border-color: #292929;
+		background-color: var(--theme_color_main);
+		border-color: var(--theme_color_main);
 	}
 	body:not(.connected) .btn-primary:hover {
-		background-color: #5c5c5c;
-		border-color: #4a4a4a;
-	}
+		background-color: var(--theme_color_main);
+		border-color: var(--theme_color_main);
+	} */
 
 	/* Settings and Context menu */
 	.settinglabel {
-		color: #ffffff;
+		color: var(--theme_color_text);
 		display: flex;
 		flex-flow: wrap;
 	}
 	.settinglabel input {
 		width: 6ch;
-		background-color: #1a3364;
+		background-color: var(--theme_color_input_bg);
+		color: var(--theme_color_input_text);
 		outline: none;
 	}
 	.settinglabel input[type=checkbox] {
 		width: 3ch;
 	}
 	.settinglabel.miniinput {
-		background-color: #ffffff;
-		color:#555;
-		border:0px solid #ccc;
+		background-color: var(--theme_color_input_bg);
+		color: var(--theme_color_input_text);
+		border:1px solid var(--theme_color_border);
 		border-radius: 4px;
 		width: 100%;
 		padding: 2px;
 	}
 	.settinglabel.miniinput:focus {
-		color:#555;
+		color: var(--theme_color_input_text);
 	}
 	.settingsmall{
 		font-size: 10px;
@@ -352,7 +443,7 @@ Current version indicated by LITEVER below.
 		width: 8ch;
 	}
 	.settinglabel input:focus {
-		color: #cdf;
+		color: var(--theme_color_input_text);
 	}
 	.settingsmenu {
 		display: flex;
@@ -387,7 +478,7 @@ Current version indicated by LITEVER below.
 	{
 		width:100%;
 		font-size:11px;
-		color:#ffffff;
+		color:var(--theme_color_text);
 		padding:3px;
 	}
 	.settingminmax {
@@ -396,35 +487,49 @@ Current version indicated by LITEVER below.
 	}
 	.settingminmax div {
 		font-size: 8pt;
-		color: #ffffff;
+		color: var(--theme_color_text);
 	}
 	.inlinelabel {
-		color: #ffffff;
+		color: var(--theme_color_text);
 		display: flex;
 		flex-flow: wrap;
 	}
 
 	.inlinelabel input
 	{
+		background-color: var(--theme_color_input_bg);
 		border-radius: 4px;
-		background-color: #ffffff;
-		color:#555;
-		border:0px solid #ccc;
+		color: var(--theme_color_input_text);
+		border:1px solid var(--theme_color_border);
 		margin: 4px;
+		padding: 2px;
 	}
 	.inlinelabel .rowitem
 	{
 		padding: 4px;
 	}
+	.form-control{
+		background-color: var(--theme_color_input_bg);
+		border-color: var(--theme_color_border);
+		color: var(--theme_color_input_text);
+	}
+	.form-control[disabled], .form-control[readonly], fieldset[disabled] .form-control
+	{
+		background-color: var(--theme_color_disabled_bg);
+		border-color: var(--theme_color_main);
+	}
 	.menuinput_multiline{
 		overflow: auto;
-		background-color: #404040;
-		color: #ffffff;
+		background-color: var(--theme_color_input_bg);
+		border-color: var(--theme_color_border);
+		color: var(--theme_color_input_text);
 		resize: vertical;
 	}
+	.form-control:focus { box-shadow: none; border-color: var(--theme_color_border_highlight); }
 	.menuinput_inline {
-		background-color: #404040;
-		color: #ffffff;
+		background-color: var(--theme_color_input_bg);
+		border-color: var(--theme_color_border);
+		color: var(--theme_color_input_text);
 		resize: none;
 		overflow: auto;
 		display: inline;
@@ -433,11 +538,11 @@ Current version indicated by LITEVER below.
 	.menutext {
 		text-align: center;
 		font-size: 10pt;
-		color: #ffffff;
+		color: var(--theme_color_text);
 		padding-top: 10px;
 	}
 	.box-label {
-		color: #ffffff;
+		color: var(--theme_color_text);
 		padding-left: 10px;
 		padding-right: 10px;
 		padding-bottom: 5px;
@@ -454,30 +559,49 @@ Current version indicated by LITEVER below.
 		margin-top: 6px;
 		margin-left: 6px;
 		font-size: 12px;
+		border-bottom: 1px solid var(--theme_color_border);
 	}
 	.settingsnav>li.active>a {
-		color: #0063ff!important;
+		color: var(--theme_color_text);
+		background-color: var(--theme_color_highlight);
+	}
+	.settingsnav>li.active>a:focus {
+		color: var(--theme_color_text);
+		background-color: var(--theme_color_highlight);
+	}
+	.settingsnav>li.active>a:hover {
+		color: var(--theme_color_text);
+		background-color: var(--theme_color_highlight);
 	}
 	.settingsnav>li>a{
 		border-radius: 8px 8px 0 0;
 		padding: 5px;
-		padding-top: 6px!important;
-		padding-bottom: 2px!important;
-		color: #666;
-		background-color: #b1b1b1;
+		padding-top: 6px;
+		padding-bottom: 2px;
+		color: var(--theme_color_tabs_text);
+		background-color: var(--theme_color_tabs);
+		border-color: var(--theme_color_border);
+	}
+	.settingsnav>li>a:hover{
+		border-color: var(--theme_color_border_highlight);
+		background-color: var(--theme_color_tabs_highlight);
+	}
+	.settingsnav>li>a:focus{
+		border-color: var(--theme_color_border_highlight);
+		background-color: var(--theme_color_tabs_highlight);
 	}
 
 
 	/* Save menu */
 	.saveloadpopup {
 		width: 660px;
-		background-color: #263040;
+		background-color: var(--theme_color_bg);
 		margin-top: 60px;
 	}
 	@media (max-width: 768px) {
 		.saveloadpopup {
 			width: 100%;
-			background-color: #263040;
+			background-color:  var(--theme_color_bg);
 			margin-top: 120px;
 		}
 	}
@@ -606,6 +730,7 @@ Current version indicated by LITEVER below.
 		color: #ffffff;
 		font-size: 12pt;
 		font-family: "Helvetica";
+		border-radius: 8px;
 	}
 	#gamescreen span {
 		align-self: flex-end;
@@ -631,7 +756,7 @@ Current version indicated by LITEVER below.
 	.lastreq
 	{
 		font-size:9pt;
-		padding-top: 2px;
+		padding-top: 4px;
 		text-shadow: 1px 1px 1px #000000;
 	}
 	.unstarted_block
@@ -643,6 +768,12 @@ Current version indicated by LITEVER below.
 	}
 
 	/* Horizontal action bar */
+	.actbtn{
+		border-radius: 6px;
+	}
+	.actbtnbtm{
+		border-radius: 8px;
+	}
 	#actionmenuitems button,#actionmenuitems2 button {
 		width: 78px;
 	}
@@ -663,9 +794,9 @@ Current version indicated by LITEVER below.
 	}
 	.borderbox {
 		border-radius: 5px;
-		border: 1px solid #646464;
+		/* border: 1px solid var(--theme_color_border); */
+		/* background-color: var(--theme_color_main); */
 		padding: 4px;
-		background: #373737;
 	}
 
 	/* Classic UI bottom rows */
@@ -723,10 +854,10 @@ Current version indicated by LITEVER below.
 		padding: 6px;
 	}
 	#btnsend.wait {
-		background-color: #6c6c6e;
+		background-color: var(--theme_color_disabled_bg);
 	}
 	#btnsend.wait:hover {
-		background-color: #98989a;
+		background-color: var(--theme_color_disabled_bg);
 	}
 	.showmicbig{
 		width: 32px;
@@ -767,18 +898,18 @@ Current version indicated by LITEVER below.
 
 	/* Popup dialogs */
 	.workerpopup {
-		background-color: #263040;
+		background-color:  var(--theme_color_bg);
 		margin-top: 100px;
 	}
 	@media (max-width: 768px) {
 		.workerpopup {
 			width: 100%;
-			background-color: #263040;
+			background-color:  var(--theme_color_bg);
 			margin-top: 100px;
 		}
 	}
 	.nspopup {
-		background-color: #263040;
+		background-color:  var(--theme_color_bg);
 		margin-top: 200px;
 	}
 	.nspopup.moderate {
@@ -880,15 +1011,15 @@ Current version indicated by LITEVER below.
 	}
 	.popuptitlebar {
 		padding: 10px;
-		background-color: #757575;
+		background-color: var(--theme_color_main);
 	}
 	body.connected .popuptitlebar {
-		background-color: #337ab7;
+		background-color: var(--theme_color_main);
 	}
 	.popuptitletext {
 		display: flex;
 		align-items: center;
-		color: #ffffff;
+		color: var(--theme_color_text);
 		font-size: 12pt;
 	}
 	.popupfooter {
@@ -896,10 +1027,11 @@ Current version indicated by LITEVER below.
 		padding: 10px;
 		display: flex;
 		justify-content: center;
-		background-color: #4d4d4d;
+		background-color: var(--theme_color_footer);
 	}
 	body.connected .popupfooter{
-		background-color: #295071;
+		background-color: var(--theme_color_footer);
+		border-top: 1px solid var(--theme_color_border);
 	}
 	.popupfooter button {
 		width: 100px;
@@ -950,7 +1082,6 @@ Current version indicated by LITEVER below.
 	}
 	.wilist
 	{
-		background-color: #434343;
 		overflow-y: auto;
 		max-height: 320px;
 		min-height: 60px;
@@ -1004,14 +1135,14 @@ Current version indicated by LITEVER below.
 	/* Scenario menu */
 	.scenariopopup {
 		width: 600px;
-		background-color: #263040;
+		background-color:  var(--theme_color_bg);
 		margin-top: 60px;
 	}
 
 	@media (max-width: 768px) {
 		.scenariopopup {
 			width: 100%;
-			background-color: #263040;
+			background-color:  var(--theme_color_bg);
 			margin-top: 70px;
 		}
 	}
@@ -1064,65 +1195,51 @@ Current version indicated by LITEVER below.
 		padding: 2px 2px;
 		text-wrap: wrap;
 	}
-	.scenarioitem.blue
-	{
-		background-image: var(--img_paper),linear-gradient(to right, #63aae7, #337ab7);
+
+	.scenarioitem.blue {
+		background-image: var(--img_paper),	linear-gradient(to right, #4f6fa0, #365580);
 	}
-	.scenarioitem.blue:hover
-	{
-		background-image: var(--img_paper),linear-gradient(to right, #7ebbf0, #438ac7);
+	.scenarioitem.blue:hover {
+		background-image: var(--img_paper),	linear-gradient(to right, #5f82b8, #406591);
 	}
-	.scenarioitem.blue:focus
-	{
-		background-image: var(--img_paper),linear-gradient(to right, #4c7aa3, #4c7aa3);
+	.scenarioitem.blue:focus {
+		background-image: var(--img_paper),	linear-gradient(to right, #304764, #304764);
 	}
-	.scenarioitem.green
-	{
-		background-image: var(--img_sword),linear-gradient(to right, #58db6e, #2ba04e);
+	.scenarioitem.green {
+		background-image: var(--img_sword),	linear-gradient(to right, #4da96d, #347a51);
 	}
-	.scenarioitem.green:hover
-	{
-		background-image: var(--img_sword),linear-gradient(to right, #68e47d, #37b85e);
+	.scenarioitem.green:hover {
+		background-image: var(--img_sword),	linear-gradient(to right, #5cbf80, #3d8c5f);
 	}
-	.scenarioitem.green:focus
-	{
-		background-image: var(--img_sword),linear-gradient(to right, #53a34c, #4ca353);
+	.scenarioitem.green:focus {
+		background-image: var(--img_sword),	linear-gradient(to right, #2f6042, #2f6042);
 	}
-	.scenarioitem.red
-	{
-		background-image: var(--img_chat),linear-gradient(to right, #e76363, #b73333);
+	.scenarioitem.red {
+		background-image: var(--img_chat),	linear-gradient(to right, #a04d4d, #7a3535);
 	}
-	.scenarioitem.red:hover
-	{
-		background-image: var(--img_chat),linear-gradient(to right, #f07e7e, #c74343);
+	.scenarioitem.red:hover {
+		background-image: var(--img_chat),	linear-gradient(to right, #b85c5c, #8c4040);
 	}
-	.scenarioitem.red:focus
-	{
-		background-image: var(--img_chat),linear-gradient(to right, #a34c4c, #a34c4c);
+	.scenarioitem.red:focus {
+		background-image: var(--img_chat),	linear-gradient(to right, #5a2e2e, #5a2e2e);
 	}
-	.scenarioitem.purple
-	{
-		background-image: none,linear-gradient(to right, #dc63e7, #ac33b7);
+	.scenarioitem.purple {
+		background-image: none,	linear-gradient(to right, #8d5ca6, #6b4582);
 	}
-	.scenarioitem.purple:hover
-	{
-		background-image: none,linear-gradient(to right, #f07ee6, #c743c7);
+	.scenarioitem.purple:hover {
+		background-image: none,	linear-gradient(to right, #9f6ab8, #7a5091);
 	}
-	.scenarioitem.purple:focus
-	{
-		background-image: none,linear-gradient(to right, #a34c9c, #a34ca3);
+	.scenarioitem.purple:focus {
+		background-image: none,	linear-gradient(to right, #50325e, #50325e);
 	}
-	.scenarioitem.yellow
-	{
-		background-image: var(--img_compass),linear-gradient(to right, #daae5d, #ad8823);
+	.scenarioitem.yellow {
+		background-image: var(--img_compass),linear-gradient(to right, #c89b4a, #9c7736);
 	}
-	.scenarioitem.yellow:hover
-	{
-		background-image: var(--img_compass),linear-gradient(to right, #e0c56e, #bba632);
+	.scenarioitem.yellow:hover {
+		background-image: var(--img_compass),linear-gradient(to right, #d6ad5c, #ad8642);
 	}
-	.scenarioitem.yellow:focus
-	{
-		background-image: var(--img_compass),linear-gradient(to right, #a38c4c, #a38c4c);
+	.scenarioitem.yellow:focus {
+		background-image: var(--img_compass),linear-gradient(to right, #6b5530, #6b5530);
 	}
 
 	/* Welcome splash */
@@ -1143,8 +1260,8 @@ Current version indicated by LITEVER below.
 	}
 	.welcome-theme-image {
 		display: block;
-		width: min(23vw, 150px);
-		height: min(23vw, 150px);
+		width: min(23vw, 160px);
+		height: min(23vw, 160px);
 		margin-bottom: 8px;
 	}
 	.welcomeimg1
@@ -1410,7 +1527,7 @@ Current version indicated by LITEVER below.
 	/* Background images */
 	.gamescreenbgnormal
 	{
-		background-color: #262626;
+		background-color: var(--theme_color_bg_dark);
 	}
 	.translucentbg
 	{
@@ -1446,7 +1563,7 @@ Current version indicated by LITEVER below.
 	}
 	.chat_mesgs{
 		width:100%;
-		background: #0b141a;
+		background: var(--theme_color_bg_dark);
 	}
 	.chat_mesgs_inner{
 		padding: 12px 20px 12px 20px;
@@ -1477,7 +1594,7 @@ Current version indicated by LITEVER below.
 	.cht_inp_bg
 	{
 		display: inline-block;
-		width: calc(100% - 84px);
+		width: calc(100% - 88px);
 		background: #222222aa none repeat scroll 0 0;
 		margin-top: 8px;
 		margin-left: 2px;
@@ -1485,7 +1602,7 @@ Current version indicated by LITEVER below.
 		padding-left: 10px;
 		padding-right: 10px;
 		padding-top: 7px;
-		border: 1px solid #bbbbbbaa;
+		border: 1px solid #aaaaaa55;
 	}
 	.cht_inp_bg_inner
 	{
@@ -1500,10 +1617,10 @@ Current version indicated by LITEVER below.
 	}
 	.cht_inp_bg.shorter
 	{
-		width: calc(100% - 114px);
+		width: calc(100% - 118px);
 	}
 	.cht_inp_hold_outer {
-		border-top: 1px solid #c4c4c4;
+		/* border-top: 1px solid #c4c4c4; */
 		position: relative;
 	}
 	.chat_btnmode_chat {
@@ -1716,34 +1833,14 @@ Current version indicated by LITEVER below.
 		max-height: 100%;
 		width: 100%;
 		word-wrap: break-word;
-		font-size: 18px;
+		font-size: 17px;
 		font-family: Inter, sans-serif;
 		tab-size: 4;
-		line-height: 32px;
+		line-height: 30px;
 		color: rgb(55, 65, 81);
 		display: flex;
 	}
-	@media (max-width: 400px)
-	{
-		.corpostyle
-		{
-			font-size: 16px;
-			line-height: 26px;
-		}
-		.corpostyleinner
-		{
-			padding-left: 6px;
-			padding-right: 6px;
-			margin-top: 0px;
-		}
-		.corpostyleitem
-		{
-			padding-left: 6px;
-			padding-right: 6px;
-			padding-top: 8px;
-			padding-bottom: 8px;
-		}
-	}
+
 	body.darkmode .corpostyle {
 		background-color: #222222;
 		color: #ececec;
@@ -1759,7 +1856,7 @@ Current version indicated by LITEVER below.
 		padding-right: 12px;
 		padding-top: 8px;
 		width:100%;
-		border: 1px solid #bbbbbbaa;
+		border: 1px solid #aaaaaa55;
 		position: relative;
 	}
 	.corpo_edit_inner
@@ -1787,7 +1884,7 @@ Current version indicated by LITEVER below.
 		padding-left: 52px;
 		padding-right: 52px;
 		padding-top: 8px;
-		border: 1px solid #bbbbbb55;
+		border: 1px solid #aaaaaa55;
 		position: relative;
 		box-shadow: 0px 4px 10px 3px rgb(0 0 0 / 20%);
 	}
@@ -1803,7 +1900,7 @@ Current version indicated by LITEVER below.
 		background: #00000000 none repeat scroll 0 0;
 		border: medium none;
 		color: #0d0d0d;
-		font-size: 20px;
+		font-size: 18px;
 		font-weight: 400;
 		outline:none;
 		line-height: 28px;
@@ -2007,7 +2104,7 @@ Current version indicated by LITEVER below.
 		width: 100%;
 	}
 	.corpo_leftpanel_btn:hover {
-		background: #9dcef5;
+		background: #b0d9fc;
 		background-repeat: no-repeat;
 		background-position: 8px;
 		background-size: 24px;
@@ -2083,32 +2180,10 @@ Current version indicated by LITEVER below.
 		border-bottom: 16px solid transparent;
 		border-left: 10px solid #aaaaaa;
 	}
-	@media (max-width: 768px)
-	{
-		.corpostylemain
-		{
-			margin-top: 0px;
-		}
-		.corpoleftpanel {
-			position: fixed;
-			left: 0;
-			top: 0;
-			height: 100%;
-			transform: translateX(-100%);
-		}
-		.corpoleftpanel.open {
-			transform: translateX(0);
-		}
-		.corpo_leftpanel_close {
-			display: block;
-		}
-		.corpo_leftpanel_open {
-			display: block;
-		}
-	}
+
 	.corpowelcome
 	{
-		font-size: 26px;
+		font-size: 22px;
 		font-weight: 550;
 		display: flex;
 		justify-content: center;
@@ -2138,15 +2213,15 @@ Current version indicated by LITEVER below.
 	{
 		margin-left: auto;
 		margin-right: auto;
-		padding-left: 8px;
-		padding-right: 8px;
+		padding-left: 6px;
+		padding-right: 6px;
 	}
 	.corpostyleitem
 	{
-		padding-left: 10px;
-		padding-right: 10px;
-		padding-top: 10px;
-		padding-bottom: 10px;
+		padding-left: 8px;
+		padding-right: 8px;
+		padding-top: 8px;
+		padding-bottom: 8px;
 		display: flex;
 	}
 	.corpoavatar
@@ -2178,7 +2253,7 @@ Current version indicated by LITEVER below.
 	.corpolastreq
 	{
 		text-align:center;
-		font-size:14px;
+		font-size:13px;
 		line-height:1.1;
 		margin:4px;
 		margin-top: 8px;
@@ -2189,6 +2264,50 @@ Current version indicated by LITEVER below.
 	{
 		padding: 5px 7px 5px 7px;
 		margin: 2px;
+	}
+	@media (max-width: 768px)
+	{
+		.corpostylemain
+		{
+			margin-top: 0px;
+		}
+		.corpoleftpanel {
+			position: fixed;
+			left: 0;
+			top: 0;
+			height: 100%;
+			transform: translateX(-100%);
+		}
+		.corpoleftpanel.open {
+			transform: translateX(0);
+		}
+		.corpo_leftpanel_close {
+			display: block;
+		}
+		.corpo_leftpanel_open {
+			display: block;
+		}
+	}
+	@media (max-width: 400px)
+	{
+		.corpostyle
+		{
+			font-size: 16px;
+			line-height: 26px;
+		}
+		.corpostyleinner
+		{
+			padding-left: 4px;
+			padding-right: 4px;
+			margin-top: 0px;
+		}
+		.corpostyleitem
+		{
+			padding-left: 4px;
+			padding-right: 4px;
+			padding-top: 6px;
+			padding-bottom: 6px;
+		}
 	}
 
 	/* Colors */
@@ -2244,6 +2363,9 @@ Current version indicated by LITEVER below.
 	}
 	.color_cyan {
 		color: #7afaff;
+	}
+	.color_kobotext {
+		color: var(--theme_color_glow_text)
 	}
 	.color_gray {
 		color: #9b9b9b;
@@ -2803,6 +2925,10 @@ Current version indicated by LITEVER below.
 	const get_instructstartplaceholder_end = ()=>{if(localsettings.raw_instruct_tags){return get_instruct_starttag_end(false);};return instructstartplaceholder_end;}
 	const get_instructendplaceholder_end = ()=>{if(localsettings.raw_instruct_tags){return get_instruct_endtag_end(false);};return instructendplaceholder_end;}
 	const get_instructsysplaceholder_end = ()=>{if(localsettings.raw_instruct_tags){return get_instruct_systag_end(false);};return instructsysplaceholder_end;}
+	function is_on_mobile()
+	{
+		return (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || navigator.maxTouchPoints > 1 || window.innerWidth <= 768);
+	}
 
 	// list of all preinstalled quick start scenarios
 	// Modified to allow tweaking with server side saves later
@@ -3564,7 +3690,7 @@ Current version indicated by LITEVER below.
 		saved_palm_jailbreak:"", //gemini system prompt
 		saved_palm_jailbreak2:"", //gemini postfix
 		saved_oai_custommodel: "", //customized oai custom model
-		saved_oai_role: 0, //0=user,1=assistant,2=system, 3=auto
+		saved_oai_role: 3, //0=user,1=assistant,2=system, 3=auto
 		saved_a1111_url: default_a1111_base,
 		saved_comfy_url: default_comfy_base,
 		saved_xtts_url: default_xtts_base,
@@ -3665,8 +3791,9 @@ Current version indicated by LITEVER below.
 		invert_colors: false,
 		sidepanel_mode: false,
 		passed_ai_warning: false, //used to store AI safety panel acknowledgement state
-		entersubmit: true, //enter sends the prompt
+		entersubmit: (is_on_mobile()?false:true), //enter sends the prompt
 		darkmode: true,
+		oldtheme: false, //temp setting maybe.
 		render_streaming_markdown: true,
 
 		raw_instruct_tags: false, //experimental flags
@@ -5088,7 +5215,7 @@ Current version indicated by LITEVER below.
 				let pending_eptype = localsettings.prev_custom_endpoint_type;
 				let pending_custmodel = localsettings.prev_custom_endpoint_model;
 				let pending_ischatcmpl = localsettings.prev_custom_endpoint_ischatcmpl;
-				if(!localflag && pending_eptype>0)
+				if((!localflag && pending_eptype>0) || (localflag && pending_eptype==2))
 				{
 					msgboxYesNo("Reconnect to previous custom endpoint?","Custom Endpoint Reconnect",()=>{
 						document.getElementById("customapidropdown").value = (pending_eptype).toString();
@@ -5223,7 +5350,7 @@ Current version indicated by LITEVER below.
 	updateAgentButtonVisibility();
 
 	//invert colors
-	toggle_invert_colors();
+	toggle_theme_colors();
 	toggle_sidepanel_mode();
 
 	//start the polling script for async generation status checking every Xs
@@ -7129,6 +7256,7 @@ Current version indicated by LITEVER below.
 			.replace(/<\/li><\/ul>\s*?<ul><li>/gm, "</li><li>")
 
 			.replace(/\*\*\*([^\s*][\s\S]*?[^\\])\*\*\*/gm, "<b><em>$1</em></b>")
+			.replace(/\*\*(.)\*\*/g, "<b>$1</b>") //handle single char bold
 			.replace(/\*\*([^\s*][\s\S]*?[^\\])\*\*/gm, "<b>$1</b>")
 			.replace(/\*([^\s*][\s\S]*?[^\\])\*/gm, "<em>$1</em>")
 			.replace(/___(\w.*?[^\\])___/gm, "<b><em>$1</em></b>")
@@ -8178,11 +8306,9 @@ Current version indicated by LITEVER below.
 	{
 		return (window.location.hostname.includes("koboldai.net") || window.location.hostname.includes("lostruins.github.io"));
 	}
-
 	function is_using_kcpp_with_embeddings() {
 		return (custom_kobold_endpoint != "" && koboldcpp_version && koboldcpp_version != "" && compare_version_str(koboldcpp_version, "1.84") >= 0 && koboldcpp_has_embeddings);
 	}
-
 	function is_using_kcpp_with_imagegen() {
 		return (custom_kobold_endpoint != "" && koboldcpp_version && koboldcpp_version != "" && compare_version_str(koboldcpp_version, "1.61") >= 0 && koboldcpp_has_txt2img);
 	}
@@ -8198,7 +8324,6 @@ Current version indicated by LITEVER below.
 	function get_kcpp_embedding_model() {
 		return (custom_kobold_endpoint != "" && koboldcpp_version && koboldcpp_version != "" && compare_version_str(koboldcpp_version, "1.84") >= 0 && koboldcpp_embedding_model);
 	}
-
 	function determine_if_ban_eos(input_was_empty) {
 		if(localsettings.eos_ban_mode == 3)
 		{
@@ -9099,10 +9224,7 @@ Current version indicated by LITEVER below.
 								localsettings.instruct_endtag = "\\n" + localsettings.instruct_endtag + "\\n";
 							}
 						}
-						//old versions dont have this flag
-						if (localsettings.entersubmit === true || localsettings.entersubmit === false) {
-							document.getElementById("entersubmit").checked = localsettings.entersubmit;
-						}
+
 					}
 					if(!loadstopseq)
 					{
@@ -9183,7 +9305,7 @@ Current version indicated by LITEVER below.
 				//force load everything
 				import_settings(true, true, true, true, true, true);
 			}
-			toggle_invert_colors();
+			toggle_theme_colors();
 			toggle_sidepanel_mode();
 			update_for_sidepanel();
 			render_gametext(save_after_loading);
@@ -10996,6 +11118,8 @@ Current version indicated by LITEVER below.
 			document.getElementById("choosesharecontainer").classList.contains("hidden") &&
 			document.getElementById("advancedloadfile").classList.contains("hidden") &&
 			document.getElementById("welcomecontainer").classList.contains("hidden") &&
+			document.getElementById("dynatempcontainer").classList.contains("hidden") &&
+			document.getElementById("secondepsamplecontainer").classList.contains("hidden") &&
 			document.getElementById("admincontainer").classList.contains("hidden")
 		);
 	}
@@ -11036,6 +11160,8 @@ Current version indicated by LITEVER below.
 		document.getElementById("choosesharecontainer").classList.add("hidden");
 		document.getElementById("advancedloadfile").classList.add("hidden");
 		document.getElementById("welcomecontainer").classList.add("hidden");
+		document.getElementById("dynatempcontainer").classList.add("hidden");
+		document.getElementById("secondepsamplecontainer").classList.add("hidden");
 		document.getElementById("admincontainer").classList.add("hidden");
 		stop_webcam();
 		mainmenu_untab(false);
@@ -11080,6 +11206,16 @@ Current version indicated by LITEVER below.
 		document.getElementById("dynatemp_outtemp").value = currtmp.toFixed(3);
 		preview_dynatemp(true);
 		document.getElementById("dynatempcontainer").classList.remove("hidden");
+	}
+
+	function confirm_2epsample()
+	{
+		document.getElementById("secondepsamplecontainer").classList.add("hidden");
+		document.getElementById("second_ep_overview").innerText = (document.getElementById("second_ep_qty").value>0 && document.getElementById("second_ep_url").value!=""?"ON":"OFF");
+	}
+	function show_2epsample()
+	{
+		document.getElementById("secondepsamplecontainer").classList.remove("hidden");
 	}
 
 	function explain_horde()
@@ -13535,7 +13671,9 @@ Current version indicated by LITEVER below.
 							}
 						}
 						let warndebugtag = (curr.name.toLowerCase().includes("debug-") ? " ⚠️" : "");
-						model_choices += "<option value=\"" + i + "\" " + alrselected + ">" + escape_html(curr.name) + warndebugtag + " (ETA: "+ curr.eta +"s, Queue: " + curr.queued + ", Speed: " + mperf + ", Qty: " + curr.count + ")</option>";
+						let shortcurrname = escape_html(curr.name);
+						shortcurrname = (shortcurrname.length>=52?shortcurrname.substring(0,50)+"...":shortcurrname);
+						model_choices += "<option value=\"" + i + "\" " + alrselected + ">" + shortcurrname + warndebugtag + " (ETA: "+ curr.eta +"s, Queue: " + curr.queued + ", Qty: " + curr.count + ")</option>";
 					}
 					document.getElementById("pickedmodel").innerHTML = model_choices;
 				}
@@ -13886,12 +14024,14 @@ Current version indicated by LITEVER below.
 		document.getElementById("rep_pen_range").value = localsettings.rep_pen_range;
 		document.getElementById("top_p").value = document.getElementById("top_p_slide").value = localsettings.top_p;
 		document.getElementById("autoscroll").checked = localsettings.autoscroll;
+		document.getElementById("entersubmit").checked = localsettings.entersubmit?true:false;
 		document.getElementById("printer_view").checked = localsettings.printer_view;
 		document.getElementById("viewport_width_mode").value = localsettings.viewport_width_mode;
 		document.getElementById("export_settings").checked = localsettings.export_settings;
 		document.getElementById("show_advanced_load").checked = localsettings.show_advanced_load;
 		document.getElementById("import_tavern_prompt").checked = localsettings.import_tavern_prompt;
 		document.getElementById("invert_colors").checked = localsettings.invert_colors;
+		document.getElementById("oldtheme").checked = localsettings.oldtheme;
 		document.getElementById("sidepanel_mode").checked = localsettings.sidepanel_mode;
 		document.getElementById("trimsentences").checked = localsettings.trimsentences;
 		document.getElementById("trimwhitespace").checked = localsettings.trimwhitespace;
@@ -13925,6 +14065,7 @@ Current version indicated by LITEVER below.
 		document.getElementById("smoothing_factor").value = localsettings.smoothing_factor;
 		document.getElementById("nsigma").value = localsettings.nsigma;
 		document.getElementById("dynatemp_overview").innerText = (localsettings.dynatemp_range!=0?"ON":"OFF");
+		document.getElementById("second_ep_overview").innerText = (localsettings.second_ep_qty>0 && localsettings.second_ep_url?"ON":"OFF");
 		document.getElementById("presence_penalty").value = localsettings.presence_penalty;
 		document.getElementById("sampler_seed").value = localsettings.sampler_seed;
 		document.getElementById("top_k").value =  document.getElementById("top_k_slide").value = localsettings.top_k;
@@ -14196,6 +14337,7 @@ Current version indicated by LITEVER below.
 			document.getElementById("sampler_order").value = found.sampler_order.toString();
 			document.getElementById("presetsdesc").innerText = found.description;
 			document.getElementById("dynatemp_overview").innerText = (document.getElementById("dynatemp_range").value!=0?"ON":"OFF");
+			document.getElementById("second_ep_overview").innerText = (document.getElementById("second_ep_qty").value>0 && document.getElementById("second_ep_url").value!=""?"ON":"OFF");
 		}else{
 			document.getElementById("presetsdesc").innerText = "";
 		}
@@ -14339,13 +14481,20 @@ Current version indicated by LITEVER below.
 		}
 	}
 
-	function toggle_invert_colors()
+	function toggle_theme_colors()
 	{
 		if(localsettings.invert_colors)
 		{
 			document.body.classList.add("invert_colors");
 		}else{
 			document.body.classList.remove("invert_colors");
+		}
+
+		if(localsettings.oldtheme)
+		{
+			document.body.classList.add("theme-old");
+		} else {
+			document.body.classList.remove("theme-old");
 		}
 	}
 
@@ -14457,12 +14606,14 @@ Current version indicated by LITEVER below.
 		localsettings.rep_pen_range = parseInt(document.getElementById("rep_pen_range").value);
 		localsettings.top_p = parseFloat(document.getElementById("top_p").value);
 		localsettings.autoscroll = (document.getElementById("autoscroll").checked ? true : false);
+		localsettings.entersubmit = (document.getElementById("entersubmit").checked ? true : false);
 		localsettings.printer_view = (document.getElementById("printer_view").checked ? true : false);
 		localsettings.viewport_width_mode = document.getElementById("viewport_width_mode").value;
 		localsettings.export_settings = (document.getElementById("export_settings").checked ? true : false);
 		localsettings.show_advanced_load = (document.getElementById("show_advanced_load").checked ? true : false);
 		localsettings.import_tavern_prompt = (document.getElementById("import_tavern_prompt").checked ? true : false);
 		localsettings.invert_colors = (document.getElementById("invert_colors").checked ? true : false);
+		localsettings.oldtheme = (document.getElementById("oldtheme").checked ? true : false);
 		localsettings.sidepanel_mode = (document.getElementById("sidepanel_mode").checked ? true : false);
 		localsettings.trimsentences = (document.getElementById("trimsentences").checked ? true : false);
 		localsettings.trimwhitespace = (document.getElementById("trimwhitespace").checked ? true : false);
@@ -14743,7 +14894,8 @@ Current version indicated by LITEVER below.
 		localsettings.xtc_threshold = cleannum(localsettings.xtc_threshold, 0.0, 1.0);
 		localsettings.sampler_seed = cleannum(localsettings.sampler_seed, -1, 999999);
 		localsettings.token_count_multiplier = cleannum(localsettings.token_count_multiplier, 70, 130);
-		toggle_invert_colors();
+		localsettings.second_ep_qty = cleannum(Math.floor(localsettings.second_ep_qty), 0, 1024);
+		toggle_theme_colors();
 		toggle_sidepanel_mode();
 
 		voice_typing_mode = document.getElementById("voice_typing_mode").value;
@@ -15608,11 +15760,6 @@ Current version indicated by LITEVER below.
 		toggle_editable();
 	}
 
-	function toggle_entersends()
-	{
-		localsettings.entersubmit = (document.getElementById("entersubmit").checked ? true : false);
-		render_gametext();
-	}
 	function toggle_editable() {
 		if (gametext_arr.length == 0)
 		{
@@ -15835,20 +15982,20 @@ Current version indicated by LITEVER below.
 		}
 	}
 
-	function handle_typing(event) {
+	function handle_typing(event)
+	{
 		var event = event || window.event;
 		var charCode = event.keyCode || event.which;
 		warn_unsaved = true;
 
-		if (!event.shiftKey && (charCode == 13||(charCode == 10 && event.ctrlKey))) {
-			let willsubmit = (document.getElementById("entersubmit").checked ? true : false);
-			let newgennotempty = (document.getElementById("input_text").value != "");
+		if (!event.shiftKey && (charCode === 13 || (charCode === 10 && event.ctrlKey))) {
+			let willsubmit = !!localsettings.entersubmit;
+			let newgennotempty = (document.getElementById("input_text").value !== "");
 			if (willsubmit) {
 				event.preventDefault();
 				//enter pressed, trigger auto submit
 				if (!document.getElementById("btnsend").disabled) {
-					if(newgennotempty || event.ctrlKey)
-					{
+					if (newgennotempty || event.ctrlKey) {
 						prepare_submit_generation();
 					}
 				}
@@ -21586,7 +21733,6 @@ Current version indicated by LITEVER below.
 			{
 				document.getElementById("btnsend").disabled = true;
 				document.getElementById("btnsend").classList.add("wait");
-				document.getElementById("btnsend").classList.remove("btn-primary");
 				document.getElementById("btnsend").innerHTML = "Offline";
 			}
 		}
@@ -21595,7 +21741,6 @@ Current version indicated by LITEVER below.
 			{
 				document.getElementById("btnsend").disabled = true;
 				document.getElementById("btnsend").classList.add("wait");
-				document.getElementById("btnsend").classList.remove("btn-primary");
 				document.getElementById("btnsend").innerHTML = "No AI<br>Loaded";
 			}
 		}
@@ -21604,7 +21749,6 @@ Current version indicated by LITEVER below.
 			{
 				document.getElementById("btnsend").disabled = false;
 				document.getElementById("btnsend").classList.remove("wait");
-				document.getElementById("btnsend").classList.add("btn-primary");
 			}
 			if (gametext_arr.length > 0 && document.getElementById("input_text").value == "" && document.getElementById("cht_inp").value == "" && document.getElementById("corpo_cht_inp").value == "") {
 				document.getElementById("btnsend").innerHTML = "Generate<br>More";
@@ -21637,7 +21781,6 @@ Current version indicated by LITEVER below.
 			{
 				document.getElementById("btnsend").disabled = true;
 				document.getElementById("btnsend").classList.add("wait");
-				document.getElementById("btnsend").classList.remove("btn-primary");
 				let oldspinnerhtml = document.getElementById("btnsend").innerHTML;
 				let newspinnerhtml = "<div class=\"outerloader\"><div id=\"outerloadernum\" class=\"outerloadernum\"></div><div id=\"maintxtloader\" class=\"innerloader\"></div></div>";
 				if (oldspinnerhtml != newspinnerhtml) {
@@ -21679,6 +21822,15 @@ Current version indicated by LITEVER below.
 		document.getElementById("gametext").contentEditable = (document.getElementById("allowediting").checked && pending_response_id=="");
 		let inEditMode = (document.getElementById("allowediting").checked ? true : false);
 
+		if(is_corpo_ui())
+		{
+			document.body.classList.add('corpoui');
+		}
+		else
+		{
+			document.body.classList.remove('corpoui');
+		}
+
 		//adventure mode has a toggle to choose action mode
 		document.getElementById("adventure_mode_img").classList.remove("input_story");
 		document.getElementById("adventure_mode_img").classList.remove("input_action");
@@ -21717,9 +21869,9 @@ Current version indicated by LITEVER below.
 			if (perfdata == null) {
 				if(document.getElementById("connectstatus").innerHTML == "Offline Mode")
 				{
-					document.getElementById("gametext").innerHTML = "Welcome to <span class=\"color_cyan\">KoboldAI Lite</span>!<br>You are in <span class=\"color_red\">Offline Mode</span>.<br>You will still be able to load and edit stories, but not generate new text."
+					document.getElementById("gametext").innerHTML = "Welcome to <span class=\"color_kobotext\">KoboldAI Lite</span>!<br>You are in <span class=\"color_red\">Offline Mode</span>.<br>You will still be able to load and edit stories, but not generate new text."
 				}else{
-					document.getElementById("gametext").innerHTML = "Welcome to <span class=\"color_cyan\">KoboldAI Lite</span>!<br><span class=\"color_orange\">Attempting to Connect...</span>"
+					document.getElementById("gametext").innerHTML = "Welcome to <span class=\"color_kobotext\">KoboldAI Lite</span>!<br><span class=\"color_orange\">Attempting to Connect...</span>"
 				}
 			} else {
 				let whorun = "";
@@ -21758,7 +21910,7 @@ Current version indicated by LITEVER below.
 				}
 
 				document.getElementById("gametext").innerHTML = `<div><img class="esobold" /></div>` +
-				`Welcome to <span class="color_cyan">KoboldAI Lite - Esobold edition</span>!`+
+				`Welcome to <span class="color_kobotext">KoboldAI Lite - Esobold edition</span>!`+
 				`<br>You are using the models <span class="color_green">${selmodelstr}</span>${(selected_workers.length == 0 ? `` : ` (Pinned to ${selected_workers.length} worker IDs)`)}.`+
 				`${whorun}.`+
 				(multiplayer_active?(!multiplayer_pinged?`<br><br><span class="color_orange">[ Trying to join Multiplayer... ]</span>`:`<br><br><span class="color_green">[ Multiplayer is <b>Active</b>! This session is shared with other server participants.]<br>[ You can leave via exit button in top right corner. ]</span>`):(is_using_kcpp_with_multiplayer()?`<br><br>[ <a href="#" tabindex="${mainmenu_is_untab?`-1`:`0`}" class="color_blueurl mainnav" onclick="join_multiplayer()"><span class="color_green">Multiplayer Available</span> - Click Here To Join</a> ]`:``))+
@@ -21927,7 +22079,7 @@ Current version indicated by LITEVER below.
 					}
 					else
 					{
-						fulltxt += `<hr style="margin-top: 12px; margin-bottom: 12px;">${isHuman ? `<span class="color_cyan">` : ""}<img class="containAndScaleImage" style="height:38px;width:38px;padding:3px 6px 3px 3px;border-radius: 8%; background-image: ${imageToUse};" />${currmsg}${isHuman ? `</span>` : ""}`;
+						fulltxt += `<hr style="margin-top: 12px; margin-bottom: 12px;">${isHuman ? `<span class="color_kobotext">` : ""}<img class="containAndScaleImage" style="height:38px;width:38px;padding:3px 6px 3px 3px;border-radius: 8%; background-image: ${imageToUse};" />${currmsg}${isHuman ? `</span>` : ""}`;
 					}
 				}
 
@@ -22158,7 +22310,7 @@ Current version indicated by LITEVER below.
 		}
 		else if (selected_models.length == 0 && selected_workers.length == 0) {
 			let perfinfo = `There are <span class="color_orange">${perfdata.worker_count}</span> total <a class="color_green mainnav" tabindex="${mainmenu_is_untab?`-1`:`0`}" href="#" onclick="get_and_show_workers()">volunteer(s)</a> in the AI Horde, and <span class="color_orange">${perfdata.queued_requests}</span> request(s) in queues.<br>A total of <span class="color_orange">${perfdata.past_minute_tokens}</span> tokens were generated in the last minute.<br><br>`;
-			document.getElementById("gametext").innerHTML = `Welcome to <span class="color_cyan">KoboldAI Lite</span>!<br><br>${perfinfo}<a href="#" class="color_blueurl" onclick="display_endpoint_container()">Please select an AI service to use!</a><br>`;
+			document.getElementById("gametext").innerHTML = `Welcome to <span class="color_kobotext">KoboldAI Lite</span>!<br><br>${perfinfo}<a href="#" class="color_blueurl" onclick="display_endpoint_container()">Please select an AI service to use!</a><br>`;
 			document.getElementById("fvico").href = favivon_normal;
 		}
 		else if (pending_response_id == "") {
@@ -23187,7 +23339,7 @@ Current version indicated by LITEVER below.
 		warn_unsaved = true;
 
 		if (!event.shiftKey && charCode == 13) {
-			let willsubmit = (document.getElementById("entersubmit").checked ? true : false);
+			let willsubmit = (localsettings.entersubmit ? true : false);
 			let newgennotempty = (document.getElementById("cht_inp").value != "" || document.getElementById("corpo_cht_inp").value != "");
 			if (willsubmit) {
 				event.preventDefault();
@@ -24177,7 +24329,7 @@ Current version indicated by LITEVER below.
 			else if(localsettings.chatopponent != "")
 			{
 				gs = `You're having a one-on-one chat with <b>`+localsettings.chatopponent+`</b>.<br><br>`
-				+`<a href='#' class='color_blueurl' onclick='hide_popups();display_settings()'>Turn it into a <b>group chat</b> by <b>adding more AI characters</b> (one per line)</a>.<br><br>`
+				+`<a href='#' class='color_blueurl' onclick='hide_popups();display_settings();display_settings_tab(0);'>Turn it into a <b>group chat</b> by <b>adding more AI characters</b> (one per line)</a>.<br><br>`
 				+ `<a href='#' class='color_blueurl' onclick='impersonate_message(0)'>Impersonate `+localsettings.chatopponent+` speaking as them</a>`;
 			}
 		}else{
@@ -24778,9 +24930,8 @@ Current version indicated by LITEVER below.
 		let classSuffixStr = isPreview ? "prv" : "";
 		let portraitsStyling = // Also, implement portraits as css classes. Now chat entries can reuse them instead of recreating them.
 		`<style>
-			.you-portrait-image${classSuffixStr} {margin: 10px 6px; background:url(${as.you_portrait}); background-clip: content-box; background-position: 50% 50%; background-size: 100% 100%; background-origin: content-box; background-repeat: no-repeat; border:none;}
-			.AI-portrait-image${classSuffixStr} {margin: 10px 6px; background:url(${(as.AI_portrait!="default"?as.AI_portrait:niko_square)}); background-clip: content-box; background-position: 50% 50%; background-size: 100% 100%; background-origin: content-box; background-repeat: no-repeat; border:none;}
-			code
+			.you-portrait-image${classSuffixStr} {margin: 6px 6px; background:url(${as.you_portrait}); background-clip: content-box; background-position: 50% 50%; background-size: 100% 100%; background-origin: content-box; background-repeat: no-repeat; border:none;}
+			.AI-portrait-image${classSuffixStr} {margin: 6px 6px; background:url(${(as.AI_portrait!="default"?as.AI_portrait:niko_square)}); background-clip: content-box; background-position: 50% 50%; background-size: 100% 100%; background-origin: content-box; background-repeat: no-repeat; border:none;}
 			#chat_msg_body code, #aesthetic_text_preview code
 			{
 				color: ${as.code_block_foreground};
@@ -25823,17 +25974,15 @@ Current version indicated by LITEVER below.
 
 		<div class="flex" style="margin-top: 6px;">
 			<div id="actionmenuitems">
-				<button type="button" class="btn btn-primary mainnav" id="btn_actmem" onclick="btn_memory()">Context</button>
-				<button type="button" class="btn btn-primary mainnav" id="btn_actundo" onpointerdown="btn_back_longpress_start()" onpointerleave="btn_back_longpress_end()" onpointerup="btn_back_longpress_end()" onclick="btn_back()">Undo</button>
-				<button type="button" class="btn btn-primary mainnav" id="btn_actredo" onpointerdown="btn_redo_longpress_start()" onpointerleave="btn_redo_longpress_end()" onpointerup="btn_redo_longpress_end()" onclick="btn_redo()">Redo</button>
-				<button type="button" class="btn btn-primary mainnav" id="btn_actretry" onclick="btn_retry()">Retry</button>
-				<button type="button" class="btn btn-primary bg_green mainnav" id="btn_addmedia" onclick="add_media_btn_menu()">Add File</button>
-				<button type="button" class="btn btn-primary mainnav slim btnicon-websearch hidden" id="btn_togglesearch" onclick="toggle_websearch()">&nbsp;</button>
-				<button type="button" class="btn btn-primary mainnav btnicon-agent slim inactive" id="btn_toggleAgent" onclick="toggleAgent()" tabindex="0">&nbsp;</button>
+				<button type="button" class="btn actbtn btn-primary mainnav" id="btn_actmem" onclick="btn_memory()">Context</button>
+				<button type="button" class="btn actbtn btn-primary mainnav" id="btn_actundo" onpointerdown="btn_back_longpress_start()" onpointerleave="btn_back_longpress_end()" onpointerup="btn_back_longpress_end()" onclick="btn_back()">Undo</button>
+				<button type="button" class="btn actbtn btn-primary mainnav" id="btn_actredo" onpointerdown="btn_redo_longpress_start()" onpointerleave="btn_redo_longpress_end()" onpointerup="btn_redo_longpress_end()" onclick="btn_redo()">Redo</button>
+				<button type="button" class="btn actbtn btn-primary mainnav" id="btn_actretry" onclick="btn_retry()">Retry</button>
+				<button type="button" class="btn actbtn btn-primary mainnav" id="btn_addmedia" onclick="add_media_btn_menu()">Add File</button>
+				<button type="button" class="btn actbtn btn-primary mainnav slim btnicon-websearch hidden" id="btn_togglesearch" onclick="toggle_websearch()">&nbsp;</button>
+				<button type="button" class="btn actbtn btn-primary mainnav btnicon-agent slim inactive" id="btn_toggleAgent" onclick="toggleAgent()" tabindex="0">&nbsp;</button>
 			</div>
 			<div class="borderbox flex flex-push-right">
-				<input type="checkbox" id="entersubmit" class="mainnav" onclick="toggle_entersends()" checked>
-				<div class="box-label"><label for="entersubmit">Enter Sends</label></div>
 				<input type="checkbox" id="allowediting" class="mainnav" onclick="toggle_editable()">
 				<div class="box-label"><label for="allowediting">Allow Editing</label></div>
 			</div>
@@ -25845,17 +25994,17 @@ Current version indicated by LITEVER below.
 						<img id="adventure_mode_img" class="input_story">
 						<br><b id="adventure_mode_txt" style="font-size: 10px;">Story</b>
 					</button>
-					<button title="Show Groupchat Selection" type="button" class="btn btn-primary mainnav" style="line-height: 1; padding: 2px 6px;" id="btnmode_chat" onclick="show_groupchat_select()">
+					<button title="Show Groupchat Selection" type="button" class="btn btn-primary mainnav actbtnbtm" style="line-height: 1; padding: 2px 6px;" id="btnmode_chat" onclick="show_groupchat_select()">
 						<img class="input_chat">
 						<br><b style="font-size: 10px;">Chat<br>Select</b>
 					</button>
 				</div>
 				<div id="input_text_holder" style="position: relative; padding-right: 4px;">
-					<textarea title="User Input" style="height: 80px;" class="form-control menuinput_multiline mainnav" id="input_text" oninput="update_submit_button()" onkeypress="return handle_typing(event)" onpaste="return img_paste_event(event)" placeholder="Enter text here"></textarea>
+					<textarea title="User Input" style="height: 80px;" class="form-control menuinput_multiline mainnav actbtnbtm" id="input_text" oninput="update_submit_button()" onkeypress="return handle_typing(event)" onpaste="return img_paste_event(event)" placeholder="Enter text here"></textarea>
 					<span id="token-budget" class="token-budget"></span>
 				</div>
 				<div style="position: relative; padding-right: 2px;">
-					<button type="button" class="btn wait mainnav" id="btnsend" disabled
+					<button type="button" class="btn btn-primary wait mainnav actbtnbtm" id="btnsend" disabled
 						onclick="submit_generation_button(false)" onpointerdown="ptt_start()" onpointerup="ptt_end()">Loading</button>
 						<a href="#" id="abortgen" class="hidden bg_black mainnav" style="text-align: center;color: #ffaaaa;" onclick="abort_generation()"><b style="display: block;">[ABORT]</b></a>
 						<span id="searchingtxt" class="hidden bg_black mainnav" style="text-align: center;color: #49a8e4; font-size: 9px;"><b style="display: block;">WebSearch...</b></span>
@@ -25873,14 +26022,14 @@ Current version indicated by LITEVER below.
 				<!-- A greatly simplified action menu for this mode -->
 				<div class="flex hidden" id="actionmenu2">
 					<div id="actionmenuitems2" class="borderbox flex-push-right" style="margin-bottom: 2px;">
-						<button type="button" class="btn btn-primary mainnav" id="btn_actmem2" onclick="btn_memory()">Context</button>
-						<button type="button" class="btn btn-primary mainnav" id="btn_actundo2" onpointerdown="btn_back_longpress_start()" onpointerleave="btn_back_longpress_end()" onpointerup="btn_back_longpress_end()" onclick="btn_back()">Undo</button>
-						<button type="button" class="btn btn-primary mainnav" id="btn_actredo2" onpointerdown="btn_redo_longpress_start()" onpointerleave="btn_redo_longpress_end()" onpointerup="btn_redo_longpress_end()" onclick="btn_redo()">Redo</button>
-						<button type="button" class="btn btn-primary mainnav" id="btn_actretry2" onclick="btn_retry()">Retry</button>
-						<button type="button" class="btn btn-primary bg_green mainnav" id="btn_addmedia2" onclick="add_media_btn_menu()">Add File</button>
-						<button type="button" class="btn btn-primary mainnav slim btnicon-websearch hidden" id="btn_togglesearch2" onclick="toggle_websearch()">&nbsp;</button>
-						<button type="button" class="btn btn-primary mainnav btnicon-agent slim inactive" id="btn_toggleAgentAesthetic" onclick="toggleAgent()" tabindex="0">&nbsp;</button>
-						<button type="button" class="btn btn-primary mainnav" id="btn_editmode" onclick="btn_editmode()">Edit</button>
+						<button type="button" class="btn actbtn btn-primary mainnav" id="btn_actmem2" onclick="btn_memory()">Context</button>
+						<button type="button" class="btn actbtn btn-primary mainnav" id="btn_actundo2" onpointerdown="btn_back_longpress_start()" onpointerleave="btn_back_longpress_end()" onpointerup="btn_back_longpress_end()" onclick="btn_back()">Undo</button>
+						<button type="button" class="btn actbtn btn-primary mainnav" id="btn_actredo2" onpointerdown="btn_redo_longpress_start()" onpointerleave="btn_redo_longpress_end()" onpointerup="btn_redo_longpress_end()" onclick="btn_redo()">Redo</button>
+						<button type="button" class="btn actbtn btn-primary mainnav" id="btn_actretry2" onclick="btn_retry()">Retry</button>
+						<button type="button" class="btn actbtn btn-primary mainnav" id="btn_addmedia2" onclick="add_media_btn_menu()">Add File</button>
+						<button type="button" class="btn actbtn btn-primary mainnav slim btnicon-websearch hidden" id="btn_togglesearch2" onclick="toggle_websearch()">&nbsp;</button>
+						<button type="button" class="btn actbtn btn-primary mainnav btnicon-agent slim inactive" id="btn_toggleAgentAesthetic" onclick="toggleAgent()" tabindex="0">&nbsp;</button>
+						<button type="button" class="btn actbtn btn-primary mainnav" id="btn_editmode" onclick="btn_editmode()">Edit</button>
 					</div>
 				</div>
 
@@ -25898,7 +26047,7 @@ Current version indicated by LITEVER below.
 					</div>
 				</div>
 
-				<div class="lastreq color_gray" id="lastreq2" style="padding-top: 2px; color:#999999"></div>
+				<div class="lastreq color_gray" id="lastreq2"></div>
 			</div>
 		</div>
 
@@ -25912,7 +26061,7 @@ Current version indicated by LITEVER below.
 					<div style="padding:2px;font-size:14px;margin-left:8px;font-weight:600;line-height:1.1;margin-top:12px">Quick Slot Load</div>
 					<hr style="margin-top:4px;margin-bottom:6px" />
 					<div class="corpoleftpanelitemsinner" id="corpoleftpanelitemsinner"></div>
-					<div style="margin-top: auto; margin-bottom:2px; width: 230px;"><div onclick="quicksave()" class="corpo_leftpanel_btn" type="button" style="width:110px;padding-left: 44px;display:inline-block;background-image: var(--img_save_mono);">Save</div><div onclick="quickdelete()" class="corpo_leftpanel_btn red" type="button" style="width:110px;padding-left: 44px;display:inline-block;background-image: var(--img_delete_mono);">Delete</div></div>
+					<div style="margin-top: auto; margin-bottom:2px; width: 230px;"><div onclick="quicksave()" class="corpo_leftpanel_btn" type="button" style="width:110px;padding-left: 44px;display:inline-block;background-image: var(--img_save_mono);">Save</div><div onclick="quickdelete()" class="corpo_leftpanel_btn" type="button" style="width:110px;padding-left: 44px;display:inline-block;background-image: var(--img_delete_mono);">Delete</div></div>
 					</div>
 				</div>
 				<button title="Show Corpo Side Panel" class="corpo_leftpanel_open mainnav" onclick="show_corpo_leftpanel(true)"><div class="corpo_arrow_right"></div></button>
@@ -25937,7 +26086,7 @@ Current version indicated by LITEVER below.
 
 	<div class="popupcontainer flex hidden" id="memorycontainer">
 		<div class="popupbg flex" id="memorycontainerbg"></div>
-		<div class="nspopup flexsizebig evenhigher" id="memorycontainerfg">
+		<div class="nspopup flexsizebig evenhigher context_tab_container_fg" id="memorycontainerfg">
 			<div class="popuptitlebar">
 				<div class="popuptitletext">Context Data</div>
 			</div>
@@ -26365,7 +26514,7 @@ Current version indicated by LITEVER below.
 						<div class="settinglabel">
 							<div class="justifyleft settingsmall">Assistant Jailbreak <span class="helpicon">?<span
 								class="helptext">Automatically injects a jailbreak message after every instruct query, to make the AI more likely to obey you.</span></span></div>
-								<button title="Set Assistant Jailbreak" type="button" class="btn btn-primary bg_green" style="padding:1px 3px;margin:0px 0px 0px auto;font-size:10px;" onclick="set_assistant_jailbreak()">Set</button>
+								<button title="Set Assistant Jailbreak" type="button" class="btn btn-primary" style="padding:1px 3px;margin:0px 0px 0px auto;font-size:10px;" onclick="set_assistant_jailbreak()">Set</button>
 								<input type="checkbox" title="Assistant Jailbreak" id="inject_jailbreak_instruct">
 						</div>
 						<div class="settinglabel">
@@ -26680,6 +26829,13 @@ Current version indicated by LITEVER below.
 								<div class="justifyleft settingsmall" style="width:100%">
 								<input title="Top N Sigma. 0 to deactivate. Range 0 to 5." class="settinglabel miniinput" type="text" inputmode="decimal" placeholder="0" value="0" id="nsigma"></div>
 							</div>
+							<div class="settinglabel settingcell">
+								<div class="justifyleft settingsmall" style="width:100%">SecondEpSampler <span class="helpicon">?<span class="helptext">
+									If enabled, sample N tokens from a second OpenAI Compatible endpoint first before a request. This can be useful for jailbreak purposes.</span></span></div>
+								<div class="justifyleft settingsmall" style="width:100%;">
+									<button title="Second Endpoint Split Sampling" type="button" class="btn btn-primary" style="padding:2px 4px;font-size:9px;" onclick="show_2epsample()"><span id="second_ep_overview">OFF</span></button>
+								</div>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -26917,7 +27073,7 @@ Current version indicated by LITEVER below.
 							<div class="justifyleft" style="padding:3px">Delay </div>
 							<input title="Voice Delay Milliseconds" type="text" inputmode="decimal" value="300" id="voice_end_delay" style="width:30px">
 							<input type="file" id="transcribe_file_input" accept="audio/*,video/*" style="display:none;">
-							<button id="transcribe_file_btn" type="button" class="bg_green btn btn-primary" style="height:20px; padding:2px 3px; font-size:11px;margin-top: 3px;" onclick="transcribe_file_btn()">Transcribe File</button>
+							<button id="transcribe_file_btn" type="button" class="btn btn-primary" style="height:20px; padding:2px 3px; font-size:11px;margin-top: 3px;" onclick="transcribe_file_btn()">Transcribe File</button>
 						</div>
 
 
@@ -27142,7 +27298,7 @@ Current version indicated by LITEVER below.
 						<table id="placeholder_replace_table" class="settinglabel" style="text-align: center; border-spacing: 3px 2px; border-collapse: separate;">
 						</table>
 						<div style="padding:3px" class="settinglabel justifyleft">
-							Randomness Seed: <span class="helpicon">?<span class="helptext">A seed to generate randomness for {{pick}}, {{roll}} and {{random}}. Set to -1 to disable these three placeholders.</span></span><input class="settinglabel miniinput" style="margin-left:4px;width:70px;" type="text" inputmode="decimal" placeholder="0" value="" id="inject_randomness_seed"><button title="Regen" type="button" class="btn btn-primary bg_green" style="padding:1px 3px;margin:0px 0px 0px auto;font-size:10px;" onclick="new_randomness_seed()">Regen</button></div>
+							Randomness Seed: <span class="helpicon">?<span class="helptext">A seed to generate randomness for {{pick}}, {{roll}} and {{random}}. Set to -1 to disable these three placeholders.</span></span><input class="settinglabel miniinput" style="margin-left:4px;width:70px;" type="text" inputmode="decimal" placeholder="0" value="" id="inject_randomness_seed"><button title="Regen" type="button" class="btn btn-primary" style="padding:1px 3px;margin:0px 0px 0px auto;font-size:10px;" onclick="new_randomness_seed()">Regen</button></div>
 					</div>
 					<div style="padding:3px;" class="justifyleft settinglabel">Classifier-Free Guidance <span class="helpicon">?<span
 						class="helptext">Functions as a negative prompt when Guidance Scale is above 1.</span></span>
@@ -27208,7 +27364,7 @@ Current version indicated by LITEVER below.
 							<input title="Never Escape HTML" type="checkbox" id="no_escape_html" style="margin:0px 0px 0px auto;">
 						</div>
 						<div class="settinglabel">
-							<div class="justifyleft settingsmall">Render Sp.Tags <span class="helpicon">?<span
+							<div class="justifyleft settingsmall">Render Special Tags <span class="helpicon">?<span
 								class="helptext">If enabled, renders special tags like EOS and padding tokens. Not recommended.</span></span></div>
 							<input title="Render Special Tags" type="checkbox" id="render_special_tags" style="margin:0px 0px 0px auto;">
 						</div>
@@ -27271,6 +27427,11 @@ Current version indicated by LITEVER below.
 							<input title="Autoscroll Text" type="checkbox" id="autoscroll" style="margin:0px 0px 0px auto;">
 						</div>
 						<div class="settinglabel">
+							<div class="justifyleft settingsmall">Submit on Enter <span class="helpicon">?<span
+								class="helptext">Pressing the Enter button submits text instead of adding a newline</span></span></div>
+							<input title="Submit on Enter" type="checkbox" id="entersubmit" style="margin:0px 0px 0px auto;">
+						</div>
+						<div class="settinglabel">
 							<div class="justifyleft settingsmall">Unlock Scroll Height <span class="helpicon">?<span
 								class="helptext">Unlocks the text viewport, allowing for infinite height without scrolling</span></span></div>
 							<input title="Unlock Scroll Height" type="checkbox" id="printer_view" style="margin:0px 0px 0px auto;">
@@ -27330,9 +27491,14 @@ Current version indicated by LITEVER below.
 							<input title="Send Autoguess Tags For Third Party APIs" type="checkbox" id="autoguess_third_party" style="margin:0px 0px 0px 0px;">
 						</div>
 						<div class="settinglabel">
-							<div class="justifyleft settingsmall">Legacy Savefile <span class="helpicon">?<span
+							<div class="justifyleft settingsmall">LegacySavefile <span class="helpicon">?<span
 								class="helptext">Adds extra data to the savefile for better legacy support. Will make your savefile much larger.</span></span></div>
 							<input title="Legacy Savefile" type="checkbox" id="legacy_savefile" style="margin:0px 0px 0px 0px;">
+						</div>
+						<div class="settinglabel">
+							<div class="justifyleft settingsmall">OldColorTheme <span class="helpicon">?<span
+								class="helptext">Switch to old color theme.</span></span></div>
+							<input title="Old Color Theme" type="checkbox" id="oldtheme" style="margin:0px 0px 0px 0px;">
 						</div>
 					</div>
 
@@ -27629,10 +27795,10 @@ Current version indicated by LITEVER below.
 						</div>
 					</div>
 					<div style="width:100%;align-self: center;">
-						<button type="button" id="savetoslot" title="Save To Slot" class="btn btn-primary bg_primary" onclick="save_to_curr_slot()"><img class="btnicon-save"/> Save Slot</button>
-						<button type="button" id="loadfromslot" title="Load From Slot" class="btn btn-primary bg_primary" onclick="load_from_curr_slot()"><img class="btnicon-load"/> Load Slot</button>
-						<button type="button" id="downloadslot" title="Download Slot" class="btn btn-primary bg_green" onclick="download_from_curr_slot()"><img class="btnicon-download"/> Download</button>
-						<button type="button" id="deleteslot" title="Delete Slot" class="btn btn-primary bg_red" onclick="delete_from_curr_slot()"><img class="btnicon-delete"/> Delete Slot</button>
+						<button type="button" id="savetoslot" title="Save To Slot" class="btn btn-primary" onclick="save_to_curr_slot()"><img class="btnicon-save"/> Save Slot</button>
+						<button type="button" id="loadfromslot" title="Load From Slot" class="btn btn-primary" onclick="load_from_curr_slot()"><img class="btnicon-load"/> Load Slot</button>
+						<button type="button" id="downloadslot" title="Download Slot" class="btn btn-primary" onclick="download_from_curr_slot()"><img class="btnicon-download"/> Download</button>
+						<button type="button" id="deleteslot" title="Delete Slot" class="btn btn-primary" onclick="delete_from_curr_slot()"><img class="btnicon-delete"/> Delete Slot</button>
 					</div>
 				</div>
 				<div class="menutext"><p style="padding:6px;font-size: 10px;" class="color_red">Caution: Local Storage Slots are saved to a temporary cache and can be deleted by your browser. KoboldCpp remote storage will save data to a file in your KoboldCpp server. To avoid losing data, use the download file button.</p></div>
@@ -27870,7 +28036,7 @@ Current version indicated by LITEVER below.
 				<span id="useoaichatcomplbox" class="hidden" onload="toggleoaichatcompl();">
 					<br>
 					Main Message Role:
-					<select title="Main Message Role" class="form-control" style="height: 25px; font-size:12px; padding:4px;display:inline;width:100px" id="oairoledropdown">
+					<select title="Main Message Role" class="form-control" style="height: 25px; font-size:12px; margin-bottom: 2px; padding:4px;display:inline;width:100px" id="oairoledropdown">
 						<option value="0" selected>User</option>
 						<option value="1">Assistant</option>
 						<option value="2">System</option>
@@ -27978,7 +28144,7 @@ Current version indicated by LITEVER below.
 				<div id="gemini_role_options">
 				<div>
 					Main Message Role:
-					<select title="Main Message Role" class="form-control" style="height: 25px; font-size:12px; padding:4px;display:inline;width:100px" onload="togglegeminirole();" onchange="togglegeminirole();" id="geminiroledropdown">
+					<select title="Main Message Role" class="form-control" style="height: 25px; font-size:12px; margin-bottom: 2px; padding:4px;display:inline;width:100px" onload="togglegeminirole();" onchange="togglegeminirole();" id="geminiroledropdown">
 						<option value="" selected>Default</option>
 						<option value="user">User</option>
 						<option value="model">Model</option>
@@ -28165,7 +28331,7 @@ Current version indicated by LITEVER below.
 		<div class="workerpopup">
 			<div class="popuptitlebar">
 				<div><span style="float:right;">
-					<input class="settinglabel miniinput" style="margin: 3px; width: 90px;" type="text" placeholder="Quick Search" value="" id="workerlistquicksearch" oninput="worker_list_quick_search()">
+					<input class="settinglabel miniinput" style="width: 90px;" type="text" placeholder="Quick Search" value="" id="workerlistquicksearch" oninput="worker_list_quick_search()">
 				</span></div>
 				<div class="popuptitletext" id="worktitlecount">Worker List</div>
 			</div>
@@ -28283,6 +28449,34 @@ Current version indicated by LITEVER below.
 		</div>
 	</div>
 
+	<div class="popupcontainer flex hidden" id="secondepsamplecontainer">
+		<div class="popupbg flex"></div>
+		<div class="nspopup flexsizevsmall">
+			<div class="popuptitlebar">
+				<div class="popuptitletext">Second Endpoint Sampling</div>
+			</div>
+			<div class="inlinelabel">
+				If enabled, sample N tokens from a second OpenAI Compatible endpoint first before a request. This can be useful for jailbreak purposes.<br><br>
+			</div>
+			<div class="inlinelabel">
+				<div class="justifyleft" style="padding:4px">Quantity: <span class="helpicon">?<span class="helptext">Number of tokens to sample. Set to 0 to disable.</span></span></div>
+				<input title="Token Quantity" class="settinglabel miniinput" type="text" inputmode="decimal" placeholder="0" value="0" id="second_ep_qty">
+			</div>
+			<div class="inlinelabel">
+				<div class="justifyleft" style="padding:4px">Model: <span class="helpicon">?<span class="helptext">Model name to use in the API</span></span></div>
+				<input title="Model Name" class="settinglabel miniinput" type="text" inputmode="decimal" placeholder="(Blank Model)" value="" id="second_ep_model">
+			</div>
+			<div class="inlinelabel">
+				<div class="justifyleft" style="padding:4px">URL: <span class="helpicon">?<span class="helptext">URL of second OpenAI Compatible Endpoint</span></span></div>
+				<input title="Second OpenAI Compatible URL" class="settinglabel miniinput" type="text" placeholder="(Full /v1/completions URL)" value="" id="second_ep_url">
+			</div>
+			<div class="popupfooter">
+				<button type="button" class="btn btn-primary" onclick="confirm_2epsample()">Ok</button>
+			</div>
+		</div>
+	</div>
+
+
 	<div class="popupcontainer flex hidden" id="addmediacontainer">
 		<div class="popupbg flex"></div>
 		<div class="nspopup flexsizevsmall moderate">
@@ -28290,19 +28484,19 @@ Current version indicated by LITEVER below.
 				<div class="popuptitletext">Add Audio or Image</div>
 			</div>
 			<div class="menutext">
-				Generate Image <button type="button" class="btn btn-primary bg_green" id="btn_inner_genimg_auto" onclick="add_img_btn_auto()">Automatic</button> <button type="button" class="btn btn-primary bg_green" id="btn_inner_genimg_custom" onclick="add_img_btn_custom()">From Prompt</button>
+				Generate Image <button type="button" class="btn btn-primary" id="btn_inner_genimg_auto" onclick="add_img_btn_auto()">Automatic</button> <button type="button" class="btn btn-primary" id="btn_inner_genimg_custom" onclick="add_img_btn_custom()">From Prompt</button>
 			</div>
 			<div class="menutext">
-				Generate Speech <button type="button" class="btn btn-primary bg_green" id="btn_inner_genspeech_custom" onclick="manual_tts()">From Prompt</button>
+				Generate Speech <button type="button" class="btn btn-primary" id="btn_inner_genspeech_custom" onclick="manual_tts()">From Prompt</button>
 			</div>
 			<div class="menutext">
-				Capture From <button type="button" class="btn btn-primary bg_green" onclick="add_img_btn_webcam()">Camera</button> <button type="button" class="btn btn-primary bg_green" onclick="add_img_btn_mic()">Microphone</button>
+				Capture From <button type="button" class="btn btn-primary" onclick="add_img_btn_webcam()">Camera</button> <button type="button" class="btn btn-primary" onclick="add_img_btn_mic()">Microphone</button>
 			</div>
 			<div class="menutext">
-				<button type="button" class="btn btn-primary bg_green" onclick="add_img_btn_upload()">Upload a File (Image / Audio)</button>
+				<button type="button" class="btn btn-primary" onclick="add_img_btn_upload()">Upload a File (Image / Audio)</button>
 			</div>
 			<div class="menutext">
-				<button type="button" class="btn btn-primary bg_green" onclick="add_img_btn_paste()">Drag Drop / Paste from Clipboard</button>
+				<button type="button" class="btn btn-primary" onclick="add_img_btn_paste()">Drag Drop / Paste from Clipboard</button>
 			</div>
 			<div class="menutext">
 				<button type="button" class="btn btn-primary" onclick="hide_popups();display_settings();display_settings_tab(2);">Customize Media Settings</button>
@@ -28369,13 +28563,13 @@ Current version indicated by LITEVER below.
 				<div class="popuptitletext">Share Story Import / Export</div>
 			</div>
 			<div class="menutext">
-				<button type="button" class="btn btn-primary bg_green" onclick="export_share_story(0)">Export Share as TextData</button>
+				<button type="button" class="btn btn-primary" onclick="export_share_story(0)">Export Share as TextData</button>
 			</div>
 			<div class="menutext">
-				<button type="button" class="btn btn-primary bg_green" onclick="export_share_story(1)">Export Share as Web URL</button>
+				<button type="button" class="btn btn-primary" onclick="export_share_story(1)">Export Share as Web URL</button>
 			</div>
 			<div class="menutext">
-				<button type="button" class="btn btn-primary bg_green" onclick="export_share_story(2)">Export Share as Plaintext</button>
+				<button type="button" class="btn btn-primary" onclick="export_share_story(2)">Export Share as Plaintext</button>
 			</div>
 			<div class="menutext">
 				<button type="button" class="btn btn-primary" onclick="import_share_story()">Import Share from TextData</button>
@@ -35923,6 +36117,7 @@ let checkFinalThoughtsPrompt = `Action: {"command":{"name":"thought","args":{"me
 		document.getElementById("worldTreeDepth").value = localsettings.worldTreeDepth;
 		document.getElementById("worldTreeShowAll").checked = localsettings.worldTreeShowAll;
 		document.getElementById("useNewEditor").checked = localsettings.useNewEditor;
+		document.getElementById("fullScreenEditorForInputs").checked = localsettings.fullScreenEditorForInputs;
 	}
 
 	confirm_settings = () => {
@@ -35938,6 +36133,7 @@ let checkFinalThoughtsPrompt = `Action: {"command":{"name":"thought","args":{"me
 		localsettings.worldTreeDepth = document.getElementById("worldTreeDepth").value;
 		localsettings.worldTreeShowAll = (document.getElementById("worldTreeShowAll").checked ? true : false);
 		localsettings.useNewEditor = (document.getElementById("useNewEditor").checked ? true : false);
+		localsettings.fullScreenEditorForInputs = (document.getElementById("fullScreenEditorForInputs").checked ? true : false);
 		updateEditorState();
 		originalConfirmSettings()
 	}
@@ -36194,6 +36390,10 @@ let checkFinalThoughtsPrompt = `Action: {"command":{"name":"thought","args":{"me
 		{
 			localsettings.useNewEditor = true
 		}
+		if (localsettings?.fullScreenEditorForInputs == undefined) 
+		{
+			localsettings.fullScreenEditorForInputs = false
+		}
 
 		let createSettingElemBool = (inputElemId, labelTitle, labelText) => {
 			let settingLabelElem = document.createElement("div")
@@ -36317,6 +36517,9 @@ let checkFinalThoughtsPrompt = `Action: {"command":{"name":"thought","args":{"me
 		lastSettingContainer.append(settingLabelElem)
 
 		settingLabelElem = createSettingElemBool("useNewEditor", "Use new editor", "Uses the new editor (including a WYSIWYG and markdown view) - has issues with HTML tags and may break")
+		lastSettingContainer.append(settingLabelElem)
+
+		settingLabelElem = createSettingElemBool("fullScreenEditorForInputs", "Full screen editor for inputs", "Adds buttons to open a full screen editor for inputs (experimental)")
 		lastSettingContainer.append(settingLabelElem)
 
 		createStopThinkingButton()
@@ -37098,7 +37301,7 @@ let checkFinalThoughtsPrompt = `Action: {"command":{"name":"thought","args":{"me
 	.md-toolbar
 	{
 		height: 50px;
-		background-color: rgb(51, 122, 183)
+		background-color: var(--theme_color_topmenu)
 	}
 	.md-toolbar-button
 	{
@@ -37107,7 +37310,7 @@ let checkFinalThoughtsPrompt = `Action: {"command":{"name":"thought","args":{"me
 	.md-tabs
 	{
 		height: 50px;
-		background-color: rgb(51, 122, 183)
+		background-color: var(--theme_color_topmenu)
 	}
 	.md-tab-button.active 
 	{
@@ -37820,6 +38023,21 @@ flowchart TD\n${treeToViewOutput.outputText.trim()}`
 	{
 		display: block;
 	}
+
+	.characterCreatorGrid {
+		color: white;
+		padding: 10px;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 8px;
+		min-width: 600px;
+	}
+
+	@media (max-width: 800px) {
+		.characterCreatorGrid {
+			grid-template-columns: 1fr;
+		}
+	}
 </style>
 <script>
 	class PopupUtils
@@ -38175,11 +38393,7 @@ flowchart TD\n${treeToViewOutput.outputText.trim()}`
 	// Native character creator popup for esobold
 	function showCharacterCreator() {
 		const form = document.createElement('div');
-		form.style.color = 'white';
-		form.style.padding = '10px';
-		form.style.display = 'grid';
-		form.style.gridTemplateColumns = '1fr 1fr';
-		form.style.gap = '8px';
+		form.classList.add("characterCreatorGrid")
 
 		const makeLabel = (text) => { 
 			const l = document.createElement('label'); 
@@ -38418,6 +38632,7 @@ flowchart TD\n${treeToViewOutput.outputText.trim()}`
 	function character_creator() { 
 		try
 		{
+			hide_popups();
 			showCharacterCreator(); 
 		}
 		catch(e) 
@@ -38425,5 +38640,96 @@ flowchart TD\n${treeToViewOutput.outputText.trim()}`
 			handleError(e);
 		}
 	}
+</script>
+<script>
+	let addFullScreenEditorButtons = () => {
+		let excludeTop = [
+			"instruct_systag",
+			"instruct_sysprompt", 
+			"instruct_starttag", 
+			"instruct_endtag",
+			"websearch_template",
+			"extrastopseq", 
+			"tokenbans", 
+			"start_thinking_tag", 
+			"stop_thinking_tag", 
+			"guidance_prompt", 
+			"anotetemplate",
+			"inputboxcontainerinputarea",
+			"negpromptinput",
+			"voice_langcode",
+			"instruct_systag_end", 
+			"instruct_starttag_end", 
+			"instruct_endtag_end", 
+			"newlogitbiasval"
+		];
+		document.querySelectorAll("input:not([disabled]):not([type='numeric']):not([type='range']):not([inputmode='numeric']):not([inputmode='decimal']):not([type='file']):not([type='checkbox']),textarea:not([disabled]):not([readonly])").forEach(c => {
+			if (c.checkVisibility())
+			{
+				if (!c.classList.contains("fullScreenEditContent") && !c.classList.contains("fullScreenTextEdit")) {
+					// c.style.border = "solid red";
+					e = document.createElement("span");
+					c.classList.add("fullScreenTextEdit")
+					e.classList.add("fullScreenTextEditButton")
+					e.onclick = () => {
+						let content = document.createElement("textarea");
+						content.classList.add("fullScreenEditContent");
+						content.value = c.value;
+						content.style.height = "70vh"
+						content.style.width = "70vw"
+						content.style.resize = "none"
+						popupUtils.reset()
+							.title("Fullscreen text edit")
+							.content(content)
+							.button("Ok", () => {
+								c.value = content.value;
+								popupUtils.reset();
+							}).show();
+					}
+					c.after(e);
+					
+					e.style.cssText = `float: right;
+					color: white;
+					background-image: var(--img_corpo_edit);
+					background-size: contain;
+					background-repeat: no-repeat;
+					height: 20px;
+					width: 20px;
+					z-index: 2;
+					margin-right: 10px;
+					${!!c?.id && excludeTop.includes(c.id) ? "" : "margin-top: -20px;"}
+					position: relative;`;
+					/*
+					margin-right: 10px; 
+					margin-top: -20px*/
+				}
+				else
+				{
+					if (c?.nextSibling?.classList?.contains("fullScreenTextEditButton"))
+					{
+						c.nextSibling.classList.remove("hidden")
+					}
+				}
+			}
+			else
+			{
+				if (c?.nextSibling?.classList?.contains("fullScreenTextEditButton"))
+				{
+					c.nextSibling.classList.add("hidden")
+				}
+			}
+		})
+	}
+	
+	setInterval(() => {
+		if (!!localsettings?.fullScreenEditorForInputs)
+		{
+			addFullScreenEditorButtons();
+		}
+		else
+		{
+			document.querySelectorAll(".fullScreenTextEditButton").forEach(c => c.remove())
+		}
+	}, 5000)
 </script>
 </html>
