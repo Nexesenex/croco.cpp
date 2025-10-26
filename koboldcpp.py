@@ -5150,8 +5150,6 @@ Change Mode<br>
         elif self.path=="/api/admin/current_model": # Returns the current model loaded
             if not args.admin:
                 response_body = ("Admin API disabled").encode()
-            elif not self.check_header_password(args.adminpassword):
-                return
             else:
                 content_type = 'text/plain'
                 if global_memory["currentModel"] is None:
@@ -5162,8 +5160,6 @@ Change Mode<br>
         elif self.path=="/api/admin/current_config": # Returns the current config loaded
             if not args.admin:
                 response_body = ("Admin API disabled").encode()
-            elif not self.check_header_password(args.adminpassword):
-                return
             else:
                 content_type = 'text/plain'
                 if global_memory["currentConfig"] is None:
