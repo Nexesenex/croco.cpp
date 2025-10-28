@@ -24,7 +24,7 @@ llama_memory_recurrent::llama_memory_recurrent(
                  uint32_t   mem_size,
                  uint32_t   n_seq_max,
     const layer_filter_cb & filter) : hparams(model.hparams), n_seq_max(n_seq_max) {
-    const int32_t n_layer = hparams.n_layer;
+    const int32_t n_layer = hparams.n_layer - hparams.nextn_predict_layers;
 
     head = 0;
     size = mem_size;
@@ -780,7 +780,7 @@ void llama_memory_recurrent::state_write_meta(llama_io_write_i & io, const std::
 
 void llama_memory_recurrent::state_write_data(llama_io_write_i & io, const std::vector<std::pair<uint32_t, uint32_t>> & cell_ranges) const {
     const uint32_t s_trans = 0;
-    const uint32_t n_layer = hparams.n_layer;
+    const uint32_t n_layer = hparams.n_layer - hparams.nextn_predict_layers;
 
     io.write(&s_trans, sizeof(s_trans));
     io.write(&n_layer,   sizeof(n_layer));
