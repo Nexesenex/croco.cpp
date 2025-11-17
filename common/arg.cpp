@@ -2315,6 +2315,20 @@ common_params_context common_params_parser_init(common_params & params, llama_ex
         }
     ).set_env("LLAMA_ARG_N_CPU_MOE"));
     add_opt(common_arg(
+        {"-cmoed", "--cpu-moe-down"},
+        "keep all Mixture of Experts (MoE) ffn_down weights in the CPU",
+        [](common_params & params) {
+            params.tensor_buft_overrides.push_back(llm_ffn_down_exps_cpu_override());
+        }
+    ).set_env("LLAMA_ARG_CPU_DOWN_MOE"));
+    add_opt(common_arg(
+        {"-cmoeug", "--cpu-moe-up-gate"},
+        "keep all Mixture of Experts (MoE) ffn_up and ffn_gate weights in the CPU",
+        [](common_params & params) {
+            params.tensor_buft_overrides.push_back(llm_ffn_up_gate_exps_cpu_override());
+        }
+    ).set_env("LLAMA_ARG_CPU_UP_GATE_MOE"));
+    add_opt(common_arg(
         {"-cmoed", "--cpu-moe-draft"},
         "keep all Mixture of Experts (MoE) weights in the CPU for the draft model",
         [](common_params & params) {
