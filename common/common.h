@@ -1041,6 +1041,26 @@ inline llama_model_tensor_buft_override llm_ffn_exps_cpu_override() {
     return { LLM_FFN_EXPS_REGEX, ggml_backend_cpu_buffer_type() };
 }
 
+const char * const LLM_FFN_DOWN_EXPS_REGEX = "\\.ffn_down_(ch|)exps";
+
+static std::string llm_ffn_down_exps_block_regex(int idx) {
+    return string_format("blk\\.%d%s", idx, LLM_FFN_DOWN_EXPS_REGEX);
+}
+
+static llama_model_tensor_buft_override llm_ffn_down_exps_cpu_override() {
+    return { LLM_FFN_DOWN_EXPS_REGEX, ggml_backend_cpu_buffer_type() };
+}
+
+const char * const LLM_FFN_UP_GATE_EXPS_REGEX = "\\.ffn_(up|gate)_(ch|)exps";
+
+static std::string llm_ffn_up_gate_exps_block_regex(int idx) {
+    return string_format("blk\\.%d%s", idx, LLM_FFN_UP_GATE_EXPS_REGEX);
+}
+
+static llama_model_tensor_buft_override llm_ffn_up_gate_exps_cpu_override() {
+    return { LLM_FFN_UP_GATE_EXPS_REGEX, ggml_backend_cpu_buffer_type() };
+}
+
 //
 // training utils
 //

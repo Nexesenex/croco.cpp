@@ -65,6 +65,8 @@ struct load_model_inputs
     const int overridenativecontext = 0;
     const int moe_experts = -1;
     const int moecpu = 0;
+    const int moedcpu = 0;
+    const int moeugcpu = 0;
     const bool no_bos_token = false;
     const bool load_guidance = false;
     const char * override_kv[overridekv_max] = {};
