@@ -2669,6 +2669,42 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
             }
             printf("Overriding %d MoE layers to CPU...\n",inputs.moecpu);
         }
+        if(ggml_backend_dev_count()>1 && inputs.moedcpu>0)
+        {
+            std::string toadd = "";
+            for (int i = 0; i < inputs.moedcpu; ++i) {
+                std::string tmp = string_format("blk\\.%d\\.ffn_down_exps=CPU", i);
+                if(i>0)
+                {
+                    tmp = "," + tmp;
+                }
+                toadd += tmp;
+            }
+            if (tensoroverrides == "") {
+                tensoroverrides = toadd;
+            } else {
+                tensoroverrides += "," + toadd;
+            }
+            printf("Overriding %d MoE FFN down layers to CPU...\n",inputs.moedcpu);
+        }
+        if(ggml_backend_dev_count()>1 && inputs.moeugcpu>0)
+        {
+            std::string toadd = "";
+            for (int i = 0; i < inputs.moeugcpu; ++i) {
+                std::string tmp = string_format("blk\\.%d\\.ffn_(up|gate)_exps=CPU", i);
+                if(i>0)
+                {
+                    tmp = "," + tmp;
+                }
+                toadd += tmp;
+            }
+            if (tensoroverrides == "") {
+                tensoroverrides = toadd;
+            } else {
+                tensoroverrides += "," + toadd;
+            }
+            printf("Overriding %d MoE FFN up and gate layers to CPU...\n",inputs.moeugcpu);
+        }
         if(tensoroverrides!="" && ggml_backend_dev_count()>1)
         {
             printf("Handling Override Tensors for backends: ");
