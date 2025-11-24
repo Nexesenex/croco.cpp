@@ -965,8 +965,10 @@ to_fp16_cuda_t ggml_get_to_fp16_cuda(ggml_type type) {
             return dequantize_row_iq1_s_cuda;
         case GGML_TYPE_IQ1_M:
             return dequantize_row_iq1_m_cuda;
+        // case GGML_TYPE_IQ4_NL:
+            // return dequantize_row_iq4_nl_cuda;
         case GGML_TYPE_IQ4_NL:
-            return dequantize_row_iq4_nl_cuda;
+            return dequantize_block_cont_cuda<QK4_NL, QR4_NL, dequantize_iq4_nl>;
         case GGML_TYPE_IQ4_XS:
             return dequantize_row_iq4_xs_cuda;
         case GGML_TYPE_IQ3_S:
@@ -1030,8 +1032,10 @@ to_fp32_cuda_t ggml_get_to_fp32_cuda(ggml_type type) {
             return dequantize_row_iq1_s_cuda;
         case GGML_TYPE_IQ1_M:
             return dequantize_row_iq1_m_cuda;
+        // case GGML_TYPE_IQ4_NL:
+            // return dequantize_row_iq4_nl_cuda;
         case GGML_TYPE_IQ4_NL:
-            return dequantize_row_iq4_nl_cuda;
+            return dequantize_block_cont_cuda<QK4_NL, QR4_NL, dequantize_iq4_nl>;
         case GGML_TYPE_IQ4_XS:
             return dequantize_row_iq4_xs_cuda;
         case GGML_TYPE_IQ3_S:
@@ -1073,6 +1077,8 @@ to_fp16_nc_cuda_t ggml_get_to_fp16_nc_cuda(ggml_type type) {
             return dequantize_block_cuda<QK6_0, QR6_0, dequantize_q6_0>;
         case GGML_TYPE_Q8_0:
             return dequantize_block_cuda<QK8_0, QR8_0, dequantize_q8_0>;
+        case GGML_TYPE_IQ4_NL:
+            return dequantize_block_cuda<QK4_NL, QR4_NL, dequantize_iq4_nl>;
         case GGML_TYPE_BF16:
             return convert_unary_cuda<nv_bfloat16>;
         default:
@@ -1096,6 +1102,8 @@ to_bf16_nc_cuda_t ggml_get_to_bf16_nc_cuda(ggml_type type) {
             return dequantize_block_cuda<QK6_0, QR6_0, dequantize_q6_0>;
         case GGML_TYPE_Q8_0:
             return dequantize_block_cuda<QK8_0, QR8_0, dequantize_q8_0>;
+        case GGML_TYPE_IQ4_NL:
+            return dequantize_block_cuda<QK4_NL, QR4_NL, dequantize_iq4_nl>;
         case GGML_TYPE_F16:
             return convert_unary_cuda<half, nv_bfloat16>;
         default:
@@ -1119,6 +1127,8 @@ to_fp32_nc_cuda_t ggml_get_to_fp32_nc_cuda(ggml_type type) {
             return dequantize_block_cuda<QK6_0, QR6_0, dequantize_q6_0>;
         case GGML_TYPE_Q8_0:
             return dequantize_block_cuda<QK8_0, QR8_0, dequantize_q8_0>;
+        case GGML_TYPE_IQ4_NL:
+            return dequantize_block_cuda<QK4_NL, QR4_NL, dequantize_iq4_nl>;
         case GGML_TYPE_BF16:
             return convert_unary_cuda<nv_bfloat16, float>;
         default:
