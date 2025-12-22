@@ -735,52 +735,21 @@ static __device__ __forceinline__ void ggml_cuda_mad(float & acc, const half2 v,
 #endif // defined(GGML_USE_HIP) && (defined(RDNA2)  || defined(RDNA3) || defined(RDNA4) || defined(GCN5) || defined(CDNA))
 }
 
-static __device__ __forceinline__ void ggml_cuda_mad(half2 & acc, const half2 v, const half2 u) {
-#ifdef FAST_FP16_AVAILABLE
-    acc += v*u;
-#else
-    const float2 tmpv = __half22float2(v);
-    const float2 tmpu = __half22float2(u);
-    float2 tmpacc = __half22float2(acc);
-    tmpacc.x += tmpv.x * tmpu.x;
-    tmpacc.y += tmpv.y * tmpu.y;
-    acc = make_half2(tmpacc.x, tmpacc.y);
-#endif // FAST_FP16_AVAILABLE
-}
-
 // Aligned memory transfers of 8/16 bytes can be faster than 2 transfers with 4 bytes, especially on AMD.
 // Important: do not use this function if dst and src both point at registers.
 //     Due to the strict aliasing rule the compiler can do incorrect optimizations if src and dst have different types.
 //     The function is intended for copies between registers and SRAM/VRAM to make the compiler emit the right instructions.
 //     If dst and src point at different address spaces then they are guaranteed to not be aliased.
-template <int nbytes, int alignment = 0>
+template <int nbytes>
 static __device__ __forceinline__ void ggml_cuda_memcpy_1(void * __restrict__ dst, const void * __restrict__ src) {
-    static_assert(
-        nbytes <= ggml_cuda_get_max_cpy_bytes() || alignment == 0,
-        "You are misusing the alignment parameter for ggml_cuda_memcpy_1. "
-        "The intent is for the parameter is only as a workaround if either one of the pointers is not properly aligned. "
-        "If you use it to do more bytes per copy than ggml_cuda_max_cpy_bytes() the reads and writes may not be coalesced. "
-        "Call ggml_cuda_memcpy_1 in a loop instead.");
-    if constexpr (alignment != 0) {
-        static_assert(nbytes % alignment == 0, "bad alignment");
-    }
-    constexpr int nb_per_cpy = alignment == 0 ? nbytes : alignment;
-
-#pragma unroll
-    for (int i = 0; i < nbytes/nb_per_cpy; ++i) {
-        if constexpr (nb_per_cpy == 1) {
-            ((char *) dst)[i] = ((const char *) src)[i];
-        } else if constexpr (nb_per_cpy == 2) {
-            ((short *) dst)[i] = ((const short *) src)[i];
-        } else if constexpr (nb_per_cpy == 4) {
-            ((int *) dst)[i] = ((const int *) src)[i];
-        } else if constexpr (nb_per_cpy == 8) {
-            ((int2 *) dst)[i] = ((const int2 *) src)[i];
-        } else if constexpr (nb_per_cpy == 16) {
-            ((int4 *) dst)[i] = ((const int4 *) src)[i];
-        } else {
-            static_assert(nbytes == 0 && nbytes == -1, "bad nbytes");
-        }
+    if constexpr (nbytes == 4) {
+        *(int *) dst = *(const int *) src;
+    } else if constexpr (nbytes == 8) {
+        *(int2 *) dst = *(const int2 *) src;
+    } else if constexpr (nbytes == 16) {
+        *(int4 *) dst = *(const int4 *) src;
+    // } else {
+       // static_assert(nbytes == 0 && nbytes == -1, "bad nbytes");
     }
 }
 
