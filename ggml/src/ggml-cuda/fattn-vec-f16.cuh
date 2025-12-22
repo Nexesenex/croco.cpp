@@ -26,7 +26,7 @@ static __global__ void flash_attn_vec_ext_f16(
         const float m1,
         const uint32_t n_head_log2,
         const float logit_softcap,
-        const int32_t ne00, const int32_t ne01, const int32_t ne02, const int32_t ne03,
+        const int32_t ne00, const uint3   ne01, const int32_t ne02, const int32_t ne03,
                             const int32_t nb01, const int32_t nb02, const int32_t nb03,
         const int32_t ne10, const int32_t ne11, const int32_t ne12, const int32_t ne13,
                             const int32_t nb11, const int32_t nb12, const int64_t nb13,
@@ -120,7 +120,7 @@ static __global__ void flash_attn_vec_ext_f16(
             half2 * tmp_q_ds  = (half2 *) (tmp_q_i32 + D/sizeof(int));
 
             // Set memory to zero if out of bounds:
-            if (ncols > 2 && ic0 + j >= ne01) {
+            if (ncols > 2 && ic0 + j >= int(ne01.z)) {
 #pragma unroll
                 for (int i0 = 0; i0 < D/sizeof(int); i0 += WARP_SIZE) {
                     const int i = i0 + threadIdx.x;
@@ -166,7 +166,7 @@ static __global__ void flash_attn_vec_ext_f16(
             for (int i0 = 0; i0 < D/2; i0 += WARP_SIZE) {
                 const int i = i0 + threadIdx.x;
 
-                const float2 tmp = ncols <= 2 || ic0 + j < ne01 ? Q_f2_j[i] : make_float2(0.0f, 0.0f);
+                const float2 tmp = ncols <= 2 || ic0 + j < int(ne01.z) ? Q_f2_j[i] : make_float2(0.0f, 0.0f);
                 Q_h2[j][i0/WARP_SIZE] = make_half2(scale, scale) * make_half2(tmp.x, tmp.y);
             }
         }
@@ -191,7 +191,7 @@ static __global__ void flash_attn_vec_ext_f16(
 
         // Calculate KQ tile and keep track of new maximum KQ values:
 
-        if (mask) {
+        if (mask && (ncols == 1)) {
 #pragma unroll
             for (int j = 0; j < ncols; ++j) {
                 maskh_shared[j*D + tid] = slopeh*maskh[j*ne11 + tid];
@@ -331,7 +331,7 @@ static __global__ void flash_attn_vec_ext_f16(
 
 #pragma unroll
     for (int j_VKQ = 0; j_VKQ < ncols; ++j_VKQ) {
-        if (ncols > 2 && ic0 + j_VKQ >= ne01) {
+        if (ncols > 2 && ic0 + j_VKQ >= int(ne01.z)) {
             break;
         }
 
@@ -342,11 +342,11 @@ static __global__ void flash_attn_vec_ext_f16(
         if (gridDim.y == 1) {
             dst_val /= kqsum[j_VKQ];
         }
-        dst[(((sequence*ne01 + ic0 + j_VKQ)*ne02 + head)*gridDim.y + blockIdx.y)*D + tid] = dst_val;
+        dst[(((sequence*int(ne01.z) + ic0 + j_VKQ)*ne02 + head)*gridDim.y + blockIdx.y)*D + tid] = dst_val;
     }
 
-    if (gridDim.y != 1 && tid < ncols && (ncols <= 2 || ic0 + tid < ne01)) {
-        dst_meta[((sequence*ne01 + ic0 + tid)*ne02 + head)*gridDim.y + blockIdx.y] = make_float2(kqmax[tid], kqsum[tid]);
+    if (gridDim.y != 1 && tid < ncols && (ncols <= 2 || ic0 + tid < int(ne01.z))) {
+        dst_meta[((sequence*int(ne01.z) + ic0 + tid)*ne02 + head)*gridDim.y + blockIdx.y] = make_float2(kqmax[tid], kqsum[tid]);
     }
 #else
     GGML_UNUSED_VARS(Q, K, V, mask, sinks, KV_max, dst, dst_meta, scale,
