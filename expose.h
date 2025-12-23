@@ -57,6 +57,7 @@ struct load_model_inputs
     const int kcpp_main_gpu = 0;
     const char * vulkan_info = nullptr;
     const int batchsize = 512;
+    const int forceversion = 0;
     const bool autofit = false;
     const int autofit_tax_mb = 0;
     const int gpulayers = 0;
