@@ -8018,7 +8018,7 @@ def show_gui():
     import customtkinter as ctk
     nextstate = 0 #0=exit, 1=launch
     original_windowwidth = int(1000)
-    original_windowheight = int(740)
+    original_windowheight = int(800)
     windowwidth = original_windowwidth
     windowheight = original_windowheight
     ctk.set_appearance_mode("dark")
@@ -8942,6 +8942,9 @@ def show_gui():
     makelabelentry(hardware_tab, "Batch Threads:" , blas_threads_var, 11, 50,padx=340, singleline=True,tooltip="How many threads to use during batched processing.\nIf left blank, uses same value as regular thread count.",labelpadx=240)
     makelabelentry(hardware_tab, "Device Override", deviceoverride_var, 15, 120, padx=(160), singleline=True, tooltip="Set llama.cpp compatible device selection override. Comma separated (e.g. Vulkan0,Vulkan1). Overrides normal device choices.")
 
+    # force version
+    makelabelentry(hardware_tab, "Force Version:" , version_var, 13, 50,padx=320,singleline=True,tooltip="If the autodetected version is wrong, you can change it here.\nLeave as 0 for default.")
+
     # hardware checkboxes
     hardware_boxes = {
         "Launch Browser": [launchbrowser, "Launches your default browser after model loading is complete"],
@@ -8969,6 +8972,8 @@ def show_gui():
     makecheckbox(hardware_tab, "Force AutoFit", autofit_var, 100,0,command=changed_autofit,padx=160, tooltiptxt="Automatically attempt to fit the model in the best possible way. Overrides everything else.\nNot recommended for multi model setups. Experimental.")
     ctk.CTkButton(hardware_tab , text = "Run Benchmark", command = guibench ).grid(row=110,column=0, stick="nw", padx= 8, pady=2)
     makecheckbox(hardware_tab, "AutoFit", autofit_var, 100,0,command=changed_autofit,padx=0, tooltiptxt="Automatically attempt to fit the model in the best possible way. Overrides everything else.\nNot recommended for multi model setups. Experimental.")
+
+    ctk.CTkButton(hardware_tab , text = "Run Benchmark", command = guibench ).grid(row=110,column=0, stick="nw", padx= 8, pady=2)
 
     # Context Tab
     context_tab = tabcontent["Context"]
@@ -9033,8 +9038,8 @@ def show_gui():
     moecpu_box,moecpu_box_lbl = makelabelentry(context_tab, "MoE CPU Layers:", moecpu_var, row=55, padx=(320), singleline=True, tooltip="Force Mixture of Experts (MoE) weights of the first N layers to the CPU.\nSetting it higher than GPU layers has no effect.", labelpadx=(210))
     makelabelentry(context_tab, "MoE down CPU Layers:", moedcpu_var, row=57, padx=(150), singleline=True, tooltip="Force Mixture of Experts (MoE) down weights of the first N layers to the CPU.\nSetting it higher than GPU layers has no effect.")
     makelabelentry(context_tab, "MoE CPU up / gate Layers:", moeugcpu_var, row=57, padx=(380), singleline=True, tooltip="Force Mixture of Experts (MoE) FFN up and gate weights of the first N layers to the CPU.\nSetting it higher than GPU layers has no effect.", labelpadx=(210))
-    makelabelentry(context_tab, "Override KV:", override_kv_var, row=57, padx=(120), singleline=True, width=150, tooltip="Override metadata value by key. Separate multiple values with commas. Format is name=type:value. Types: int, float, bool, str")
-    tenos_box,tenos_box_lbl = makelabelentry(context_tab, "Override Tensors:", override_tensors_var, row=59, padx=(120), singleline=True, width=150, tooltip="Override selected backend for specific tensors matching tensor_name_regex_pattern=buffer_type, same as in llama.cpp.")
+    makelabelentry(context_tab, "Override KV:", override_kv_var, row=59, padx=(120), singleline=True, width=150, tooltip="Override metadata value by key. Separate multiple values with commas. Format is name=type:value. Types: int, float, bool, str")
+    tenos_box,tenos_box_lbl = makelabelentry(context_tab, "Override Tensors:", override_tensors_var, row=61, padx=(120), singleline=True, width=480, tooltip="Override selected backend for specific tensors matching tensor_name_regex_pattern=buffer_type, same as in llama.cpp.")
 
     # Model Tab
     model_tab = tabcontent["Loaded Files"]
