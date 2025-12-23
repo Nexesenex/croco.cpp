@@ -36,7 +36,15 @@ extern "C"
         mmproj_filename = inputs.mmproj_filename;
         draftmodel_filename = inputs.draftmodel_filename;
 
+        int forceversion = inputs.forceversion;
+
         file_format = check_file_format(model.c_str(),&file_format_meta);
+
+        if(forceversion!=0)
+        {
+            printf("\nWARNING: FILE FORMAT FORCED TO VER %d\nIf incorrect, loading may fail or crash.\n",forceversion);
+            file_format = (FileFormat)forceversion;
+        }
 
         std::string vulkan_info_raw = inputs.vulkan_info;
         std::string vulkan_info_str = "";
