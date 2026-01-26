@@ -5271,6 +5271,20 @@ ggml_backend_reg_t ggml_backend_cuda_reg() {
         static std::mutex mutex;
         std::lock_guard<std::mutex> lock(mutex);
         if (!initialized) {
+
+            // Set CUDA_SCALE_LAUNCH_QUEUES before any CUDA API call to improve multi-GPU pipeline parallelism performance
+            // PR: https://github.com/ggml-org/llama.cpp/pull/19042
+            if (getenv("CUDA_SCALE_LAUNCH_QUEUES") == nullptr) {
+#ifdef _WIN32
+                _putenv_s("CUDA_SCALE_LAUNCH_QUEUES", "2x");
+#else
+                setenv("CUDA_SCALE_LAUNCH_QUEUES", "2x", 0); // don't overwrite if already set
+#endif // _WIN32
+                GGML_LOG_WARN("==================================================================================\n");
+                GGML_LOG_WARN("CUDA_SCALE_LAUNCH_QUEUES=2x EnVar has been enabled for increased Multi-GPUs perfs.\n");
+                GGML_LOG_WARN("==================================================================================\n");
+            }
+
             ggml_backend_cuda_reg_context * ctx = new ggml_backend_cuda_reg_context;
             const int min_batch_size = getenv("GGML_OP_OFFLOAD_MIN_BATCH") ? atoi(getenv("GGML_OP_OFFLOAD_MIN_BATCH")) : 32;
 
