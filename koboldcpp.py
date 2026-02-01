@@ -82,12 +82,12 @@ dry_seq_break_max = 256 # 128
 extra_images_max = 4 # for kontext/qwen img
 
 # global vars
-KcppVersion = "1.112.0"
-LcppVersion = ""
-IKLcppVersion = ""
-EsoboldVersion = ""
-CudaSpecifics = ""
-ReleaseDate = ""
+KcppVersion = "1.112.0.05"
+LcppVersion = "b8831_k-3"
+IKLcppVersion = "Q6-IQ23456K"
+EsoboldVersion = "RMv1.28.19m"
+CudaSpecifics = "Cu128_Ar86_SMC2_DmmvX32Y1"
+ReleaseDate = "2026/06/10"
 showdebug = True
 kcpp_instance = None #global running instance
 global_memory = {"tunnel_url": "", "restart_target":"", "input_to_exit":False, "load_complete":False, "restart_model": "", "currentConfig": None, "currentBaseConfig": None, "modelOverride": None, "currentModel": None, "last_active_timestamp":datetime.now(), "triggered_sleeping":False, "current_model":"initial_model", "base_config":"", "swapReqType": None, "autoswapmode": False, "fs": {"files": {}, "current_size_bytes": 0, "max_size_bytes": 0, "source_dir": "", "mode": "memory", "initialized": False}, "restart_override_base_config": "", "current_model_override": "", "OpenLumara": False}
