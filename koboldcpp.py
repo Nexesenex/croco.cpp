@@ -73,12 +73,12 @@ dry_seq_break_max = 256
 extra_images_max = 8 # for kontext/qwen img
 
 # global vars
-KcppVersion = "1.108.0"
-LcppVersion = ""
-IKLcppVersion = ""
-EsoboldVersion = ""
-CudaSpecifics = ""
-ReleaseDate = ""
+KcppVersion = "1.108.0.02"
+LcppVersion = "b7972-5-2PR"
+IKLcppVersion = "Q6-IQ23456K"
+EsoboldVersion = "RMv1.22.09m"
+CudaSpecifics = "Cu128_Ar86_SMC2_DmmvX32Y1"
+ReleaseDate = "2026/02/08"
 showdebug = True
 kcpp_instance = None #global running instance
 global_memory = {"tunnel_url": "", "restart_target":"", "input_to_exit":False, "load_complete":False, "restart_model": "", "currentConfig": None, "modelOverride": None, "currentModel": None}
