@@ -3082,543 +3082,543 @@ def extract_text(genparams):
         print(f"Error extracting text: {str(e)}")
         return ""
 
-# def extract_text_from_pdf(docData):
-    # import traceback
-    # global args
+def extract_text_from_pdf(docData):
+    import traceback
+    global args
     
-    # decoded_bytes = None
-    # try:
-        # # Add padding if necessary
-        # padding = len(docData) % 4
-        # if padding != 0:
-            # docData += '=' * (4 - padding)
+    decoded_bytes = None
+    try:
+        # Add padding if necessary
+        padding = len(docData) % 4
+        if padding != 0:
+            docData += '=' * (4 - padding)
 
-        # # Decode the Base64 string
-        # decoded_bytes = base64.b64decode(docData)
-    # except Exception as e:
-        # print(f"Error decoding text from PDF: {str(e)}")
-        # print(traceback.format_exc())
-        # return ""
+        # Decode the Base64 string
+        decoded_bytes = base64.b64decode(docData)
+    except Exception as e:
+        print(f"Error decoding text from PDF: {str(e)}")
+        print(traceback.format_exc())
+        return ""
 
-    # try:
-        # return getTextFromPDFEncapsulatedPyMuPdf(decoded_bytes)
-    # except Exception as e:
-        # print(f"Error extracting text with PyMuPdf: {str(e)}")
-        # print(traceback.format_exc())
+    try:
+        return getTextFromPDFEncapsulatedPyMuPdf(decoded_bytes)
+    except Exception as e:
+        print(f"Error extracting text with PyMuPdf: {str(e)}")
+        print(traceback.format_exc())
     
-    # try:
-        # return getTextFromPDFEncapsulated(decoded_bytes)
-    # except Exception as e:
-        # print(f"Error extracting text with PdfPlumber: {str(e)}")
-        # print(traceback.format_exc())
-        # return ""
+    try:
+        return getTextFromPDFEncapsulated(decoded_bytes)
+    except Exception as e:
+        print(f"Error extracting text with PdfPlumber: {str(e)}")
+        print(traceback.format_exc())
+        return ""
 
-# # PDF extraction code by sevenof9
-# def getTextFromPDFEncapsulated(decoded_bytes):
-    # import pdfplumber
+# PDF extraction code by sevenof9
+def getTextFromPDFEncapsulated(decoded_bytes):
+    import pdfplumber
 
-    # """
-    # Processes a page based on the page number, content and text settings being passed in.
-    # Returns the page number and the text content
-    # """
-    # def process_page(args):
-        # import json
-        # from pdfplumber.utils import get_bbox_overlap, obj_to_bbox
+    """
+    Processes a page based on the page number, content and text settings being passed in.
+    Returns the page number and the text content
+    """
+    def process_page(args):
+        import json
+        from pdfplumber.utils import get_bbox_overlap, obj_to_bbox
 
-        # # Ensure logging is only at error level (as this could be running in multiple threads)
-        # for logger_name in [
-            # "pdfminer",
-            # "pdfminer.pdfparser",
-            # "pdfminer.pdfdocument",
-            # "pdfminer.pdfpage",
-            # "pdfminer.converter",
-            # "pdfminer.layout",
-            # "pdfminer.cmapdb",
-            # "pdfminer.utils"
-        # ]:
-            # logging.getLogger(logger_name).setLevel(logging.ERROR)
+        # Ensure logging is only at error level (as this could be running in multiple threads)
+        for logger_name in [
+            "pdfminer",
+            "pdfminer.pdfparser",
+            "pdfminer.pdfdocument",
+            "pdfminer.pdfpage",
+            "pdfminer.converter",
+            "pdfminer.layout",
+            "pdfminer.cmapdb",
+            "pdfminer.utils"
+        ]:
+            logging.getLogger(logger_name).setLevel(logging.ERROR)
 
-        # def clean_cell_text(text):
-            # if not isinstance(text, str):
-                # return ""
-            # text = text.replace("-\n", "").replace("\n", " ")
-            # return " ".join(text.split())
+        def clean_cell_text(text):
+            if not isinstance(text, str):
+                return ""
+            text = text.replace("-\n", "").replace("\n", " ")
+            return " ".join(text.split())
 
-        # def safe_join(row):
-            # return [clean_cell_text(str(cell)) if cell is not None else "" for cell in row]
+        def safe_join(row):
+            return [clean_cell_text(str(cell)) if cell is not None else "" for cell in row]
 
-        # def clamp_bbox(bbox, page_width, page_height):
-            # x0, top, x1, bottom = bbox
-            # x0 = max(0, min(x0, page_width))
-            # x1 = max(0, min(x1, page_width))
-            # top = max(0, min(top, page_height))
-            # bottom = max(0, min(bottom, page_height))
-            # return (x0, top, x1, bottom)
+        def clamp_bbox(bbox, page_width, page_height):
+            x0, top, x1, bottom = bbox
+            x0 = max(0, min(x0, page_width))
+            x1 = max(0, min(x1, page_width))
+            top = max(0, min(top, page_height))
+            bottom = max(0, min(bottom, page_height))
+            return (x0, top, x1, bottom)
 
-        # page_number, pdf, text_settings = args
+        page_number, pdf, text_settings = args
 
-        # page = pdf.pages[page_number]
-        # page_output = f"Page {page_number + 1}\n"
-        # page_width = page.width
-        # page_height = page.height
+        page = pdf.pages[page_number]
+        page_output = f"Page {page_number + 1}\n"
+        page_width = page.width
+        page_height = page.height
 
-        # filtered_page = page
-        # table_bbox_list = []
-        # table_json_outputs = []
+        filtered_page = page
+        table_bbox_list = []
+        table_json_outputs = []
 
-        # # Table extraction
-        # for table in page.find_tables():
-            # bbox = clamp_bbox(table.bbox, page_width, page_height)
-            # table_bbox_list.append(bbox)
+        # Table extraction
+        for table in page.find_tables():
+            bbox = clamp_bbox(table.bbox, page_width, page_height)
+            table_bbox_list.append(bbox)
 
-            # if not page.crop(bbox).chars:
-                # continue
+            if not page.crop(bbox).chars:
+                continue
 
-            # filtered_page = filtered_page.filter(
-                # lambda obj: get_bbox_overlap(obj_to_bbox(obj), bbox) is None
-            # )
+            filtered_page = filtered_page.filter(
+                lambda obj: get_bbox_overlap(obj_to_bbox(obj), bbox) is None
+            )
 
-            # table_data = table.extract()
-            # if table_data and len(table_data) >= 1:
-                # headers = safe_join(table_data[0])
-                # rows = [safe_join(row) for row in table_data[1:]]
-                # json_table = [dict(zip(headers, row)) for row in rows]
-                # table_json_outputs.append(json.dumps(json_table, indent=1, ensure_ascii=False))
+            table_data = table.extract()
+            if table_data and len(table_data) >= 1:
+                headers = safe_join(table_data[0])
+                rows = [safe_join(row) for row in table_data[1:]]
+                json_table = [dict(zip(headers, row)) for row in rows]
+                table_json_outputs.append(json.dumps(json_table, indent=1, ensure_ascii=False))
 
-        # # Text extraction based on bounding boxes
-        # chars_outside_tables = [
-            # word for word in page.extract_words(**TEXT_EXTRACTION_SETTINGS)
-            # if not any(
-                # bbox[0] <= float(word['x0']) <= bbox[2] and
-                # bbox[1] <= float(word['top']) <= bbox[3]
-                # for bbox in table_bbox_list
-            # )
-        # ]
+        # Text extraction based on bounding boxes
+        chars_outside_tables = [
+            word for word in page.extract_words(**TEXT_EXTRACTION_SETTINGS)
+            if not any(
+                bbox[0] <= float(word['x0']) <= bbox[2] and
+                bbox[1] <= float(word['top']) <= bbox[3]
+                for bbox in table_bbox_list
+            )
+        ]
 
-        # current_y = None
-        # line = []
-        # text_content = ""
+        current_y = None
+        line = []
+        text_content = ""
 
-        # for word in chars_outside_tables:
-            # if current_y is None or abs(word['top'] - current_y) > 10:
-                # if line:
-                    # text_content += " ".join(line) + "\n"
-                # line = [word['text']]
-                # current_y = word['top']
-            # else:
-                # line.append(word['text'])
-        # if line:
-            # text_content += " ".join(line) + "\n"
+        for word in chars_outside_tables:
+            if current_y is None or abs(word['top'] - current_y) > 10:
+                if line:
+                    text_content += " ".join(line) + "\n"
+                line = [word['text']]
+                current_y = word['top']
+            else:
+                line.append(word['text'])
+        if line:
+            text_content += " ".join(line) + "\n"
 
-        # page_output += text_content.strip() + "\n"
+        page_output += text_content.strip() + "\n"
 
-        # for idx, table in enumerate(table_json_outputs, start=1):
-            # page_output += f'"table {idx}":\n{table}\n'
-        # return page_number, page_output
+        for idx, table in enumerate(table_json_outputs, start=1):
+            page_output += f'"table {idx}":\n{table}\n'
+        return page_number, page_output
 
-    # def process_pages(pagesArgs):
-        # pageOutputs = []
-        # for i in range(0, len(pagesArgs)):
-            # pageOutputs.append(process_page(pagesArgs[i]))
-        # return pageOutputs
+    def process_pages(pagesArgs):
+        pageOutputs = []
+        for i in range(0, len(pagesArgs)):
+            pageOutputs.append(process_page(pagesArgs[i]))
+        return pageOutputs
 
-    # def run_serial(pages):
-        # from tqdm.auto import tqdm
-        # results = []
-        # for i in tqdm(range(len(pages)), desc="Processing pages"):
-            # results.append(process_page(pages[i]))
-        # return results
-        # # return [process_page(args) for args in pages]
+    def run_serial(pages):
+        from tqdm.auto import tqdm
+        results = []
+        for i in tqdm(range(len(pages)), desc="Processing pages"):
+            results.append(process_page(pages[i]))
+        return results
+        # return [process_page(args) for args in pages]
 
-    # def run_parallel(pages):
-        # from multiprocessing import cpu_count
-        # from tqdm.auto import tqdm
+    def run_parallel(pages):
+        from multiprocessing import cpu_count
+        from tqdm.auto import tqdm
 
-        # # Parallel execution based on either the number of pages or number of CPU cores
-        # num_cores = min(cpu_count(), len(pages))
-        # print(f"Started processing PDF document with {len(pages)} using {num_cores} cores...")
+        # Parallel execution based on either the number of pages or number of CPU cores
+        num_cores = min(cpu_count(), len(pages))
+        print(f"Started processing PDF document with {len(pages)} using {num_cores} cores...")
 
-        # total_pages = len(pages)
-        # num_cores = min(multiprocessing.cpu_count(), os.cpu_count() or 1)
-        # chunk_size = max(1, min(total_pages // (num_cores * 8), 20))
-        # chunks = []
-        # for i in range(0, total_pages, chunk_size):
-            # end = min(i + chunk_size, total_pages)
-            # chunk = []
-            # for pageNo in range(i, end):
-                # chunk.append(pages[pageNo])
-            # chunks.append(chunk)
-        # results = []
+        total_pages = len(pages)
+        num_cores = min(multiprocessing.cpu_count(), os.cpu_count() or 1)
+        chunk_size = max(1, min(total_pages // (num_cores * 8), 20))
+        chunks = []
+        for i in range(0, total_pages, chunk_size):
+            end = min(i + chunk_size, total_pages)
+            chunk = []
+            for pageNo in range(i, end):
+                chunk.append(pages[pageNo])
+            chunks.append(chunk)
+        results = []
+        with ThreadPoolExecutor(max_workers=num_cores) as exe:
+            with tqdm(total=total_pages, desc="Processing pages") as pbar:
+                for chunk_results in exe.map(process_pages, chunks):
+                    results.extend(chunk_results)
+                    pbar.update(len(chunk_results))
+        return results
+
         # with ThreadPoolExecutor(max_workers=num_cores) as exe:
-            # with tqdm(total=total_pages, desc="Processing pages") as pbar:
-                # for chunk_results in exe.map(process_pages, chunks):
-                    # results.extend(chunk_results)
-                    # pbar.update(len(chunk_results))
-        # return results
+        #     return exe.map(process_page, pages)
 
-        # # with ThreadPoolExecutor(max_workers=num_cores) as exe:
-        # #     return exe.map(process_page, pages)
+    decoded_bytes = io.BytesIO(decoded_bytes)  
+    with pdfplumber.open(decoded_bytes) as pdf:
+        num_pages = len(pdf.pages)
 
-    # decoded_bytes = io.BytesIO(decoded_bytes)  
-    # with pdfplumber.open(decoded_bytes) as pdf:
-        # num_pages = len(pdf.pages)
+        TEXT_EXTRACTION_SETTINGS = {
+            "x_tolerance": 2,
+            "y_tolerance": 5,
+            "keep_blank_chars": False,
+            "use_text_flow": True
+        }
 
-        # TEXT_EXTRACTION_SETTINGS = {
-            # "x_tolerance": 2,
-            # "y_tolerance": 5,
-            # "keep_blank_chars": False,
-            # "use_text_flow": True
-        # }
+        # Number of pages before multithreading should be used
+        PARALLEL_THRESHOLD = 14
 
-        # # Number of pages before multithreading should be used
-        # PARALLEL_THRESHOLD = 14
+        pages = [(i, pdf, TEXT_EXTRACTION_SETTINGS) for i in range(num_pages)]
 
-        # pages = [(i, pdf, TEXT_EXTRACTION_SETTINGS) for i in range(num_pages)]
+        if num_pages <= PARALLEL_THRESHOLD:
+            results = run_serial(pages)
+        else:
+            results = run_parallel(pages)
 
-        # if num_pages <= PARALLEL_THRESHOLD:
-            # results = run_serial(pages)
-        # else:
-            # results = run_parallel(pages)
-
-        # # Sorting results by their page number
-        # sorted_results = sorted(results, key=lambda x: x[0])
-        # final_output = "\n".join(page_output for _, page_output in sorted_results)
+        # Sorting results by their page number
+        sorted_results = sorted(results, key=lambda x: x[0])
+        final_output = "\n".join(page_output for _, page_output in sorted_results)
         
-        # print(f"Finished processing PDF")
+        print(f"Finished processing PDF")
 
-        # return final_output
-    # return ""
+        return final_output
+    return ""
 
-# # Text extraction from PDF by Vic49
-# # Modified for compatibility with KCPP by Esolithe
-# def getJsonFromPDFEncapsulatedPyMuPdf(decoded_bytes):
-    # from tqdm.auto import tqdm
-    # import fitz
-    # import io
-    # from concurrent.futures import ThreadPoolExecutor
-    # import json
-    # import re
-    # import multiprocessing
-    # import gc
-    # import os
-    # import string
+# Text extraction from PDF by Vic49
+# Modified for compatibility with KCPP by Esolithe
+def getJsonFromPDFEncapsulatedPyMuPdf(decoded_bytes):
+    from tqdm.auto import tqdm
+    import fitz
+    import io
+    from concurrent.futures import ThreadPoolExecutor
+    import json
+    import re
+    import multiprocessing
+    import gc
+    import os
+    import string
 
-    # # Global PDF variables
-    # CLEAN_PATTERN = re.compile(r"[^\u0000-\uFFFF]", re.DOTALL)
-    # WHITE = set(string.whitespace)
+    # Global PDF variables
+    CLEAN_PATTERN = re.compile(r"[^\u0000-\uFFFF]", re.DOTALL)
+    WHITE = set(string.whitespace)
 
-    # # Functions for text extraction
-    # def clean_text(text):
-        # text = CLEAN_PATTERN.sub("", text)
-        # text = re.sub(r"\n{2,}", "\n", text)
-        # text = re.sub(r"^\.*\s*", "", text, 1)
-        # return text.strip()
+    # Functions for text extraction
+    def clean_text(text):
+        text = CLEAN_PATTERN.sub("", text)
+        text = re.sub(r"\n{2,}", "\n", text)
+        text = re.sub(r"^\.*\s*", "", text, 1)
+        return text.strip()
 
-    # def is_white(text):
-        # return WHITE.issuperset(text)
+    def is_white(text):
+        return WHITE.issuperset(text)
 
-    # def get_raw_lines(textpage, clip=None, tolerance=3, ignore_invisible=True):
-        # y_delta = tolerance
-        # def sanitize_spans(line):
-            # line.sort(key=lambda s: s["bbox"].x0)
-            # for i in range(len(line) - 1, 0, -1):
-                # s0 = line[i - 1]
-                # s1 = line[i]
-                # delta = s1["size"] * 0.1
-                # try:
-                    # if s0["bbox"].x1 + delta < s1["bbox"].x0 or (s0["flags"], s0["char_flags"], s0["size"],) != (s1["flags"], s1["char_flags"], s1["size"]):
-                        # continue
-                # except Exception:
-                    # pass
-                    # # print("Could not check char flags in bbox for similarity")
+    def get_raw_lines(textpage, clip=None, tolerance=3, ignore_invisible=True):
+        y_delta = tolerance
+        def sanitize_spans(line):
+            line.sort(key=lambda s: s["bbox"].x0)
+            for i in range(len(line) - 1, 0, -1):
+                s0 = line[i - 1]
+                s1 = line[i]
+                delta = s1["size"] * 0.1
+                try:
+                    if s0["bbox"].x1 + delta < s1["bbox"].x0 or (s0["flags"], s0["char_flags"], s0["size"],) != (s1["flags"], s1["char_flags"], s1["size"]):
+                        continue
+                except Exception:
+                    pass
+                    # print("Could not check char flags in bbox for similarity")
                 
-                # dashHandler = False
-                # try:
-                    # if s0["text"].endswith("-") and s1["text"] and s1["text"][0].isalpha():
-                        # dashHandler = True
-                # except Exception:
-                    # pass
-                    # # print(f"Failed to check opacity for dash handler on page")
+                dashHandler = False
+                try:
+                    if s0["text"].endswith("-") and s1["text"] and s1["text"][0].isalpha():
+                        dashHandler = True
+                except Exception:
+                    pass
+                    # print(f"Failed to check opacity for dash handler on page")
 
-                # if dashHandler:
-                    # s0["text"] = s0["text"][:-1] + s1["text"]
-                # else:
-                    # s0["text"] += s1["text"]
+                if dashHandler:
+                    s0["text"] = s0["text"][:-1] + s1["text"]
+                else:
+                    s0["text"] += s1["text"]
 
-                # s0["bbox"] |= s1["bbox"]
-                # del line[i]
-                # line[i - 1] = s0
-            # return line
-        # if clip is None:
-            # clip = textpage.rect
-        # blocks = [
-            # b
-            # for b in textpage.extractDICT()["blocks"]
-            # if b["type"] == 0 and not fitz.Rect(b["bbox"]).is_empty
-        # ]
-        # spans = []
-        # for bno, b in enumerate(blocks):
-            # for lno, line in enumerate(b["lines"]):
-                # if abs(1 - line["dir"][0]) > 1e-3:
-                    # continue
-                # for sno, s in enumerate(line["spans"]):
-                    # sbbox = fitz.Rect(s["bbox"])
-                    # if is_white(s["text"]):
-                        # continue
-                    # try:
-                        # if s["alpha"] == 0 and ignore_invisible:
-                            # continue
-                    # except Exception:
-                        # pass
-                        # # print(f"Failed to check opacity for text on page")
-                    # if abs(sbbox & clip) < abs(sbbox) * 0.8:
-                        # continue
-                    # if s["flags"] & 1 == 1:
-                        # i = 1 if sno == 0 else sno - 1
-                        # if len(line["spans"]) > i:
-                            # neighbor = line["spans"][i]
-                            # sbbox.y1 = neighbor["bbox"][3]
-                        # s["text"] = f"[{s['text']}]"
-                    # s["bbox"] = sbbox
-                    # s["line"] = lno
-                    # s["block"] = bno
-                    # spans.append(s)
-        # if not spans:
-            # return []
-        # spans.sort(key=lambda s: s["bbox"].y1)
-        # nlines = []
-        # line = [spans[0]]
-        # lrect = spans[0]["bbox"]
-        # for s in spans[1:]:
-            # sbbox = s["bbox"]
-            # sbbox0 = line[-1]["bbox"]
-            # if abs(sbbox.y1 - sbbox0.y1) <= y_delta or abs(sbbox.y0 - sbbox0.y0) <= y_delta:
-                # line.append(s)
-                # lrect |= sbbox
-                # continue
-            # line = sanitize_spans(line)
-            # nlines.append([lrect, line])
-            # line = [s]
-            # lrect = sbbox
-        # line = sanitize_spans(line)
-        # nlines.append([lrect, line])
-        # return nlines
+                s0["bbox"] |= s1["bbox"]
+                del line[i]
+                line[i - 1] = s0
+            return line
+        if clip is None:
+            clip = textpage.rect
+        blocks = [
+            b
+            for b in textpage.extractDICT()["blocks"]
+            if b["type"] == 0 and not fitz.Rect(b["bbox"]).is_empty
+        ]
+        spans = []
+        for bno, b in enumerate(blocks):
+            for lno, line in enumerate(b["lines"]):
+                if abs(1 - line["dir"][0]) > 1e-3:
+                    continue
+                for sno, s in enumerate(line["spans"]):
+                    sbbox = fitz.Rect(s["bbox"])
+                    if is_white(s["text"]):
+                        continue
+                    try:
+                        if s["alpha"] == 0 and ignore_invisible:
+                            continue
+                    except Exception:
+                        pass
+                        # print(f"Failed to check opacity for text on page")
+                    if abs(sbbox & clip) < abs(sbbox) * 0.8:
+                        continue
+                    if s["flags"] & 1 == 1:
+                        i = 1 if sno == 0 else sno - 1
+                        if len(line["spans"]) > i:
+                            neighbor = line["spans"][i]
+                            sbbox.y1 = neighbor["bbox"][3]
+                        s["text"] = f"[{s['text']}]"
+                    s["bbox"] = sbbox
+                    s["line"] = lno
+                    s["block"] = bno
+                    spans.append(s)
+        if not spans:
+            return []
+        spans.sort(key=lambda s: s["bbox"].y1)
+        nlines = []
+        line = [spans[0]]
+        lrect = spans[0]["bbox"]
+        for s in spans[1:]:
+            sbbox = s["bbox"]
+            sbbox0 = line[-1]["bbox"]
+            if abs(sbbox.y1 - sbbox0.y1) <= y_delta or abs(sbbox.y0 - sbbox0.y0) <= y_delta:
+                line.append(s)
+                lrect |= sbbox
+                continue
+            line = sanitize_spans(line)
+            nlines.append([lrect, line])
+            line = [s]
+            lrect = sbbox
+        line = sanitize_spans(line)
+        nlines.append([lrect, line])
+        return nlines
 
-    # def column_boxes(page, footer_margin=50, header_margin=50):
-        # clip = fitz.Rect(page.rect)
-        # clip.y1 -= footer_margin
-        # clip.y0 += header_margin
-        # blocks = [
-            # fitz.Rect(b["bbox"])
-            # for b in page.get_text("dict")["blocks"]
-            # if b["type"] == 0
-        # ]
-        # blocks = [b for b in blocks if not b.is_empty and b.intersects(clip)]
-        # blocks.sort(key=lambda r: (r.x0, r.y0))
-        # columns = []
-        # threshold = max(page.rect.width * 0.05, 40)
-        # for r in blocks:
-            # placed = False
-            # for col in columns:
-                # if abs(r.x0 - col[0].x0) < threshold:
-                    # col.append(r)
-                    # placed = True
-                    # break
-            # if not placed:
-                # columns.append([r])
-        # ordered = []
-        # columns.sort(key=lambda c: c[0].x0)
-        # for col in columns:
-            # col.sort(key=lambda r: r.y0)
-            # ordered.extend(col)
-        # return ordered
+    def column_boxes(page, footer_margin=50, header_margin=50):
+        clip = fitz.Rect(page.rect)
+        clip.y1 -= footer_margin
+        clip.y0 += header_margin
+        blocks = [
+            fitz.Rect(b["bbox"])
+            for b in page.get_text("dict")["blocks"]
+            if b["type"] == 0
+        ]
+        blocks = [b for b in blocks if not b.is_empty and b.intersects(clip)]
+        blocks.sort(key=lambda r: (r.x0, r.y0))
+        columns = []
+        threshold = max(page.rect.width * 0.05, 40)
+        for r in blocks:
+            placed = False
+            for col in columns:
+                if abs(r.x0 - col[0].x0) < threshold:
+                    col.append(r)
+                    placed = True
+                    break
+            if not placed:
+                columns.append([r])
+        ordered = []
+        columns.sort(key=lambda c: c[0].x0)
+        for col in columns:
+            col.sort(key=lambda r: r.y0)
+            ordered.extend(col)
+        return ordered
 
-    # def format_span(s):
-        # txt = s["text"]
-        # bold = False
-        # try:
-            # bold = (s["flags"] & 16) or (s["char_flags"] & 8)
-        # except Exception:
-            # pass
-            # # print("Could not check for bold state on page")
-        # italic = s["flags"] & 2
-        # if bold and italic:
-            # txt = f"***{txt}***"
-        # elif bold:
-            # txt = f"**{txt}**"
-        # elif italic:
-            # txt = f"*{txt}*"
-        # return txt
+    def format_span(s):
+        txt = s["text"]
+        bold = False
+        try:
+            bold = (s["flags"] & 16) or (s["char_flags"] & 8)
+        except Exception:
+            pass
+            # print("Could not check for bold state on page")
+        italic = s["flags"] & 2
+        if bold and italic:
+            txt = f"***{txt}***"
+        elif bold:
+            txt = f"**{txt}**"
+        elif italic:
+            txt = f"*{txt}*"
+        return txt
 
-    # def split_table_and_footnote(data):
-        # if data and data[-1]:
-            # non_empty = [c for c in data[-1] if c and str(c).strip()]
-            # if len(non_empty) == 1:
-                # footnote = non_empty[0]
-                # return data[:-1], footnote
-        # return data, None
+    def split_table_and_footnote(data):
+        if data and data[-1]:
+            non_empty = [c for c in data[-1] if c and str(c).strip()]
+            if len(non_empty) == 1:
+                footnote = non_empty[0]
+                return data[:-1], footnote
+        return data, None
 
-    # def extract_page(doc, pageTables, page_number):
-        # page = doc[page_number]
-        # label = page.get_label() or str(page_number + 1)
-        # textpage = page.get_textpage()
-        # tables_block = []
+    def extract_page(doc, pageTables, page_number):
+        page = doc[page_number]
+        label = page.get_label() or str(page_number + 1)
+        textpage = page.get_textpage()
+        tables_block = []
 
-        # # tables_block = page.get_text("dict")["blocks"]
-        # # table_rects = []
-
-        # tables = {} # page.find_tables() # pageTables[page_number]
+        # tables_block = page.get_text("dict")["blocks"]
         # table_rects = []
-        # if tables and tables.tables:
-            # for table in tables.tables:
-                # if table.row_count >= 2 and table.col_count >= 2:
-                    # rows = table.extract()
-                    # rows, footnote = split_table_and_footnote(rows)
-                    # if rows:
-                        # table_dict = {
-                            # "bbox": tuple(table.bbox),
-                            # "type": "table",
-                            # "rows": rows,
-                        # }
-                        # if footnote:
-                            # table_dict["footnote"] = footnote
-                        # tables_block.append(table_dict)
-                        # table_rects.append(fitz.Rect(table.bbox))
-        # tables_block.sort(key=lambda t: (t["bbox"][1], t["bbox"][0]))
-        # rects = [
-            # r
-            # for r in column_boxes(page)
-            # if not any(r.intersects(tr) for tr in table_rects)
-        # ]
-        # blocks = []
-        # while tables_block and tables_block[0]["bbox"][1] < rects[0].y0 if rects else False:
-            # blocks.append(tables_block.pop(0))
-        # for rect in rects:
-            # while tables_block and tables_block[0]["bbox"][1] < rect.y0:
-                # blocks.append(tables_block.pop(0))
-            # lines = []
-            # for _, spans in get_raw_lines(textpage, clip=rect):
-                # span_line = "".join(format_span(s) for s in spans)
-                # if span_line.strip():
-                    # lines.append(span_line)
-            # text_block = clean_text("\n".join(lines))
-            # if text_block:
-                # blocks.append({"type": "paragraph", "text": text_block})
-        # blocks.extend(tables_block)
-        # page = None
-        # gc.collect()
-        # return f"Page {label}", blocks
 
-    # def process_pages(args):
-        # (doc, pageTables, start_page, end_page) = args
-        # results = []
-        # for i in range(start_page, end_page):
-            # results.append(extract_page(doc, pageTables, i))
-        # return results
+        tables = {} # page.find_tables() # pageTables[page_number]
+        table_rects = []
+        if tables and tables.tables:
+            for table in tables.tables:
+                if table.row_count >= 2 and table.col_count >= 2:
+                    rows = table.extract()
+                    rows, footnote = split_table_and_footnote(rows)
+                    if rows:
+                        table_dict = {
+                            "bbox": tuple(table.bbox),
+                            "type": "table",
+                            "rows": rows,
+                        }
+                        if footnote:
+                            table_dict["footnote"] = footnote
+                        tables_block.append(table_dict)
+                        table_rects.append(fitz.Rect(table.bbox))
+        tables_block.sort(key=lambda t: (t["bbox"][1], t["bbox"][0]))
+        rects = [
+            r
+            for r in column_boxes(page)
+            if not any(r.intersects(tr) for tr in table_rects)
+        ]
+        blocks = []
+        while tables_block and tables_block[0]["bbox"][1] < rects[0].y0 if rects else False:
+            blocks.append(tables_block.pop(0))
+        for rect in rects:
+            while tables_block and tables_block[0]["bbox"][1] < rect.y0:
+                blocks.append(tables_block.pop(0))
+            lines = []
+            for _, spans in get_raw_lines(textpage, clip=rect):
+                span_line = "".join(format_span(s) for s in spans)
+                if span_line.strip():
+                    lines.append(span_line)
+            text_block = clean_text("\n".join(lines))
+            if text_block:
+                blocks.append({"type": "paragraph", "text": text_block})
+        blocks.extend(tables_block)
+        page = None
+        gc.collect()
+        return f"Page {label}", blocks
 
-    # # Get bytes as a readable form
-    # decoded_bytes = io.BytesIO(decoded_bytes)
+    def process_pages(args):
+        (doc, pageTables, start_page, end_page) = args
+        results = []
+        for i in range(start_page, end_page):
+            results.append(extract_page(doc, pageTables, i))
+        return results
+
+    # Get bytes as a readable form
+    decoded_bytes = io.BytesIO(decoded_bytes)
     
-    # # Processing logic
-    # with fitz.open("pdf", decoded_bytes) as doc:
-        # total_pages = len(doc)
-        # print(f"Start processing PDF with {total_pages}")
-        # results = []
-        # pageTables = []
+    # Processing logic
+    with fitz.open("pdf", decoded_bytes) as doc:
+        total_pages = len(doc)
+        print(f"Start processing PDF with {total_pages}")
+        results = []
+        pageTables = []
 
-        # # for i in tqdm(range(total_pages), desc="Extracting tables"):
-        # #     pageTables.append({}) # {} 
+        # for i in tqdm(range(total_pages), desc="Extracting tables"):
+        #     pageTables.append({}) # {} 
     
-        # num_cores = os.cpu_count()
-        # if (num_cores is None):
-            # num_cores = 1
-        # if total_pages > num_cores: # and True is False
-            # chunk_size = max(1, min(total_pages // (num_cores * 8), 20))
-            # chunks = []
-            # for i in range(0, total_pages, chunk_size):
-                # end = min(i + chunk_size, total_pages)
-                # chunks.append((doc, pageTables, i, end))
-            # with ThreadPoolExecutor(max_workers=num_cores) as exe:
-                # with tqdm(total=total_pages, desc="Processing pages") as pbar:
-                    # # for chunk_results in pool.starmap(process_pages, chunks):
-                    # for chunk_results in exe.map(process_pages, chunks):
-                        # results.extend(chunk_results)
-                        # pbar.update(len(chunk_results))
-        # else:
-            # for i in tqdm(range(total_pages), desc="Processing pages"):
-                # results.append(extract_page(doc, pageTables, i))
-        # result_dict = dict(results)
+        num_cores = os.cpu_count()
+        if (num_cores is None):
+            num_cores = 1
+        if total_pages > num_cores: # and True is False
+            chunk_size = max(1, min(total_pages // (num_cores * 8), 20))
+            chunks = []
+            for i in range(0, total_pages, chunk_size):
+                end = min(i + chunk_size, total_pages)
+                chunks.append((doc, pageTables, i, end))
+            with ThreadPoolExecutor(max_workers=num_cores) as exe:
+                with tqdm(total=total_pages, desc="Processing pages") as pbar:
+                    # for chunk_results in pool.starmap(process_pages, chunks):
+                    for chunk_results in exe.map(process_pages, chunks):
+                        results.extend(chunk_results)
+                        pbar.update(len(chunk_results))
+        else:
+            for i in tqdm(range(total_pages), desc="Processing pages"):
+                results.append(extract_page(doc, pageTables, i))
+        result_dict = dict(results)
         
-        # print(f"Finish processing PDF with {total_pages}")
-        # return result_dict
-    # return None
+        print(f"Finish processing PDF with {total_pages}")
+        return result_dict
+    return None
 
-# # Text extraction from PDF by Vic49
-# # Modified for compatibility with KCPP by Esolithe
-# def getTextFromPDFJsonEncapsulatedPyMuPdf(pages):
-    # import json
-    # import textwrap
+# Text extraction from PDF by Vic49
+# Modified for compatibility with KCPP by Esolithe
+def getTextFromPDFJsonEncapsulatedPyMuPdf(pages):
+    import json
+    import textwrap
 
-    # def col_widths(rows):
-        # w = []
-        # for row in rows:
-            # for i, cell in enumerate(row):
-                # raw = str(cell or "")
-                # lines = raw.splitlines() or [""]          # ← ensure non-empty
-                # longest = max(len(l) for l in lines)
-                # if i >= len(w):
-                    # w.append(longest)
-                # else:
-                    # w[i] = max(w[i], longest)
-        # return w
+    def col_widths(rows):
+        w = []
+        for row in rows:
+            for i, cell in enumerate(row):
+                raw = str(cell or "")
+                lines = raw.splitlines() or [""]          # ← ensure non-empty
+                longest = max(len(l) for l in lines)
+                if i >= len(w):
+                    w.append(longest)
+                else:
+                    w[i] = max(w[i], longest)
+        return w
 
-    # def pad_cell(cell, width):
-        # lines = (str(cell or "").splitlines() or [""])   # ← ensure non-empty
-        # return "\n".join(l.ljust(width) for l in lines)
+    def pad_cell(cell, width):
+        lines = (str(cell or "").splitlines() or [""])   # ← ensure non-empty
+        return "\n".join(l.ljust(width) for l in lines)
 
-    # def format_table(rows):
-        # widths = col_widths(rows)
-        # bar = " | "
-        # out = []
-        # for r, row in enumerate(rows):
-            # padded = [pad_cell(c, widths[i]) for i, c in enumerate(row)]
-            # split  = [c.splitlines() for c in padded]
-            # height = max(len(c) for c in split)
-            # for line in range(height):
-                # out.append(
-                    # bar.join(
-                        # split[i][line] if line < len(split[i]) else " " * widths[i]
-                        # for i in range(len(widths))
-                    # )
-                # )
-            # if r == 0:
-                # out.append(bar.join("-" * w for w in widths))
-        # return "\n".join(out)
+    def format_table(rows):
+        widths = col_widths(rows)
+        bar = " | "
+        out = []
+        for r, row in enumerate(rows):
+            padded = [pad_cell(c, widths[i]) for i, c in enumerate(row)]
+            split  = [c.splitlines() for c in padded]
+            height = max(len(c) for c in split)
+            for line in range(height):
+                out.append(
+                    bar.join(
+                        split[i][line] if line < len(split[i]) else " " * widths[i]
+                        for i in range(len(widths))
+                    )
+                )
+            if r == 0:
+                out.append(bar.join("-" * w for w in widths))
+        return "\n".join(out)
 
-    # if (json is not None):
-        # pages = pages
+    if (json is not None):
+        pages = pages
 
-        # lines = []
-        # for page_key in sorted(pages, key=lambda k: int(k.split()[1])):
-            # page_no = page_key.split()[1]
-            # lines.append(f"\n[PAGE BREAK][{page_no}]\n")
-            # for blk in pages[page_key]:
-                # if blk.get("type") == "paragraph":
-                    # para = blk["text"].rstrip()
-                    # lines.append(textwrap.fill(para, 100, replace_whitespace=False))
-                    # lines.append("")
-                # elif blk.get("type") == "table":
-                    # lines.append(format_table(blk["rows"]))
-                    # if "footnote" in blk:
-                        # lines.append(blk["footnote"])
-                    # lines.append("")
+        lines = []
+        for page_key in sorted(pages, key=lambda k: int(k.split()[1])):
+            page_no = page_key.split()[1]
+            lines.append(f"\n[PAGE BREAK][{page_no}]\n")
+            for blk in pages[page_key]:
+                if blk.get("type") == "paragraph":
+                    para = blk["text"].rstrip()
+                    lines.append(textwrap.fill(para, 100, replace_whitespace=False))
+                    lines.append("")
+                elif blk.get("type") == "table":
+                    lines.append(format_table(blk["rows"]))
+                    if "footnote" in blk:
+                        lines.append(blk["footnote"])
+                    lines.append("")
 
-        # return "\n".join(lines)
-    # else:
-        # return ""
+        return "\n".join(lines)
+    else:
+        return ""
 
-# def getTextFromPDFEncapsulatedPyMuPdf(decoded_bytes):
-    # return getTextFromPDFJsonEncapsulatedPyMuPdf(getJsonFromPDFEncapsulatedPyMuPdf(decoded_bytes))
+def getTextFromPDFEncapsulatedPyMuPdf(decoded_bytes):
+    return getTextFromPDFJsonEncapsulatedPyMuPdf(getJsonFromPDFEncapsulatedPyMuPdf(decoded_bytes))
 
 def whisper_generate(genparams):
     global args
