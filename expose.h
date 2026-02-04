@@ -21,6 +21,7 @@ enum samplers
 };
 enum stop_reason
 {
+    ERROR_ENCOUNTERED=-2,
     INVALID=-1,
     OUT_OF_TOKENS=0,
     EOS_TOKEN_HIT=1,
