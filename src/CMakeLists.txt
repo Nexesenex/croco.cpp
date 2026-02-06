@@ -84,6 +84,7 @@ add_library(llama
             models/internlm2.cpp
             models/jais.cpp
             models/jamba.cpp
+            models/kimi-linear.cpp
             models/lfm2.cpp
             models/llada-moe.cpp
             models/llada.cpp
@@ -134,6 +135,7 @@ add_library(llama
             models/stablelm.cpp
             models/starcoder.cpp
             models/starcoder2.cpp
+            models/step35-iswa.cpp
             models/t5-dec.cpp
             models/t5-enc.cpp
             models/wavtokenizer-dec.cpp
