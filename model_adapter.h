@@ -64,6 +64,7 @@ enum GGUFArch
     ARCH_GLM4 = 9,
     ARCH_GEMMA3N = 10,
     ARCH_GPTOSS = 11,
+    ARCH_DEEPSEEK2 = 12,
 };
 
 struct FileFormatExtraMeta

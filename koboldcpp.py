@@ -72,7 +72,7 @@ dry_seq_break_max = 128
 extra_images_max = 4 # for kontext/qwen img
 
 # global vars
-KcppVersion = "1.107"
+KcppVersion = "1.107.2"
 showdebug = True
 kcpp_instance = None #global running instance
 global_memory = {"tunnel_url": "", "restart_target":"", "input_to_exit":False, "load_complete":False, "restart_model": "", "currentConfig": None, "modelOverride": None, "currentModel": None}
@@ -505,13 +505,15 @@ class MCPStdioClient:
         finally:
             self.alive = False
 
-    def send(self, message: dict) -> dict: # Send JSON-RPC request and wait for one response.
+    def send(self, message: dict, await_response=True) -> dict: # Send JSON-RPC request and wait for one response.
         line = json.dumps(message)
         with self.lock:
             if self.process.stdin.closed:
                 raise RuntimeError("MCP server stdin is closed")
             self.process.stdin.write(line + "\n")
             self.process.stdin.flush()
+            if not await_response:
+                return None
             response = self.process.stdout.readline()
         if not response:
             errmsg = "\n".join(self.stderr_buffer[-10:])
@@ -530,27 +532,42 @@ class MCPStdioClient:
 
 class MCPHTTPClient:
     def __init__(self, url, headers=None, timeout=60.0):
+        global nocertify
         self.url = url
         self.headers = {"Content-Type": "application/json","Accept": "application/json, text/event-stream"}
         if headers:
             self.headers.update(headers)
         self.timeout = timeout
+        ssl_cert_dir = os.environ.get('SSL_CERT_DIR')
+        if not ssl_cert_dir and not nocertify and os.name != 'nt':
+            os.environ['SSL_CERT_DIR'] = '/etc/ssl/certs'
 
     def _read_sse(self, response) -> bytes:
-        last_json = None
+        json_events = []
+        buf = []
         for raw in response:
-            line = raw.decode("utf-8", errors="replace").strip()
-            if not line or line.startswith(":"):
+            line = raw.decode("utf-8", errors="replace").rstrip("\n")
+            if not line: # end of SSE event
+                if buf:
+                    payload = "\n".join(buf)
+                    if payload and payload[0] in "{[":
+                        json_events.append(payload)
+                    buf = []
+                continue
+            if line.startswith(":"):
                 continue
             if line.startswith("data:"):
-                payload = line[5:].strip()
-                if payload and payload[0] in "{[":
-                    last_json = payload
-        if not last_json:
+                buf.append(line[5:].lstrip())
+        if buf: # flush last event
+            payload = "\n".join(buf)
+            if payload and payload[0] in "{[":
+                json_events.append(payload)
+        if not json_events:
             raise RuntimeError("MCP HTTP server returned no JSON SSE response")
-        return last_json.encode("utf-8")
+        return json_events[-1].encode("utf-8")
 
-    def send(self, message: dict) -> dict: # Send JSON-RPC request and return response.
+
+    def send(self, message: dict, await_response=True) -> dict: # Send JSON-RPC request and return response.
         data = json.dumps(message).encode("utf-8")
         req = urllib.request.Request(self.url, data=data, headers=self.headers, method="POST")
         try:
@@ -565,6 +582,8 @@ class MCPHTTPClient:
             raise RuntimeError(f"MCP HTTP error {e.code}: {error_body}") from e
         except urllib.error.URLError as e:
             raise RuntimeError(f"MCP HTTP connection failed: {e.reason}") from e
+        if not await_response:
+            return None
         if not body:
             raise RuntimeError("MCP HTTP server returned empty response")
         try:
@@ -1090,6 +1109,7 @@ def convert_json_to_gbnf(json_obj):
         dotall=False,
         raw_pattern=False)
         schema = json.loads(json.dumps(json_obj))
+        schema = converter.resolve_refs(schema, '')
         converter.visit(schema, '')
         outstr = converter.format_grammar()
         return outstr
@@ -1591,14 +1611,14 @@ def load_model(model_filename):
     inputs.use_smartcontext = args.smartcontext
     inputs.use_contextshift = (0 if args.noshift else 1)
     inputs.use_fastforward = (0 if args.nofastforward else 1)
-    inputs.flash_attention = args.flashattention
+    inputs.flash_attention =  (False if args.noflashattention else True)
     if args.quantkv>0:
-        if args.flashattention:
-            inputs.quant_k = inputs.quant_v = args.quantkv
-        else:
+        if args.noflashattention:
             inputs.quant_k = args.quantkv
             inputs.quant_v = 0
-            print("\nWarning: quantkv was used without flashattention! This is NOT RECOMMENDED!\nOnly K cache can be quantized, and performance can suffer.\nIn some cases, it might even use more VRAM when doing a full offload.\nYou are strongly encouraged to use flashattention if you want to use quantkv.")
+            print("\nWarning: Quantized KV was used without flash attention! This is NOT RECOMMENDED!\nOnly K cache can be quantized, and performance can suffer.\nIn some cases, it might even use more VRAM when doing a full offload.\nYou are strongly encouraged to use flash attention if you want to use quantkv.")
+        else:
+            inputs.quant_k = inputs.quant_v = args.quantkv
     else:
         inputs.quant_k = inputs.quant_v = 0
     inputs.batchsize = args.batchsize
@@ -2762,7 +2782,7 @@ def tts_load_model(ttc_model_filename,cts_model_filename):
     inputs.ttc_model_filename = ttc_model_filename.encode("UTF-8") if ttc_model_filename else "".encode("UTF-8")
     inputs.cts_model_filename = cts_model_filename.encode("UTF-8") if cts_model_filename else "".encode("UTF-8")
     inputs.gpulayers = (999 if args.ttsgpu else 0)
-    inputs.flash_attention =  args.flashattention
+    inputs.flash_attention = (False if args.noflashattention else True)
     thds = args.threads
     if args.ttsthreads and args.ttsthreads > 0:
         ttst = int(args.ttsthreads)
@@ -2842,7 +2862,7 @@ def embeddings_load_model(model_filename):
     inputs = embeddings_load_model_inputs()
     inputs.model_filename = model_filename.encode("UTF-8")
     inputs.gpulayers = (999 if args.embeddingsgpu else 0)
-    inputs.flash_attention = args.flashattention
+    inputs.flash_attention = (False if args.noflashattention else True)
     inputs.threads = args.threads
     inputs.use_mmap = args.usemmap
     inputs.embeddingsmaxctx = (args.embeddingsmaxctx if args.embeddingsmaxctx else args.contextsize) # for us to clamp to contextsize if embeddingsmaxctx unspecified
@@ -4209,7 +4229,7 @@ class KcppServerRequestHandler(http.server.SimpleHTTPRequestHandler):
         recvtxt = genout['text']
         prompttokens = genout['prompt_tokens']
         comptokens = genout['completion_tokens']
-        currfinishreason = ("length" if (genout['stopreason'] != 1) else "stop")
+        currfinishreason = "error" if (genout['stopreason'] == -2) else ("length" if (genout['stopreason'] != 1) else "stop")
 
         # grab logprobs if not streaming
         logprobsdict = None
@@ -4302,7 +4322,7 @@ class KcppServerRequestHandler(http.server.SimpleHTTPRequestHandler):
                 streamDone = handle.has_finished() #exit next loop on done
                 if streamDone:
                     sr = handle.get_last_stop_reason()
-                    currfinishreason = ("length" if (sr!=1) else "stop")
+                    currfinishreason = "error" if sr==-2 else ("length" if (sr!=1) else "stop")
                 tokenStr = ""
                 streamcount = handle.get_stream_count()
                 while current_token < streamcount:
@@ -4830,7 +4850,8 @@ Change Mode<br>
             if friendlysdmodelname=="inactive" or fullsdmodelpath=="":
                 response_body = (json.dumps([]).encode())
             else:
-                response_body = (json.dumps([{"name":"Euler","aliases":["k_euler"],"options":{}},{"name":"Euler a","aliases":["k_euler_a","k_euler_ancestral"],"options":{}},{"name":"Heun","aliases":["k_heun"],"options":{}},{"name":"DPM2","aliases":["k_dpm_2"],"options":{}},{"name":"DPM++ 2M","aliases":["k_dpmpp_2m"],"options":{}},{"name":"DDIM","aliases":["ddim"],"options":{}},{"name":"LCM","aliases":["k_lcm"],"options":{}},{"name":"Default","aliases":["default"],"options":{}}]).encode())
+                response_body = (json.dumps([{"name":"Euler","aliases":["k_euler"],"options":{}},{"name":"Euler a","aliases":["k_euler_a","k_euler_ancestral"],"options":{}},{"name":"Heun","aliases":["k_heun"],"options":{}},{"name":"DPM2","aliases":["k_dpm_2"],"options":{}},{"name":"DPM++ 2M","aliases":["k_dpmpp_2m"],"options":{}},{"name":"DDIM","aliases":["ddim"],"options":{}},{"name":"LCM","aliases":["k_lcm"],"options":{}},{"name":"Res 2s","aliases":["k_res_2s"],"options":{}},{"name":"Res Multistep","aliases":["k_res_multistep"],"options":{}},
+                      {"name":"Default","aliases":["default"],"options":{}}]).encode())
         elif clean_path.endswith('/sdapi/v1/schedulers'):
             if friendlysdmodelname=="inactive" or fullsdmodelpath=="":
                 response_body = (json.dumps([]).encode())
@@ -6318,6 +6339,21 @@ def show_gui():
     def get_problematic_scaler():
         if sys.platform != "linux":
             return False
+        xdg_curr_desk = os.environ.get("XDG_CURRENT_DESKTOP")
+        if xdg_curr_desk and ("KDE" in xdg_curr_desk or "GNOME" in xdg_curr_desk or "Cinnamon" in xdg_curr_desk): # broad spectrum dpi handler
+            dpi = 0
+            try:
+                output = subprocess.check_output(["xrdb", "-query"], text=True).strip()
+                if output:
+                    for line in output.splitlines():
+                        if line.startswith("Xft.dpi:"):
+                            dpi = float(line.split(":")[1].strip())
+                            break
+            except Exception:
+                pass
+            if dpi > 100:
+                return True
+
         import xml.etree.ElementTree as ET
         from pathlib import Path
         fractional_enabled = False # Check if fractional scaling is enabled
@@ -6484,6 +6520,7 @@ def show_gui():
         else:
             gtooltip_label.configure(text=tooltip_text)
 
+        gtooltip_box.update_idletasks()
         x, y = root.winfo_pointerxy()
         gtooltip_box.wm_geometry(f"+{x + 10}+{y + 10}")
         gtooltip_box.deiconify()
@@ -6588,6 +6625,7 @@ def show_gui():
     draftgpulayers_var = ctk.StringVar(value=str(999))
     draftgpusplit_str_vars = ctk.StringVar(value="")
     nomodel = ctk.IntVar(value=0)
+    download_dir_var = ctk.StringVar()
 
     port_var = ctk.StringVar(value=defaultport)
     host_var = ctk.StringVar(value="")
@@ -6833,7 +6871,6 @@ def show_gui():
                 modelsearch2_var.set("")
                 fileinfotxt_var.set("")
                 print(f"Error: {e}")
-
         def fetch_search_models():
             from tkinter import messagebox
             nonlocal searchbox1, searchbox2, modelsearch1_var, modelsearch2_var, fileinfotxt_var
@@ -7256,7 +7293,7 @@ def show_gui():
     makecheckbox(context_tab, "Custom RoPE Config", variable=customrope_var, row=22, command=togglerope,tooltiptxt="Override the default RoPE configuration with custom RoPE scaling.")
     noqkvlabel = makelabel(context_tab,"(Note: QuantKV works best with flash attention)",30,0,"Only K cache can be quantized, and performance can suffer.\nIn some cases, it might even use more VRAM when doing a full offload.",padx=160)
     noqkvlabel.configure(text_color="#ff5555")
-    qkvslider,qkvlabel,qkvtitle = makeslider(context_tab, "Quantize KV Cache:", quantkv_text, quantkv_var, 0, 2, 30, set=0,tooltip="Enable quantization of KV cache.\nRequires FlashAttention for full effect, otherwise only K cache is quantized.")
+    qkvslider,qkvlabel,qkvtitle = makeslider(context_tab, "Quantize KV Cache:", quantkv_text, quantkv_var, 0, 2, 30, set=0,tooltip="Enable quantization of KV cache.\nRequires Flash Attention for full effect, otherwise only K cache is quantized.")
     quantkv_var.trace_add("write", toggleflashattn)
     makecheckbox(context_tab, "No BOS Token", nobostoken_var, 43, tooltiptxt="Prevents BOS token from being added at the start of any prompt. Usually NOT recommended for most models.")
     makecheckbox(context_tab, "Enable Guidance", enableguidance_var, 43,padx=(140), tooltiptxt="Enables the use of Classifier-Free-Guidance, which allows the use of negative prompts. Has performance and memory impact.")
@@ -7296,18 +7333,19 @@ def show_gui():
     makefileentry(model_tab, "Preload Story:", "Select Preloaded Story File", preloadstory_var, 17,width=280,singlerow=True,tooltiptxt="Select an optional KoboldAI JSON savefile \nto be served on launch to any client.")
     makefileentry(model_tab, "SaveData File:", "Select or Create New SaveData Database File", savedatafile_var, 19,width=280,filetypes=[("KoboldCpp SaveDB", "*.jsondb")],singlerow=True,dialog_type=1,tooltiptxt="Selecting a file will allow data to be loaded and saved persistently to this KoboldCpp server remotely. File is created if it does not exist.")
     makefileentry(model_tab, "MCP JSON:", "Select a mcp.json configuration file", mcpfile_var, 21,width=280,filetypes=[("MCP JSON", "*.json")],singlerow=True,tooltiptxt="Specify path to mcp.json which contains the Cladue Desktop compatible MCP server config.")
-    makefileentry(model_tab, "ChatCompletions Adapter:", "Select ChatCompletions Adapter File", chatcompletionsadapter_var, 24, width=250, filetypes=[("JSON Adapter", "*.json")], tooltiptxt="Select an optional ChatCompletions Adapter JSON file to force custom instruct tags.")
+    makefileentry(model_tab, "Chat Adapter:", "Select ChatCompletions Adapter File", chatcompletionsadapter_var, 24, width=184, filetypes=[("JSON Adapter", "*.json")], singlerow=True, tooltiptxt="Select an optional ChatCompletions Adapter JSON file to force custom instruct tags.")
     def pickpremadetemplate():
         initialDir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'kcpp_adapters')
         initialDir = initialDir if os.path.isdir(initialDir) else None
         fnam = zentk_askopenfilename(title="Pick Premade ChatCompletions Adapter",filetypes=[("JSON Adapter", "*.json")], initialdir=initialDir)
         if fnam:
             chatcompletionsadapter_var.set(fnam)
-    ctk.CTkButton(model_tab, 64, text="Pick Premade", command=pickpremadetemplate).grid(row=25, column=0, padx=(322), pady=2, stick="nw")
+    ctk.CTkButton(model_tab, 64, text="Pick Premade", command=pickpremadetemplate).grid(row=24, column=0, padx=(350), pady=2, stick="nw")
 
     mmproj_var.trace_add("write", gui_changed_modelfile)
     draftmodel_var.trace_add("write", gui_changed_modelfile)
-    makecheckbox(model_tab, "Allow Launch Without Models", nomodel, 27, tooltiptxt="Allows running the WebUI with no model loaded.")
+    makefileentry(model_tab, "Download Dir:", "Select directory to store all model downloads", download_dir_var, 27, width=280, singlerow=True, dialog_type=2, tooltiptxt="Specify a directory to store any downloaded models.")
+    makecheckbox(model_tab, "Allow Launch Without Models", nomodel, 40, tooltiptxt="Allows running the WebUI with no model loaded.")
 
     # Network Tab
     network_tab = tabcontent["Network"]
@@ -7520,7 +7558,7 @@ def show_gui():
         args.highpriority = highpriority.get()==1
         args.usemmap = usemmap.get()==1
         args.smartcontext = smartcontext_var.get()==1
-        args.flashattention = flashattention_var.get()==1
+        args.noflashattention = flashattention_var.get()==0
         args.noshift = contextshift_var.get()==0
         args.nofastforward = fastforward_var.get()==0
         args.useswa = swa_var.get()==1
@@ -7628,6 +7666,7 @@ def show_gui():
         args.preloadstory = None if preloadstory_var.get() == "" else preloadstory_var.get()
         args.savedatafile = None if savedatafile_var.get() == "" else savedatafile_var.get()
         args.mcpfile = None if mcpfile_var.get() == "" else mcpfile_var.get()
+        args.downloaddir = download_dir_var.get()
         try:
             if kcpp_exporting_template and isinstance(args.preloadstory, str) and args.preloadstory!="" and os.path.exists(args.preloadstory):
                 print("Embedding preload story...")   # parse and save embedded preload story
@@ -7746,7 +7785,7 @@ def show_gui():
         highpriority.set(1 if "highpriority" in dict and dict["highpriority"] else 0)
         usemmap.set(1 if "usemmap" in dict and dict["usemmap"] else 0)
         smartcontext_var.set(1 if "smartcontext" in dict and dict["smartcontext"] else 0)
-        flashattention_var.set(1 if "flashattention" in dict and dict["flashattention"] else 0)
+        flashattention_var.set(0 if "noflashattention" in dict and dict["noflashattention"] else 1)
         contextshift_var.set(0 if "noshift" in dict and dict["noshift"] else 1)
         fastforward_var.set(0 if "nofastforward" in dict and dict["nofastforward"] else 1)
         swa_var.set(1 if "useswa" in dict and dict["useswa"] else 0)
@@ -7912,6 +7951,7 @@ def show_gui():
         multiuser_var.set(dict["multiuser"] if ("multiuser" in dict) else 1)
         multiplayer_var.set(dict["multiplayer"] if ("multiplayer" in dict) else 0)
         websearch_var.set(dict["websearch"] if ("websearch" in dict) else 0)
+        download_dir_var.set(dict["downloaddir"] if ("downloaddir" in dict and dict["downloaddir"]) else "")
 
         horde_name_var.set(dict["hordemodelname"] if ("hordemodelname" in dict and dict["hordemodelname"]) else "koboldcpp")
         horde_context_var.set(dict["hordemaxctx"] if ("hordemaxctx" in dict and dict["hordemaxctx"]) else maxhordectx)
@@ -8008,9 +8048,58 @@ def show_gui():
             import_vars(dict)
         pass
 
+    def display_help():
+        popup = ctk.CTkToplevel(root)
+        popup.title("Help Menu")
+        popup.geometry("380x380")
+        noobbox_var = ctk.StringVar(value="")
+        def display_hf():
+            popup.destroy()
+            model_searcher()
+        def fetch_noob_templates():
+            nonlocal noobbox
+            noobmodels = []
+            resp = make_url_request("https://huggingface.co/api/models/koboldcpp/newbie-templates",None,'GET',{},10)
+            for m in resp["siblings"]:
+                entry = m["rfilename"]
+                if entry.endswith(".kcppt") and "LowSpec" in entry:
+                    noobmodels.append(entry[:-6])
+            for m in resp["siblings"]:
+                entry = m["rfilename"]
+                if entry.endswith(".kcppt") and "MidSpec" in entry:
+                    noobmodels.append(entry[:-6])
+            for m in resp["siblings"]:
+                entry = m["rfilename"]
+                if entry.endswith(".kcppt") and "HighSpec" in entry:
+                    noobmodels.append(entry[:-6])
+            noobbox.configure(values=noobmodels)
+            if len(noobmodels)>0:
+                noobbox_var.set(noobmodels[0])
+        def load_noob_template():
+            fname = f"https://huggingface.co/koboldcpp/newbie-templates/resolve/main/{noobbox_var.get()}.kcppt"
+            data = make_url_request(fname,data=None,method="GET")
+            if data is not None:
+                import_vars(data)
+            popup.destroy()
+        ctk.CTkLabel(popup, text="Helpful Newbie Resources").pack(pady=(5, 0))
+        ctk.CTkButton(popup, text="Read the Wiki", command=display_wiki).pack(pady=5)
+        ctk.CTkButton(popup, text="Read Starter Guides", command=display_starter_guides).pack(pady=5)
+        ctk.CTkButton(popup, text="Search Model on Hugginface", command=display_hf).pack(pady=5)
+        ctk.CTkLabel(popup, text="Or, Pick an Easy Template for Newbies").pack(pady=(12, 0))
+        noobbox = ctk.CTkComboBox(popup, values=[], width=280, variable=noobbox_var, state="readonly")
+        noobbox.pack(pady=5)
+        ctk.CTkButton(popup, text="Load Template", command=load_noob_template).pack(pady=5)
+        ctk.CTkLabel(popup, text="LowSpec = Recommend 6GB VRAM\nMidSpec = Recommend 12GB VRAM\nHighSpec = Recommend 24GB VRAM").pack(pady=(10, 0))
+        ctk.CTkLabel(popup, text="Everything = All Features         Text = Text Generation\nImages = Image Generation         Vision = Image Recognition\nVoice = Speech Generation         Audio = Speech Recognition").pack(pady=(10, 0))
+        fetch_noob_templates()
+        popup.transient(root)
+
     def display_help_models():
         LaunchWebbrowser("https://github.com/LostRuins/koboldcpp/wiki#what-models-does-koboldcpp-support-what-architectures-are-supported","Cannot launch help in browser.")
-
+    def display_starter_guides():
+        LaunchWebbrowser("https://github.com/LostRuins/koboldcpp/wiki#step-by-step-guides","Cannot launch help in browser.")
+    def display_wiki():
+        LaunchWebbrowser("https://github.com/LostRuins/koboldcpp/wiki#the-koboldcpp-faq-and-knowledgebase","Cannot launch help in browser.")
     def display_updates():
         LaunchWebbrowser("https://github.com/LostRuins/koboldcpp/releases/latest","Cannot launch updates in browser.")
 
@@ -8019,7 +8108,7 @@ def show_gui():
     ctk.CTkButton(tabs , text = "Update", fg_color="#9900cc", hover_color="#aa11dd", command = display_updates, width=90, height = 35 ).grid(row=1,column=0, stick="sw", padx= 5, pady=5)
     ctk.CTkButton(tabs , text = "Save Config", fg_color="#084a66", hover_color="#085a88", command = save_config_gui, width=60, height = 35 ).grid(row=1,column=1, stick="sw", padx= 5, pady=5)
     ctk.CTkButton(tabs , text = "Load Config", fg_color="#084a66", hover_color="#085a88", command = load_config_gui, width=60, height = 35 ).grid(row=1,column=1, stick="sw", padx= (92), pady=5)
-    ctk.CTkButton(tabs , text = "Help (Find Models)", fg_color="#992222", hover_color="#bb3333", command = display_help_models, width=100, height = 35 ).grid(row=1,column=1, stick="sw", padx= (180), pady=5)
+    ctk.CTkButton(tabs , text = "Get Help", fg_color="#992222", hover_color="#bb3333", command = display_help, width=60, height = 35 ).grid(row=1,column=1, stick="sw", padx= (180), pady=5)
 
     # start a thread that tries to get actual gpu names and layer counts
     gpuinfo_thread = threading.Thread(target=auto_set_backend_gui)
@@ -8336,6 +8425,8 @@ def convert_invalid_args(args):
         dict["jinja"] = True
     if "sdgendefaults" in dict and "gendefaults" not in dict:
         dict["gendefaults"] = dict["sdgendefaults"]
+    if "flashattention" in dict and "noflashattention" not in dict:
+        dict["noflashattention"] = not dict["flashattention"]
     return args
 
 def setuptunnel(global_memory, has_sd):
@@ -8550,21 +8641,28 @@ def sanitize_string(input_string):
     return sanitized_string
 
 def downloader_internal(input_url, output_filename, capture_output, min_file_size=64): # 64 bytes required by default
+    download_dir_path = args.downloaddir
     if "https://huggingface.co/" in input_url and "/blob/main/" in input_url:
         input_url = input_url.replace("/blob/main/", "/resolve/main/")
+    if download_dir_path:
+        download_dir_path = os.path.abspath(download_dir_path)
+        os.makedirs(download_dir_path, exist_ok=True)
     if output_filename == "auto":
-        cwd = os.getcwd()
-        non_writable = False
-        if os.name == "nt":
-            parts = [p.lower() for p in os.path.normpath(cwd).split(os.sep)]
-            if "windows" in parts and ("system32" in parts or "syswow64" in parts):
-                non_writable = True
-        if not non_writable:
-            output_filename = os.path.basename(input_url).split('?')[0].split('#')[0]
+        filename = os.path.basename(input_url).split('?')[0].split('#')[0]
+        if download_dir_path:
+            output_filename = os.path.join(download_dir_path, filename)
         else:
-            exe_dir = os.path.dirname(sys.executable if getattr(sys, 'frozen', False) else __file__)
-            filename = os.path.basename(input_url).split('?')[0].split('#')[0]
-            output_filename = os.path.join(exe_dir, filename)
+            cwd = os.getcwd()
+            non_writable = False
+            if os.name == "nt":
+                parts = [p.lower() for p in os.path.normpath(cwd).split(os.sep)]
+                if "windows" in parts and ("system32" in parts or "syswow64" in parts):
+                    non_writable = True
+            if not non_writable:
+                output_filename = filename
+            else:
+                exe_dir = os.path.dirname(sys.executable if getattr(sys, 'frozen', False) else __file__)
+                output_filename = os.path.join(exe_dir, filename)
     incomplete_dl_exist = (os.path.exists(output_filename+".aria2") and os.path.getsize(output_filename+".aria2") > 16)
     if os.path.exists(output_filename) and os.path.getsize(output_filename) > min_file_size and not incomplete_dl_exist:
         print(f"{output_filename} already exists, using existing file.")
@@ -8718,7 +8816,11 @@ def load_mcp_async(args):
                 raise ValueError("MCP config must be a JSON object")
             servers = loaded.get("mcpServers")
             if not isinstance(servers, dict):
-                raise ValueError("MCP config missing 'mcpServers' object")
+                serversVsCode = loaded.get("servers")
+                if isinstance(serversVsCode, dict):
+                    servers = serversVsCode
+                else:
+                    raise ValueError("MCP config missing 'mcpServers' object")
             for name, cfg in servers.items():
                 try:
                     print(f"Connecting to MCP Server {name}...")
@@ -8731,7 +8833,9 @@ def load_mcp_async(args):
                         mcpenv = cfg.get("env", {})
                         client = MCPStdioClient(command=mcpcmd,largs=mcpargs,env=mcpenv)
                     elif mcpurl:
+                        mcp_ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36'
                         headers = cfg.get("headers", {})
+                        headers.setdefault('User-Agent', mcp_ua)
                         client = MCPHTTPClient(url=mcpurl, headers=headers)
                     else:
                         raise ValueError(f"MCP server '{name}' missing 'command' and 'url'")
@@ -8751,16 +8855,24 @@ def load_mcp_async(args):
                             "clientInfo": {"name": "koboldcpp", "version": "1.0.0"}
                         }
                     }
+                    notif_payload = {
+                        "jsonrpc": "2.0",
+                        "method": "notifications/initialized"
+                    }
                     toolget_payload = {
                         "jsonrpc": "2.0",
                         "id": random.randint(100000, 999999),
                         "method": "tools/list",
                         "params": {}
                     }
+
                     resp1 = conn["client"].send(init_payload)
                     if "result" not in resp1:
                         continue
+
+                    conn["client"].send(notif_payload, await_response=False)
                     resp2 = conn["client"].send(toolget_payload)
+
                     if "result" not in resp2 or "tools" not in resp2["result"]:
                         continue
                     with mcp_lock:
@@ -9316,7 +9428,7 @@ def kcpp_main_process(launch_args, g_memory=None, gui_launcher=False):
             if args.gpulayers==-1:
                 if MaxMemory[0] > 0 and (not args.usecpu) and ((args.usecuda is not None) or (args.usevulkan is not None) or sys.platform=="darwin"):
                     extract_modelfile_params(args.model_param,args.sdmodel,args.whispermodel,args.mmproj,args.draftmodel,args.ttsmodel if args.ttsgpu else "",args.embeddingsmodel if args.embeddingsgpu else "")
-                    layeramt = autoset_gpu_layers(args.contextsize,args.sdquant,args.batchsize,(args.quantkv if args.flashattention else 0))
+                    layeramt = autoset_gpu_layers(args.contextsize,args.sdquant,args.batchsize,(0 if args.noflashattention else args.quantkv))
                     print(f"Auto Recommended GPU Layers: {layeramt}")
                     args.gpulayers = layeramt
                 else:
@@ -9769,7 +9881,7 @@ def kcpp_main_process(launch_args, g_memory=None, gui_launcher=False):
                 s_pp = float(benchmaxctx-benchlen)/t_pp
                 s_gen = float(benchlen)/t_gen
                 datetimestamp = datetime.now(timezone.utc)
-                benchflagstr = f"NoAVX2={args.noavx2} Threads={args.threads} HighPriority={args.highpriority} Cuda_Args={args.usecuda} Tensor_Split={args.tensor_split} BlasThreads={args.blasthreads} BatchSize={args.batchsize} FlashAttention={args.flashattention} KvCache={args.quantkv}"
+                benchflagstr = f"NoAVX2={args.noavx2} Threads={args.threads} HighPriority={args.highpriority} Cuda_Args={args.usecuda} Tensor_Split={args.tensor_split} BlasThreads={args.blasthreads} BatchSize={args.batchsize} FlashAttention={not args.noflashattention} KvCache={args.quantkv}"
                 print(f"\nBenchmark Completed - v{KcppVersion} Results:\n======")
                 print(f"Flags: {benchflagstr}")
                 print(f"Timestamp: {datetimestamp}")
@@ -9894,7 +10006,7 @@ if __name__ == '__main__':
     advparser.add_argument("--chatcompletionsadapter", metavar=('[filename]'), help="Select an optional ChatCompletions Adapter JSON file to force custom instruct tags.", default="AutoGuess")
     advparser.add_argument("--jinja", help="Enables using jinja chat template formatting for chat completions endpoint. Other endpoints are unaffected. Tool calls are done without jinja.", action='store_true')
     advparser.add_argument("--jinja_tools","--jinja-tools","--jinjatools", help="Enables using jinja chat template formatting for chat completions endpoint. Other endpoints are unaffected. Tool calls are done with jinja.", action='store_true')
-    advparser.add_argument("--flashattention","--flash-attn","-fa", help="Enables flash attention.", action='store_true')
+    advparser.add_argument("--noflashattention","--no-flash-attn","-nofa", help="Disables flash attention.", action='store_true')
     advparser.add_argument("--lowvram","-nkvo","--no-kv-offload", help="If supported by the backend, do not offload KV to GPU (lowvram mode). Not recommended, will be slow.", action='store_true')
     advparser.add_argument("--quantkv", help="Sets the KV cache data type quantization, 0=f16, 1=q8, 2=q4. Requires Flash Attention for full effect, otherwise only K cache is quantized.",metavar=('[quantization level 0/1/2]'), type=int, choices=[0,1,2], default=0)
     advparser.add_argument("--smartcontext", help="Reserving a portion of context to try processing less frequently. Outdated. Not recommended.", action='store_true')
@@ -9920,6 +10032,7 @@ if __name__ == '__main__':
     advparser.add_argument("--gendefaultsoverwrite", help="Allow the gendefaults parameters to overwrite the original value in API payloads.", action='store_true')
     advparser.add_argument("--mcpfile", metavar=('[mcp json file]'), help="Specify path to mcp.json which contains the Cladue Desktop compatible MCP server config.", default="")
     advparser.add_argument("--device", "-dev", metavar=('<dev1,dev2,..>'), help="Set llama.cpp compatible device selection override. Comma separated. Overrides normal device choices.", default="")
+    advparser.add_argument("--downloaddir", metavar=('[directory]'), help="Specify a directory that models will be downloaded to or searched from, if unset uses the working directory.", default="")
 
     hordeparsergroup = parser.add_argument_group('Horde Worker Commands')
     hordeparsergroup.add_argument("--hordemodelname", metavar=('[name]'), help="Sets your AI Horde display model name.", default="")
@@ -9983,6 +10096,7 @@ if __name__ == '__main__':
     deprecatedgroup.add_argument("--sdnotile", help=argparse.SUPPRESS, action='store_true') # legacy option, see sdtiledvae
     deprecatedgroup.add_argument("--forceversion", help=argparse.SUPPRESS, action='store_true') #no longer used
     deprecatedgroup.add_argument("--sdgendefaults", help=argparse.SUPPRESS, action='store_true') # legacy option, see gendefaults
+    deprecatedgroup.add_argument("--flashattention","--flash-attn","-fa", help=argparse.SUPPRESS, action='store_true') #flash attention now default on
 
     debuggroup = parser.add_argument_group('Debug Commands')
     debuggroup.add_argument("--testmemory", help=argparse.SUPPRESS, action='store_true')

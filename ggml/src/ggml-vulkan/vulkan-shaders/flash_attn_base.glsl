@@ -8,6 +8,9 @@ layout (constant_id = 3) const uint32_t HSK = 32;
 layout (constant_id = 4) const uint32_t HSV = 32;
 layout (constant_id = 5) const uint32_t Clamp = 0;
 layout (constant_id = 6) const uint32_t D_split = 16;
+layout (constant_id = 7) const uint32_t SubGroupSize = 32;
+layout (constant_id = 8) const uint32_t K_LOAD_SHMEM = 0;
+layout (constant_id = 9) const bool     USE_MASK_OPT = false;
 
 // Round up head sizes to a multiple of 16, for coopmat1/coopmat2 paths
 const uint32_t HSK_pad = (HSK + 15) & ~15;
@@ -64,6 +67,11 @@ layout (binding = 4) readonly buffer S {float data_s[];};
 
 layout (binding = 5) writeonly buffer O {D_TYPE data_o[];};
 
+layout (binding = 6) readonly buffer MO {uint32_t data_mask_opt[];};
+
+#define MASK_OPT_ALL_NEG_INF 1
+#define MASK_OPT_ALL_ZERO 2
+
 #define BINDING_IDX_K 0
 #define BINDING_IDX_V 1
 #if defined(DATA_A_F32)
@@ -72,6 +80,10 @@ layout (binding = 2) readonly buffer V_PACKED {vec4 v_data_packed[];} v_packed;
 #elif defined(A_TYPE_PACKED16)
 layout (binding = 1) readonly buffer K_PACKED16 {A_TYPE_PACKED16 k_data_packed16[];} k_packed;
 layout (binding = 2) readonly buffer V_PACKED16 {A_TYPE_PACKED16 v_data_packed16[];} v_packed;
+#endif
+
+#ifndef BLOCK_SIZE
+#define BLOCK_SIZE 1
 #endif
 
 #if defined(DATA_A_F32)

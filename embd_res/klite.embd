@@ -925,7 +925,7 @@ Current version indicated by LITEVER below.
 		padding-right: 6px;
 	}
 	#actionmenuitems button.slim,#actionmenuitems2 button.slim {
-		min-width: 38px;
+		width: 34px;
 		padding-left: 4px;
 		padding-right: 4px;
 	}
@@ -20827,12 +20827,7 @@ Current version indicated by LITEVER below.
 						//something went wrong.
 						clear_poll_flags();
 						render_gametext();
-						if (data.message != "") {
-							msgbox(data.message);
-						}
-						else {
-							msgbox("Unspecified error while submitting prompt");
-						}
+						msgbox("Error Submitting Prompt: " + JSON.stringify(data));
 					}
 				})
 				.catch((error) => {

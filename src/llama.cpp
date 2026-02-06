@@ -10,7 +10,7 @@ static bool old_mixtral_warning_showed = false;
 #include "llama-batch.cpp"
 #include "llama-vocab.cpp"
 #include "llama-grammar.cpp"
-#include "llama-sampling.cpp"
+#include "llama-sampler.cpp"
 #include "llama-kv-cache.cpp"
 #include "llama-kv-cache-iswa.cpp"
 #include "llama-memory-hybrid.cpp"
