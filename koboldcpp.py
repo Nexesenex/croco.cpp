@@ -63,6 +63,7 @@ savestate_limit = 0 #savestate slots start at 0, only set when load model
 default_vae_tile_threshold = 768
 default_native_ctx = 16384
 overridekv_max = 4
+default_autofit_padding = 1024
 
 # abuse prevention
 stop_token_max = 256
@@ -72,7 +73,7 @@ dry_seq_break_max = 128
 extra_images_max = 4 # for kontext/qwen img
 
 # global vars
-KcppVersion = "1.107.2"
+KcppVersion = "1.108"
 showdebug = True
 kcpp_instance = None #global running instance
 global_memory = {"tunnel_url": "", "restart_target":"", "input_to_exit":False, "load_complete":False, "restart_model": "", "currentConfig": None, "modelOverride": None, "currentModel": None}
@@ -647,9 +648,9 @@ def get_default_threads():
     processor = platform.processor()
     if 'Intel' in processor:
         default_threads = (8 if default_threads > 8 else default_threads) #this helps avoid e-cores.
-    if default_threads > 48:
-        print(f"Auto CPU Threads capped at 48 (instead of {default_threads}). You can override this by passing an explicit number of --threads.")
-        default_threads = 48
+    if default_threads > 64:
+        print(f"Auto CPU Threads capped at 64 (instead of {default_threads}). You can override this by passing an explicit number of --threads.")
+        default_threads = 64
     return default_threads
 
 def pick_existant_file(ntoption,nonntoption):
@@ -1623,7 +1624,7 @@ def load_model(model_filename):
         inputs.quant_k = inputs.quant_v = 0
     inputs.batchsize = args.batchsize
     inputs.autofit = args.autofit
-    inputs.autofit_tax_mb = int(calulated_gpu_overhead/(1024*1024))
+    inputs.autofit_tax_mb = int(args.autofitpadding) + int(calulated_gpu_overhead/(1024*1024))
     inputs.gpulayers = args.gpulayers
     if args.overridenativecontext and args.overridenativecontext>0:
         inputs.overridenativecontext = args.overridenativecontext
@@ -4311,6 +4312,10 @@ class KcppServerRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header("connection", "keep-alive")
         self.end_headers(content_type='text/event-stream')
 
+        encap_in_thinking = False
+        encap_first_loop = True
+        thinkpairs = [{"start":"<|channel|>analysis<|message|>","end":"<|start|>assistant<|channel|>final<|message|>"},
+                      {"start":"<think>","end":"</think>"}]
         current_token = 0
         incomplete_token_buffer = bytearray()
         async_sleep_short = 0.02
@@ -4361,9 +4366,37 @@ class KcppServerRequestHandler(http.server.SimpleHTTPRequestHandler):
 
                         if tokenStr!="" or streamDone:
                             need_split_final_msg = True if (currfinishreason is not None and streamDone and tokenStr!="") else False
+
+                            # hack for lcppui reasoning_content for thinking models
+                            delta = {'role':'assistant','content':tokenStr}
+                            if genparams.get('encapsulate_thinking', False):
+                                for pair in thinkpairs:
+                                    if encap_first_loop and not encap_in_thinking and genparams.get("prompt","").endswith(pair["start"]):
+                                        encap_in_thinking = True
+                                        delta = {'role':'assistant','reasoning_content':tokenStr}
+                                        thinkpairs = [pair] #remove all others
+                                        break
+                                    elif not encap_in_thinking and (pair["start"] in tokenStr):
+                                        encap_in_thinking = True
+                                        out1, out2 = tokenStr.split(pair["start"], 1)
+                                        delta = {'role':'assistant','reasoning_content':out2}
+                                        thinkpairs = [pair] #remove all others
+                                        break
+                                    elif encap_in_thinking and pair["end"] in tokenStr:
+                                        encap_in_thinking = False
+                                        out1, out2 = tokenStr.split(pair["end"], 1)
+                                        delta = {'role':'assistant','reasoning_content':out1,'content':out2}
+                                        thinkpairs = [pair] #remove all others
+                                        break
+                                    elif encap_in_thinking:
+                                        delta = {'role':'assistant','reasoning_content':tokenStr}
+                                    else:
+                                        delta = {'role':'assistant','content':tokenStr}
+                                encap_first_loop = False
+
                             if need_split_final_msg: #we need to send one message without the finish reason, then send a finish reason with no msg to follow standards
                                 if api_format == 4:  # if oai chat, set format to expected openai streaming response
-                                    event_str = json.dumps({"id":"koboldcpp","object":"chat.completion.chunk","created":int(time.time()),"model":friendlymodelname,"choices":[{"index":0,"finish_reason":None,"delta":{'role':'assistant','content':tokenStr}}]})
+                                    event_str = json.dumps({"id":"koboldcpp","object":"chat.completion.chunk","created":int(time.time()),"model":friendlymodelname,"choices":[{"index":0,"finish_reason":None,"delta":delta}]})
                                     await self.send_oai_sse_event(event_str)
                                 elif api_format == 3:  # non chat completions
                                     event_str = json.dumps({"id":"koboldcpp","object":"text_completion","created":int(time.time()),"model":friendlymodelname,"choices":[{"index":0,"finish_reason":None,"text":tokenStr}]})
@@ -4378,7 +4411,7 @@ class KcppServerRequestHandler(http.server.SimpleHTTPRequestHandler):
                                     logprobsdict = parse_last_logprobs(lastlogprobs)
                                     addonstr = json.dumps({"id":"koboldcpp","object":"chat.completion.chunk","created":int(time.time()),"model":friendlymodelname,"choices":[{"index":0,"finish_reason":None,"delta":{'role':'assistant','content':''},"logprobs":logprobsdict}]})
                                     await self.send_oai_sse_event(addonstr)
-                                event_str = json.dumps({"id":"koboldcpp","object":"chat.completion.chunk","created":int(time.time()),"model":friendlymodelname,"choices":[{"index":0,"finish_reason":currfinishreason,"delta":{'role':'assistant','content':tokenStr}}]})
+                                event_str = json.dumps({"id":"koboldcpp","object":"chat.completion.chunk","created":int(time.time()),"model":friendlymodelname,"choices":[{"index":0,"finish_reason":currfinishreason,"delta":delta}]})
                                 await self.send_oai_sse_event(event_str)
                             elif api_format == 3:  # non chat completions
                                 if streamDone and ("logprobs" in genparams and genparams["logprobs"]): # this is a hack that sends an extra message containing ALL the logprobs
@@ -5844,6 +5877,7 @@ Change Mode<br>
                 # payload modifications for lcpp endpoint. we detect this by the timings_per_token field existing
                 if "timings_per_token" in genparams:
                     genparams["continue_assistant_turn"] = True
+                    genparams["encapsulate_thinking"] = True
 
                 printablegenparams_raw = truncate_long_json(genparams,trunc_len)
                 utfprint("\nInput: " + json.dumps(printablegenparams_raw,ensure_ascii=False),1)
@@ -6335,7 +6369,7 @@ def show_gui():
     global using_gui_launcher
     using_gui_launcher = True
 
-    #check for wayland with fractional scale
+    #check for potential scaling issues
     def get_problematic_scaler():
         if sys.platform != "linux":
             return False
@@ -6430,7 +6464,7 @@ def show_gui():
     root = ctk.CTk(fg_color="#2b2b2b")
     if corrupt_scaler:
         print("Adjusting tk scaling to try and fix scaling issues...")
-        root.tk.call('tk','scaling',2)
+        root.tk.call('tk','scaling', 2.25)
     root.geometry(str(windowwidth) + "x" + str(windowheight))
     root.title(f"KoboldCpp v{KcppVersion}")
 
@@ -6562,6 +6596,7 @@ def show_gui():
     threads_var = ctk.StringVar(value=str(default_threads))
     runopts_var = ctk.StringVar()
     gpu_choice_var = ctk.StringVar(value="1")
+    autofit_padding_var = ctk.StringVar(value=str(default_autofit_padding))
 
     launchbrowser = ctk.IntVar(value=1)
     highpriority = ctk.IntVar()
@@ -6999,26 +7034,31 @@ def show_gui():
             changed_gpulayers_estimate()
         pass
 
+    def changed_autofit(*args):
+        changerunmode(1,1,1)
+        changed_gpulayers_estimate()
+
     def changed_gpulayers_estimate(*args):
-        predicted_gpu_layers = autoset_gpu_layers(int(contextsize_text[context_var.get()]),sd_quant_option(sd_quant_var.get()),int(batchsize_values[int(blas_size_var.get())]),(quantkv_var.get() if flashattention_var.get()==1 else 0))
-        max_gpu_layers = (f"/{modelfile_extracted_meta[1][0]+1}" if (modelfile_extracted_meta and modelfile_extracted_meta[1] and modelfile_extracted_meta[1][0]!=0) else "")
+        autoset_gpu_layers(int(contextsize_text[context_var.get()]),sd_quant_option(sd_quant_var.get()),int(batchsize_values[int(blas_size_var.get())]),(quantkv_var.get() if flashattention_var.get()==1 else 0))
+        max_gpu_layers = (f"{modelfile_extracted_meta[1][0]+1}" if (modelfile_extracted_meta and modelfile_extracted_meta[1] and modelfile_extracted_meta[1][0]!=0) else "")
         index = runopts_var.get()
         gpu_be = (index == "Use Vulkan" or index == "Use Vulkan (Old CPU)" or index == "Use Vulkan (Older CPU)" or index == "Use CUDA" or index == "Use hipBLAS (ROCm)")
         layercounter_label.grid(row=6, column=0, padx=230, sticky="W")
         quick_layercounter_label.grid(row=6, column=1, padx=75, sticky="W")
-        if sys.platform=="darwin" and gpulayers_var.get()=="-1":
-            quick_layercounter_label.configure(text="(Auto: All Layers)")
-            layercounter_label.configure(text="(Auto: All Layers)")
-        elif gpu_be and gpulayers_var.get()=="-1" and predicted_gpu_layers>0:
-            quick_layercounter_label.configure(text=f"(Auto: {predicted_gpu_layers}{max_gpu_layers} Layers)")
-            layercounter_label.configure(text=f"(Auto: {predicted_gpu_layers}{max_gpu_layers} Layers)")
-        elif gpu_be and gpulayers_var.get()=="-1" and predicted_gpu_layers<=0 and (modelfile_extracted_meta and modelfile_extracted_meta[2]):
-            quick_layercounter_label.configure(text="(Auto: No Offload)")
-            layercounter_label.configure(text="(Auto: No Offload)")
+        if sys.platform=="darwin" and gpulayers_var.get()=="-1" and max_gpu_layers:
+            quick_layercounter_label.configure(text=f"(Auto) ({max_gpu_layers} Total Layers)")
+            layercounter_label.configure(text=f"(Auto) ({max_gpu_layers} Total Layers)")
+        elif gpu_be and gpulayers_var.get()=="-1" and max_gpu_layers:
+            quick_layercounter_label.configure(text=f"(Auto) ({max_gpu_layers} Total Layers)")
+            layercounter_label.configure(text=f"(Auto) ({max_gpu_layers} Total Layers)")
         elif gpu_be and gpulayers_var.get()=="":
             quick_layercounter_label.configure(text="(Set -1 for Auto)")
             layercounter_label.configure(text="(Set -1 for Auto)")
         else:
+            layercounter_label.grid_remove()
+            quick_layercounter_label.grid_remove()
+
+        if autofit_var.get()==1:
             layercounter_label.grid_remove()
             quick_layercounter_label.grid_remove()
 
@@ -7144,6 +7184,18 @@ def show_gui():
             gpu_layers_entry.grid_remove()
             quick_gpu_layers_label.grid_remove()
             quick_gpu_layers_entry.grid_remove()
+
+        if autofit_var.get()==1:
+            gpu_layers_label.grid_remove()
+            gpu_layers_entry.grid_remove()
+            quick_gpu_layers_label.grid_remove()
+            quick_gpu_layers_entry.grid_remove()
+            autofit_padding_label.grid(row=6, column=0, padx=8, pady=1, stick="nw")
+            autofit_padding_entry.grid(row=6, column=0, padx=160, pady=1, stick="nw")
+        else:
+            autofit_padding_label.grid_remove()
+            autofit_padding_entry.grid_remove()
+
         changed_gpulayers_estimate()
         changed_gpu_choice_var()
 
@@ -7175,21 +7227,21 @@ def show_gui():
         "Use MMAP": [usemmap,  "Use mmap to load models if enabled, model will not be unloadable"],
         "Use ContextShift": [contextshift_var, "Uses Context Shifting to reduce reprocessing.\nRecommended. Check the wiki for more info."],
         "Remote Tunnel": [remotetunnel_var,  "Creates a trycloudflare tunnel.\nAllows you to access koboldcpp from other devices over an internet URL."],
+        "Use FlashAttention": [flashattention_var, "Enable flash attention for GGUF models."],
+        "AutoFit": [autofit_var, "Automatically attempt to fit the model in the best possible way. Overrides everything else.\nNot recommended for multi model setups. Experimental."],
         "Quiet Mode": [quietmode, "Prevents all generation related terminal output from being displayed."]
     }
 
     for idx, (name, properties) in enumerate(quick_boxes.items()):
         makecheckbox(quick_tab, name, properties[0], int(idx/2) + 20, idx % 2, tooltiptxt=properties[1])
 
-    makecheckbox(quick_tab, "Use FlashAttention", flashattention_var, 22, 1, tooltiptxt="Enable flash attention for GGUF models.")
-
     # context size
-    makeslider(quick_tab, "Context Size:", contextsize_text, context_var, 0, len(contextsize_text)-1, 30, width=280, set=7,tooltip="What is the maximum context size to support. Model specific. You cannot exceed it.\nLarger contexts require more memory, and not all models support it.")
+    makeslider(quick_tab, "Context Size:", contextsize_text, context_var, 0, len(contextsize_text)-1, 40, width=280, set=7,tooltip="What is the maximum context size to support. Model specific. You cannot exceed it.\nLarger contexts require more memory, and not all models support it.")
 
     # load model
-    makefileentry(quick_tab, "GGUF Text Model:", "Select GGUF or GGML Model File", model_var, 40, 280, onchoosefile=on_picked_model_file,tooltiptxt="Select a GGUF or GGML model file on disk to be loaded.")
+    makefileentry(quick_tab, "GGUF Text Model:", "Select GGUF or GGML Model File", model_var, 50, 280, onchoosefile=on_picked_model_file,tooltiptxt="Select a GGUF or GGML model file on disk to be loaded.")
     model_var.trace_add("write", gui_changed_modelfile)
-    ctk.CTkButton(quick_tab, width=70, text = "HF Search", command = model_searcher ).grid(row=41,column=1, stick="sw", padx= 202, pady=2)
+    ctk.CTkButton(quick_tab, width=70, text = "HF Search", command = model_searcher ).grid(row=51,column=1, stick="sw", padx=184, pady=2)
 
     # Hardware Tab
     hardware_tab = tabcontent["Hardware"]
@@ -7210,7 +7262,8 @@ def show_gui():
     lowvram_box = makecheckbox(hardware_tab,  "No KV offload", lowvram_var, 4,0, tooltiptxt='Avoid offloading KV Cache or scratch buffers to VRAM.\nAllows more layers to fit, but may result in a large speed loss.')
     mmq_box = makecheckbox(hardware_tab,  "Use MMQ", mmq_var, 4,0,padx=160, tooltiptxt="Enable MMQ mode to use finetuned kernels instead of default CuBLAS/HipBLAS for prompt processing.\nRead the wiki. Speed may vary.")
     splitmode_box = makecheckbox(hardware_tab,  "Row-Split", rowsplit_var, 4,0,padx=300, tooltiptxt="Split rows across GPUs instead of splitting layers and KV across GPUs.\nUses the main GPU for small tensors and intermediate results. Speed may vary.")
-    gpu_layers_entry,gpu_layers_label = makelabelentry(hardware_tab,"GPU Layers:", gpulayers_var, 6, 50, padx=160,singleline=True,tooltip="How many layers to offload onto the GPU.\nVRAM intensive, usage increases with model and context size.\nRequires some trial and error to find the best fit value.\n\nCommon values for total layers, accuracy not guaranteed.\n\nLlama/Mistral 7b/8b: 33\nSolar 10.7b/11b: 49\nLlama 13b: 41\nLlama 20b(stack): 63\nLlama/Yi 34b: 61\nMixtral 8x7b: 33\nLlama 70b: 81")
+    gpu_layers_entry,gpu_layers_label = makelabelentry(hardware_tab,"GPU Layers:", gpulayers_var, 6, 50, padx=160,singleline=True,tooltip="How many layers to offload onto the GPU.\nUsage varies based on model type and increases with model and context size.\nRequires some trial and error to find the best fit value.\n\nNote: The auto estimation is often inaccurate! Please set layers yourself for best results!")
+    autofit_padding_entry,autofit_padding_label = makelabelentry(hardware_tab,"Autofit Padding (MB):", autofit_padding_var, 6, 50, padx=160,singleline=True,tooltip="How much spare allowance in MB should autofit reserve? If it's too little, the load might fail.")
     layercounter_label = ctk.CTkLabel(hardware_tab, text="")
     layercounter_label.grid(row=6, column=0, padx=230, sticky="W")
     layercounter_label.configure(text_color="#ffff00")
@@ -7244,7 +7297,7 @@ def show_gui():
 
     makecheckbox(hardware_tab, "Use FlashAttention", flashattention_var, 100, command=toggleflashattn,  tooltiptxt="Enable flash attention for GGUF models.")
 
-    makecheckbox(hardware_tab, "AutoFit (llama.cpp mode)", autofit_var, 100,0,padx=160, tooltiptxt="Automatically attempt to fit the model in the best possible way. Overrides everything else. Not recommended for multi model setups. Experimental.")
+    makecheckbox(hardware_tab, "AutoFit", autofit_var, 100,0,command=changed_autofit,padx=160, tooltiptxt="Automatically attempt to fit the model in the best possible way. Overrides everything else.\nNot recommended for multi model setups. Experimental.")
     ctk.CTkButton(hardware_tab , text = "Run Benchmark", command = guibench ).grid(row=110,column=0, stick="nw", padx= 8, pady=2)
 
 
@@ -7603,6 +7656,8 @@ def show_gui():
                 args.failsafe = True
         if gpulayers_var.get():
             args.gpulayers = (0 if gpulayers_var.get()=="" else int(gpulayers_var.get()))
+        if autofit_padding_var.get():
+            args.autofitpadding = (default_autofit_padding if autofit_padding_var.get()=="" else int(autofit_padding_var.get()))
         if runopts_var.get()=="Use CPU":
             args.usecpu = True
         if runopts_var.get()=="Use CPU (Old CPU)":
@@ -7915,6 +7970,11 @@ def show_gui():
 
         autofit_var.set(1 if "autofit" in dict and dict["autofit"] else 0)
         model_var.set(dict["model_param"] if ("model_param" in dict and dict["model_param"]) else "")
+
+        if "autofitpadding" in dict and dict["autofitpadding"]:
+            autofit_padding_var.set(dict["autofitpadding"])
+        else:
+            autofit_padding_var.set(str(default_autofit_padding))
 
         lora_var.set("")
         if "lora" in dict and dict["lora"]:
@@ -8647,6 +8707,8 @@ def downloader_internal(input_url, output_filename, capture_output, min_file_siz
     if download_dir_path:
         download_dir_path = os.path.abspath(download_dir_path)
         os.makedirs(download_dir_path, exist_ok=True)
+    if output_filename != "auto" and download_dir_path and not os.path.isabs(output_filename):
+        output_filename = os.path.join(download_dir_path, output_filename)
     if output_filename == "auto":
         filename = os.path.basename(input_url).split('?')[0].split('#')[0]
         if download_dir_path:
@@ -9431,6 +9493,11 @@ def kcpp_main_process(launch_args, g_memory=None, gui_launcher=False):
                     layeramt = autoset_gpu_layers(args.contextsize,args.sdquant,args.batchsize,(0 if args.noflashattention else args.quantkv))
                     print(f"Auto Recommended GPU Layers: {layeramt}")
                     args.gpulayers = layeramt
+                    # enable autofit also if permissible
+                    if not args.autofit and not args.tensor_split and not args.overridetensors:
+                        args.autofit = True
+                        args.autofitpadding = default_autofit_padding
+                        print("GPU layers is default: Will enable AutoFit for increased estimation accuracy.")
                 else:
                     print("No GPU backend found, or could not automatically determine GPU layers. Please set it manually.")
                     args.gpulayers = 0
@@ -10033,6 +10100,7 @@ if __name__ == '__main__':
     advparser.add_argument("--mcpfile", metavar=('[mcp json file]'), help="Specify path to mcp.json which contains the Cladue Desktop compatible MCP server config.", default="")
     advparser.add_argument("--device", "-dev", metavar=('<dev1,dev2,..>'), help="Set llama.cpp compatible device selection override. Comma separated. Overrides normal device choices.", default="")
     advparser.add_argument("--downloaddir", metavar=('[directory]'), help="Specify a directory that models will be downloaded to or searched from, if unset uses the working directory.", default="")
+    advparser.add_argument("--autofitpadding", metavar=('[padding in MB]'), help="How much spare allowance in MB should autofit reserve? If it's too little, the load might fail.", type=int, default=default_autofit_padding)
 
     hordeparsergroup = parser.add_argument_group('Horde Worker Commands')
     hordeparsergroup.add_argument("--hordemodelname", metavar=('[name]'), help="Sets your AI Horde display model name.", default="")

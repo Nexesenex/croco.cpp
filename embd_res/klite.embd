@@ -12,7 +12,7 @@ Current version indicated by LITEVER below.
 -->
 <head>
 	<script id="init-config">
-	const LITEVER = 312;
+	const LITEVER = 313;
 	const urlParams = new URLSearchParams(window.location.search);
 	var localflag = urlParams.get('local'); //this will be replaced automatically in embedded kcpp
 	const STORAGE_PREFIX = (localflag?"e_":"")+"kaihordewebui_";
@@ -3861,7 +3861,7 @@ Current version indicated by LITEVER below.
 	var uses_cors_proxy = false; //we start off attempting a direct connection. switch to proxy if that fails
 	var synchro_polled_response = null;
 	var synchro_polled_respimg = null; //sometimes a LLM response can also include an image.
-	var synchro_polled_resptoolcall = null; //set if a tool call was triggered
+	var synchro_polled_resptoolcalls = null; //set if a tool call was triggered
 	var last_stop_reason = ""; //update stop reason if known
 	var synchro_pending_stream = ""; //used for storing incomplete streaming text
 	var streaming_was_thinking = false; //used as a switch to determine when thinking ends, to wrap output in tags
@@ -6740,7 +6740,7 @@ Current version indicated by LITEVER below.
 			}else if (custom_gemini_key != "" && data.candidates != null && data.candidates.length>0 && data.candidates[0].content && data.candidates[0].content.parts != null && data.candidates[0].content.parts.length>0) {
 				synchro_polled_response = "";
 				synchro_polled_respimg = null;
-				synchro_polled_resptoolcall = null;
+				synchro_polled_resptoolcalls = null;
 				for(let x=0;x<data.candidates[0].content.parts.length;++x)
 				{
 					if(!synchro_polled_respimg && data.candidates[0].content.parts[x].inlineData && data.candidates[0].content.parts[x].inlineData.data)
@@ -6791,7 +6791,7 @@ Current version indicated by LITEVER below.
 		.then((data) => {
 			console.log("sync finished response: " + JSON.stringify(data));
 			last_response_obj = JSON.parse(JSON.stringify(data));
-			if (custom_oai_key != "" && data.choices != null && data.choices.length > 0) {
+			if ((custom_oai_key != "" || determine_if_mcp_active()) && data.choices != null && data.choices.length > 0) {
 				let dch = data.choices[0];
 				if (dch.text) {
 					synchro_polled_response = dch.text;
@@ -6816,6 +6816,15 @@ Current version indicated by LITEVER below.
 						else
 						{
 							synchro_polled_response = `${localsettings.start_thinking_tag}${reasoningtxt}${localsettings.stop_thinking_tag}${dch.message.content}`;
+						}
+					}
+
+					if(dch.message.tool_calls && dch.message.tool_calls.length>0)
+					{
+						synchro_polled_resptoolcalls = dch.message.tool_calls;
+						if(!synchro_polled_response)
+						{
+							synchro_polled_response = "";
 						}
 					}
 
@@ -6857,7 +6866,8 @@ Current version indicated by LITEVER below.
 		synchro_pending_stream = "";
 		streaming_was_thinking = false;
 		let logprobs_content_arr = [];
-		let pending_toolcall_obj = null;
+		let pending_toolcall_objs = [];
+		let pending_toolcall_last_obj = null;
 		let reqOpt =
 		{method: 'POST',
 		headers: submit_headers,
@@ -6985,6 +6995,14 @@ Current version indicated by LITEVER below.
 									else if(streaming_was_thinking)
 									{
 										streaming_was_thinking = false;
+										//if there is some final reasoning, add it
+										if(event.data.choices[0].delta.reasoning_content!=null&& event.data.choices[0].delta.reasoning_content!="")
+										{
+											synchro_pending_stream += event.data.choices[0].delta.reasoning_content;
+										}else if(event.data.choices[0].delta.reasoning!=null&& event.data.choices[0].delta.reasoning!="")
+										{
+											synchro_pending_stream += event.data.choices[0].delta.reasoning;
+										}
 										synchro_pending_stream = `${localsettings.start_thinking_tag}${synchro_pending_stream}${localsettings.stop_thinking_tag}`;
 									}
 									synchro_pending_stream += cnt;
@@ -7002,37 +7020,39 @@ Current version indicated by LITEVER below.
 								else if(event.data.choices[0].delta && !event.data.choices[0].delta.content && event.data.choices[0].delta.tool_calls && event.data.choices[0].delta.tool_calls.length>0)
 								{
 									//handle tool calls
-									if(pending_toolcall_obj==null)
+									if(pending_toolcall_last_obj==null)
 									{
-										pending_toolcall_obj = {};
+										pending_toolcall_last_obj = {};
 									}
-									let itm = event.data.choices[0].delta.tool_calls[0];
-									if(itm.id)
+
+									for(let x=0;x<event.data.choices[0].delta.tool_calls.length;++x)
 									{
-										pending_toolcall_obj.id = itm.id;
-									}
-									if(itm.function)
-									{
-										if(itm.function.name)
-										{
-											if(!pending_toolcall_obj.name)
-											{
-												pending_toolcall_obj.name = itm.function.name;
-											}
-											else if(pending_toolcall_obj.name!=itm.function.name)
-											{
-												pending_toolcall_obj.name += itm.function.name;
-											}
+										let itm = event.data.choices[0].delta.tool_calls[x];
+
+										//if the incoming tool chunk has a different id, it's the next tool. stash current tool and proceed
+										if ((pending_toolcall_last_obj.id && itm.id && pending_toolcall_last_obj.id != itm.id)) {
+											pending_toolcall_objs.push(pending_toolcall_last_obj);
+											pending_toolcall_last_obj = {};
 										}
-										if(itm.function.arguments)
-										{
-											if(!pending_toolcall_obj.arguments)
-											{
-												pending_toolcall_obj.arguments = itm.function.arguments;
+										if (itm.id) {
+											pending_toolcall_last_obj.id = itm.id;
+										}
+										if (itm.function) {
+											if (itm.function.name) {
+												if (!pending_toolcall_last_obj.name) {
+													pending_toolcall_last_obj.name = itm.function.name;
+												}
+												else if (pending_toolcall_last_obj.name != itm.function.name) {
+													pending_toolcall_last_obj.name += itm.function.name;
+												}
 											}
-											else
-											{
-												pending_toolcall_obj.arguments += itm.function.arguments;
+											if (itm.function.arguments) {
+												if (!pending_toolcall_last_obj.arguments) {
+													pending_toolcall_last_obj.arguments = itm.function.arguments;
+												}
+												else {
+													pending_toolcall_last_obj.arguments += itm.function.arguments;
+												}
 											}
 										}
 									}
@@ -7111,10 +7131,31 @@ Current version indicated by LITEVER below.
 					{
 						synchro_polled_response = cleanup_story_completion(synchro_polled_response);
 					}
-					if(synchro_polled_response=="" && last_stop_reason=="tool_calls" && pending_toolcall_obj!=null)
+					//cleanup incomplete tool
+					if(pending_toolcall_last_obj && pending_toolcall_last_obj.id)
+					{
+						pending_toolcall_objs.push(pending_toolcall_last_obj);
+						pending_toolcall_last_obj = null;
+					}
+					if(synchro_polled_response=="" && last_stop_reason=="tool_calls" && pending_toolcall_objs!=null && pending_toolcall_objs.length>0)
 					{
 						//a tool call was triggered instead
-						synchro_polled_resptoolcall = pending_toolcall_obj;
+						synchro_polled_resptoolcalls = [];
+						for(let i=0;i<pending_toolcall_objs.length;++i)
+						{
+							let item = pending_toolcall_objs[i];
+							let tool =
+							{
+								"id": item.id,
+								"type": "function",
+								"function": {
+									"name": item.name,
+									"arguments": item.arguments
+								}
+							};
+							synchro_polled_resptoolcalls.push(tool);
+
+						}
 					}
 					synchro_pending_stream = "";
 					streaming_was_thinking = false;
@@ -8013,14 +8054,25 @@ Current version indicated by LITEVER below.
 					let tgt = replaceStringsInObject(response.content[0],"&quot;","\""); //we must remove existing escaped quotes or things break later
 					callresp.content = JSON.stringify(tgt);
 				}
-				callresptxt += JSON.stringify(callresp) + get_instructendplaceholder();
+				callresptxt += JSON.stringify(callresp);
+				if(toolcall_obj.tool_calls.length < 2)
+				{
+					callresptxt += get_instructendplaceholder();
+				}
 				gametext_arr.push(callresptxt);
 				console.log(response);
-				pending_response_id = "";
-				poll_in_progress = false;
-				show_abort_button(false);
-				submit_generation(""); //generate final response or new toolcall
-				render_gametext(false,false);
+				if(toolcall_obj.tool_calls.length > 1)
+				{
+					MCPToolCall({"tool_calls":toolcall_obj.tool_calls.slice(1)});
+				}
+				else
+				{
+					pending_response_id = "";
+					poll_in_progress = false;
+					show_abort_button(false);
+					submit_generation(""); //generate final response or new toolcall
+					render_gametext(false,false);
+				}
 			}).catch(function (error) {
 				// Handle errors
 				callresp.content = "{\"error\": \"Tool call failed\"}";
@@ -9145,6 +9197,11 @@ Current version indicated by LITEVER below.
 	function determine_if_can_use_mcp()
 	{
 		return (custom_oai_key!="" && document.getElementById("useoaichatcompl").checked) || is_using_kcpp_with_streaming();
+	}
+
+	function determine_if_mcp_active()
+	{
+		return (localsettings.enable_tool_use && determine_if_can_use_mcp() && localsettings.cached_mcp_tools && Object.keys(localsettings.cached_mcp_tools).length>0);
 	}
 
 	//returns true if the current multimodal setup for some media can be used, otherwise false.
@@ -12822,6 +12879,43 @@ Current version indicated by LITEVER below.
 		return (epchoice==7 || epchoice==10 || epchoice==11);
 	}
 
+	function find_oai_model()
+	{
+		inputBox("Find model by name (case insensitive)\nBest match will be selected.","Find model by name","","", ()=>{
+			let coai = getInputBoxValue().trim();
+			let dropdown = get_custom_ep_model_dropdown();
+			var mdlopt = dropdown.querySelector('option.custom_model_option');
+			if(coai!="")
+			{
+				coai = coai.toLowerCase();
+				let findparts = coai.split(" ").filter(x => (x && x != ""));
+				//first search for all matches
+				let foundidx = -1;
+				let bestmatches = 0;
+				for (var i = 0; i < dropdown.options.length; i++)
+				{
+					let matchcount = 0;
+					for(let x=0;x<findparts.length;++x)
+					{
+						let part = findparts[x];
+						if (dropdown.options[i].text.toLowerCase().indexOf(part) !== -1) {
+							++matchcount;
+						}
+					}
+					if (matchcount > bestmatches)
+					{
+						foundidx = i;
+						bestmatches = matchcount;
+					}
+				}
+				if(foundidx>=0)
+				{
+					dropdown.selectedIndex = foundidx;
+				}
+			}
+			oai_model_change(ep_should_always_use_chat_completions());
+		},false);
+	}
 	function select_custom_oai_model()
 	{
 		inputBox("Enter custom model name","Custom Model Name",localsettings.saved_oai_custommodel,"", ()=>{
@@ -13100,9 +13194,6 @@ Current version indicated by LITEVER below.
 
 	function toggleclaudemodel()
 	{
-		document.getElementById("claudesystemprompt").classList.remove("hidden");
-		document.getElementById("claudejailbreakprompt").classList.remove("hidden");
-
 		if(document.getElementById("custom_claude_model").value.toLowerCase().includes("claude-3-7")||
 		document.getElementById("custom_claude_model").value.toLowerCase().includes("claude-sonnet-4")||
 		document.getElementById("custom_claude_model").value.toLowerCase().includes("claude-haiku-4")||
@@ -17359,7 +17450,7 @@ Current version indicated by LITEVER below.
 		poll_in_progress = false;
 		synchro_polled_response = null;
 		synchro_polled_respimg = null;
-		synchro_polled_resptoolcall = null;
+		synchro_polled_resptoolcalls = null;
 		last_stop_reason = "";
 		synchro_pending_stream = "";
 		streaming_was_thinking = false;
@@ -17392,7 +17483,7 @@ Current version indicated by LITEVER below.
 		pending_response_id = "";
 		synchro_polled_response = null;
 		synchro_polled_respimg = null;
-		synchro_polled_resptoolcall = null;
+		synchro_polled_resptoolcalls = null;
 		last_stop_reason = "";
 		synchro_pending_stream = "";
 		streaming_was_thinking = false;
@@ -20383,7 +20474,7 @@ Current version indicated by LITEVER below.
 			poll_in_progress = false;
 			synchro_polled_response = null;
 			synchro_polled_respimg = null;
-			synchro_polled_resptoolcall = null;
+			synchro_polled_resptoolcalls = null;
 			last_stop_reason = "";
 			synchro_pending_stream = "";
 			streaming_was_thinking = false;
@@ -20419,7 +20510,7 @@ Current version indicated by LITEVER below.
 				last_response_streamlog = "";
 
 				if(localsettings.opmode==4 &&
-				(is_using_kcpp_with_jinja() || (localsettings.enable_tool_use && determine_if_can_use_mcp() && localsettings.cached_mcp_tools && Object.keys(localsettings.cached_mcp_tools).length>0)))
+				(is_using_kcpp_with_jinja() || determine_if_mcp_active()))
 				{
 					//for tool calling, we hijack the oai endpoint in order to utilize
 					let combinedprompt = submit_payload.prompt;
@@ -20457,7 +20548,7 @@ Current version indicated by LITEVER below.
 						}
 						submit_payload.messages.push(cturn);
 					}
-					if(localsettings.enable_tool_use && determine_if_can_use_mcp() && localsettings.cached_mcp_tools && Object.keys(localsettings.cached_mcp_tools).length>0)
+					if(determine_if_mcp_active())
 					{
 						let senttools = MCPGetAllowedTools();
 						if(senttools.length>0)
@@ -20520,7 +20611,7 @@ Current version indicated by LITEVER below.
 						oai_payload.logprobs = 5;
 					}
 				}
-				if(!targetep.toLowerCase().includes("api.x.ai"))
+				if(!targetep.toLowerCase().includes("api.x.ai") && !targetep.toLowerCase().includes("api.perplexity.ai"))
 				{
 					//grok has no support for stop
 					oai_payload.stop = get_stop_sequences().slice(0, 4); //lets try adding stop sequences, limit to first 4
@@ -20648,7 +20739,7 @@ Current version indicated by LITEVER below.
 						}
 					}
 
-					if(localsettings.enable_tool_use && determine_if_can_use_mcp() && localsettings.cached_mcp_tools && Object.keys(localsettings.cached_mcp_tools).length>0)
+					if(determine_if_mcp_active())
 					{
 						let senttools = MCPGetAllowedTools();
 						if(senttools.length>0)
@@ -20795,6 +20886,7 @@ Current version indicated by LITEVER below.
 
 				let sysprompt = document.getElementById("claudesystemprompt").value;
 				let assistantprompt = document.getElementById("claudejailbreakprompt").value;
+				let assistantpromptrole = document.getElementById("claudejailbreakpromptrole").value;
 				let claudethinking = (document.getElementById("claudethinking").checked?true:false);
 
 				claude_payload =
@@ -20858,7 +20950,8 @@ Current version indicated by LITEVER below.
 				}
 				if(assistantprompt)
 				{
-					claude_payload.messages.push({"role": "assistant", "content": assistantprompt});
+					let usedrole = (assistantpromptrole==2)?"system":(assistantpromptrole==1?"assistant":"user");
+					claude_payload.messages.push({"role": usedrole, "content": assistantprompt});
 				}
 
 
@@ -23498,19 +23591,10 @@ Current version indicated by LITEVER below.
 						render_gametext(true,false); //only scroll to bottom if autoscroll is on
 						sync_multiplayer(false);
 					}
-					if(synchro_polled_resptoolcall && localsettings.cached_mcp_tools)
+					if(synchro_polled_resptoolcalls && synchro_polled_resptoolcalls.length>0 && localsettings.cached_mcp_tools)
 					{
 						//if valid, execute the tool call and get the result
-						let savedcallobj = {"tool_calls": [
-							{
-							"id": synchro_polled_resptoolcall.id,
-							"type": "function",
-							"function": {
-								"name": synchro_polled_resptoolcall.name,
-								"arguments": synchro_polled_resptoolcall.arguments
-							}
-							}
-						]};
+						let savedcallobj = {"tool_calls": synchro_polled_resptoolcalls};
 
 						let calltxt = "";
 						if(!(gametext_arr.length>0 && gametext_arr[gametext_arr.length-1].trim().endsWith("{{[OUTPUT]}}")))
@@ -23525,7 +23609,7 @@ Current version indicated by LITEVER below.
 							MCPToolCall(savedcallobj);
 						}
 
-						synchro_polled_resptoolcall = null;
+						synchro_polled_resptoolcalls = null;
 						render_gametext(false,false);
 					}
 					if(synchro_polled_respimg)
@@ -31044,7 +31128,7 @@ Current version indicated by LITEVER below.
 				<input class="form-control" name="username" autocomplete="username" type="text" id="custom_oai_endpoint" placeholder="OpenAI API URL" value="" onblur="">
 				<input class="form-control" name="password" autocomplete="current-password" type="password" id="custom_oai_key" placeholder="API Key (Required)" value="" onfocus="focus_api_keys()" onblur="blur_api_keys()"><br>
 				Model Choice:<br>
-				<select title="OpenAI Model Selection" style="padding:4px;display:inline;width:calc(100% - 220px)" class="form-control" id="custom_oai_model" onchange="oai_model_change(true)">
+				<select title="OpenAI Model Selection" style="padding:4px;display:inline;width:calc(100% - 200px)" class="form-control" id="custom_oai_model" onchange="oai_model_change(true)">
 					<option value="gpt-3.5-turbo-instruct" selected="selected">gpt-3.5-turbo-instruct</option>
 					<option value="davinci-002">davinci-002</option>
 					<option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
@@ -31071,7 +31155,7 @@ Current version indicated by LITEVER below.
 					<option value="o4-mini">o4-mini</option>
 					<option style="display:none;" class="custom_model_option" value="custom">[Custom]</option>
 				</select>
-				<select title="OpenRouter AI Model Selection" style="padding:4px;display:inline;width:calc(100% - 220px)" class="form-control hidden" id="custom_openrouter_model" onchange="oai_model_change(true)">
+				<select title="OpenRouter AI Model Selection" style="padding:4px;display:inline;width:calc(100% - 200px)" class="form-control hidden" id="custom_openrouter_model" onchange="oai_model_change(true)">
 					<option value="openai/gpt-3.5-turbo">openai/gpt-3.5-turbo</option>
 					<option value="openai/gpt-4">openai/gpt-4</option>
 					<option value="openai/gpt-4o">openai/gpt-4o</option>
@@ -31082,7 +31166,7 @@ Current version indicated by LITEVER below.
 					<option value="gryphe/mythomax-l2-13b">gryphe/mythomax-l2-13b</option>
 					<option style="display:none;" class="custom_model_option" value="custom">[Custom]</option>
 				</select>
-				<select title="Mistral AI Model Selection" style="padding:4px;display:inline;width:calc(100% - 220px)" class="form-control hidden" id="custom_mistralai_model" onchange="oai_model_change(true)">
+				<select title="Mistral AI Model Selection" style="padding:4px;display:inline;width:calc(100% - 200px)" class="form-control hidden" id="custom_mistralai_model" onchange="oai_model_change(true)">
 					<option value="open-mistral-7b">open-mistral-7b</option>
 					<option value="open-mistral-nemo">open-mistral-nemo</option>
 					<option value="open-mixtral-8x22b">open-mixtral-8x22b</option>
@@ -31098,7 +31182,7 @@ Current version indicated by LITEVER below.
 					<option value="codestral-latest">codestral-latest</option>
 					<option style="display:none;" class="custom_model_option" value="custom">[Custom]</option>
 				</select>
-				<select title="Featherless AI Model Selection" style="padding:4px;display:inline;width:calc(100% - 220px)" class="form-control hidden" id="custom_featherless_model" onchange="oai_model_change(true)">
+				<select title="Featherless AI Model Selection" style="padding:4px;display:inline;width:calc(100% - 200px)" class="form-control hidden" id="custom_featherless_model" onchange="oai_model_change(true)">
 					<option value="Sao10K/L3-8B-Lunaris-v1">Sao10K/L3-8B-Lunaris-v1</option>
 					<option value="Sao10K/L3-8B-Stheno-v3.2">Sao10K/L3-8B-Stheno-v3.2</option>
 					<option value="unsloth/llama-3-8b-Instruct">unsloth/llama-3-8b-Instruct</option>
@@ -31112,7 +31196,7 @@ Current version indicated by LITEVER below.
 					<option value="meta-llama/Meta-Llama-3.1-405B-Instruct">meta-llama/Meta-Llama-3.1-405B-Instruct</option>
 				<option style="display:none;" class="custom_model_option" value="custom">[Custom]</option>
 				</select>
-				<select title="Grok AI Model Selection" style="padding:4px;display:inline;width:calc(100% - 220px)" class="form-control hidden" id="custom_grok_model" onchange="oai_model_change(true)">
+				<select title="Grok AI Model Selection" style="padding:4px;display:inline;width:calc(100% - 200px)" class="form-control hidden" id="custom_grok_model" onchange="oai_model_change(true)">
 					<option value="grok-2-1212">grok-2-1212</option>
 					<option value="grok-3" selected>grok-3</option>
 					<option value="grok-3-mini">grok-3-mini</option>
@@ -31120,7 +31204,7 @@ Current version indicated by LITEVER below.
 					<option value="grok-4-0709">grok-4-0709</option>
 					<option style="display:none;" class="custom_model_option" value="custom">[Custom]</option>
 				</select>
-				<select title="Pollinations AI Model Selection" style="padding:4px;display:inline;width:calc(100% - 220px)" class="form-control hidden" id="custom_pollinations_model" onchange="oai_model_change(true)">
+				<select title="Pollinations AI Model Selection" style="padding:4px;display:inline;width:calc(100% - 200px)" class="form-control hidden" id="custom_pollinations_model" onchange="oai_model_change(true)">
 					<option value="bidara">bidara</option>
 					<option value="chickytutor">chickytutor</option>
 					<option value="gemini">gemini</option>
@@ -31130,7 +31214,7 @@ Current version indicated by LITEVER below.
 					<option value="openai-fast">openai-fast</option>
 					<option style="display:none;" class="custom_model_option" value="custom">[Custom]</option>
 				</select>
-				<select title="Nvidia NIM AI Model Selection" style="padding:4px;display:inline;width:calc(100% - 220px)" class="form-control hidden" id="custom_nvidianim_model" onchange="oai_model_change(true)">
+				<select title="Nvidia NIM AI Model Selection" style="padding:4px;display:inline;width:calc(100% - 200px)" class="form-control hidden" id="custom_nvidianim_model" onchange="oai_model_change(true)">
 					<option value="deepseek-ai/deepseek-v3.1-terminus">deepseek-ai/deepseek-v3.1-terminus</option>
 					<option value="google/gemma-3-27b-it">google/gemma-3-27b-it</option>
 					<option value="meta/llama-3.3-70b-instruct">meta/llama-3.3-70b-instruct</option>
@@ -31141,8 +31225,9 @@ Current version indicated by LITEVER below.
 					<option value="z-ai/glm4.7">z-ai/glm4.7</option>
 					<option style="display:none;" class="custom_model_option" value="custom">[Custom]</option>
 				</select>
-				<button type="button" class="btn btn-primary" style="display:inline;width:105px;" id="oaifetchlist" onclick="oai_fetch_models()">Fetch List</button>
-				<button type="button" class="btn btn-primary" style="display:inline;width:105px;" id="oaiusecustom" onclick="select_custom_oai_model()">Use Custom</button>
+				<button type="button" class="btn btn-primary" style="display:inline;width:42px;height:34px;vertical-align: top;" id="oaifindmodel" onclick="find_oai_model()">🔎</button>
+				<button type="button" class="btn btn-primary" style="display:inline;width:70px;height:34px;vertical-align: top;" id="oaifetchlist" onclick="oai_fetch_models()">Fetch</button>
+				<button type="button" class="btn btn-primary" style="display:inline;width:70px;height:34px;vertical-align: top;" id="oaiusecustom" onclick="select_custom_oai_model()">Custom</button>
 				<div class="hidden" id="oaiemulatecompletionsbox">
 					<div><input type="checkbox" id="oaiemulatecompletions" title="Emulate Completions with Prefill">
 					<div class="box-label">Emulate Completions API with Prefill</div></div>
@@ -31225,8 +31310,17 @@ Current version indicated by LITEVER below.
 				<input type="checkbox" title="Add endpoint version" id="claudeaddversion" onchange="" checked>
 				<div class="box-label" title="Add endpoint version">Add Endpoint Version</div>
 
-				<textarea class="form-control hidden" title="Claude System Prompt" rows="2" style="resize: vertical; line-height:1.1; padding:4px; display:inline; width: 100%" id="claudesystemprompt" placeholder="(Enter System Prompt, which steers overall AI behavior.)" onload=""></textarea>
-				<textarea class="form-control hidden" title="Claude Assistant Postfix" rows="2" style="resize: vertical; line-height:1.1; padding:4px; display:inline; width: 100%" id="claudejailbreakprompt" placeholder="(Enter Assistant Postfix, which forces the AI to start responses with this text.)" onload=""></textarea>
+				<textarea class="form-control" title="Claude System Prompt" rows="2" style="resize: vertical; line-height:1.1; padding:4px; display:inline; width: 100%" id="claudesystemprompt" placeholder="(Enter System Prompt, which steers overall AI behavior.)" onload=""></textarea>
+
+				<div style="display:flex">
+					<select title="Claude Postfix Role" class="form-control" style="height: 25px; font-size:12px; padding:4px;display:inline;width:100px" id="claudejailbreakpromptrole">
+						<option value="0">User</option>
+						<option value="1" selected>Assistant</option>
+						<option value="2">System</option>
+					</select>
+					<textarea title="Enter Claude Postfix" class="form-control" rows="2" style="resize: vertical; line-height:1.1; padding:4px; display:inline; width: 100%" id="claudejailbreakprompt" placeholder="(Enter a postfix, which forces the AI to start responses with this text.)" onload=""></textarea>
+				</div>
+
 
 				<div id="claudethinkingbox" class="hidden">
 				<div class="box-label" title="Enable Thinking">Enable Thinking </div>

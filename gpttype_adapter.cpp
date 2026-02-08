@@ -189,6 +189,10 @@ inline bool LogitsDuplicated(std::vector<float> & arr1, std::vector<float> & arr
     return true;
 }
 
+static inline void log_callback_off(ggml_log_level level, const char* text, void*) {
+    return;
+}
+
 static inline void string_trim_whitespace(std::string & s) {
     auto nul = std::find(s.begin(), s.end(), '\0'); //remove everything after the first NUL
     if (nul != s.end()) {
@@ -2550,7 +2554,7 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
         if(inputs.autofit)
         {
             common_params temp_params;
-            size_t taxmb = 1024 + inputs.autofit_tax_mb;
+            size_t taxmb = inputs.autofit_tax_mb;
             printf("\nAttempting to use llama.cpp's automating fitting code. This will override all your layer configs, may or may not work!\n");
             //zero out any customizations made
             tenos.clear();
@@ -2559,12 +2563,30 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
             model_params.tensor_split = tensor_split_temp;
             model_params.n_gpu_layers = -1; //must be this value to be considered default
             printf("Autofit Reserve Space: %d MB\n",taxmb);
+            //disable log spam
+            bool dospam = (debugmode==1 && !is_quiet);
+            ggml_log_callback currlogger;
+            void * curruserdat;
+            if(!dospam)
+            {
+                llama_log_get(&currlogger, &curruserdat);
+                llama_log_set(log_callback_off, nullptr);
+            }
             fit_params_target[0] = taxmb*1024*1024;
-            llama_params_fit(kcpp_data->model_filename.c_str(), &model_params, &llama_ctx_params,
+            bool success = (llama_params_fit(kcpp_data->model_filename.c_str(), &model_params, &llama_ctx_params,
             tensor_split_temp, tenos.data(), fit_params_target.data(), kcpp_data->n_ctx,
-            GGML_LOG_LEVEL_DEBUG);
-            printf("Autofit Result: ");
+            GGML_LOG_LEVEL_NONE)==0);
+            if(!dospam)
+            {
+                llama_log_set(currlogger, curruserdat);
+            }
+            printf("Autofit Success: %d, Autofit Result: ",success);
             print_fitted_params(model_params,llama_ctx_params);
+            if(!success)
+            {
+                //revert to previous
+                model_params.n_gpu_layers = inputs.gpulayers;
+            }
         }
 
         llama_model * llamamodel = llama_model_load_from_file(kcpp_data->model_filename.c_str(), model_params);
