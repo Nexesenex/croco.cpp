@@ -727,61 +727,81 @@ static void speculative_decoding_setup(std::string spec_model_filename, const ll
     else 
     {
         draft_ctx_params.type_k =
-		(draft_quant_k==25?GGML_TYPE_IQ4_NL:
-		(draft_quant_k==24?GGML_TYPE_Q4_0:
-		(draft_quant_k==23?GGML_TYPE_Q4_1:
-		(draft_quant_k==22?GGML_TYPE_Q5_0:
-		(draft_quant_k==21?GGML_TYPE_Q5_1:
-		(draft_quant_k==20?GGML_TYPE_Q6_0:
-		(draft_quant_k==19?GGML_TYPE_Q8_0:
-		(draft_quant_k==18?GGML_TYPE_IQ4_NL:
-		(draft_quant_k==17?GGML_TYPE_Q5_0:
-		(draft_quant_k==16?GGML_TYPE_Q5_0:
-		(draft_quant_k==15?GGML_TYPE_Q5_1:
-		(draft_quant_k==14?GGML_TYPE_Q5_1:
-		(draft_quant_k==13?GGML_TYPE_Q5_1:
-		(draft_quant_k==12?GGML_TYPE_Q6_0:
-		(draft_quant_k==11?GGML_TYPE_Q6_0:
-		(draft_quant_k==10?GGML_TYPE_Q6_0:
-		(draft_quant_k==9?GGML_TYPE_Q8_0:
-		(draft_quant_k==8?GGML_TYPE_Q8_0:
-		(draft_quant_k==7?GGML_TYPE_Q8_0:
-		(draft_quant_k==6?GGML_TYPE_F16:
-		(draft_quant_k==5?GGML_TYPE_F16:
-		(draft_quant_k==4?GGML_TYPE_Q4_0:
-		(draft_quant_k==3?GGML_TYPE_Q5_1:
-		(draft_quant_k==2?GGML_TYPE_Q8_0:
-		(draft_quant_k==1?GGML_TYPE_BF16:
-		GGML_TYPE_F16))))))))))))))))))))))));
+		(draft.quant_k==35?GGML_TYPE_IQ4_NL:
+		(draft.quant_k==34?GGML_TYPE_Q4_0:
+		(draft.quant_k==33?GGML_TYPE_Q4_1:
+		(draft.quant_k==32?GGML_TYPE_Q5_0:
+		(draft.quant_k==31?GGML_TYPE_Q5_1:
+		(draft.quant_k==30?GGML_TYPE_Q6_0:
+		(draft.quant_k==29?GGML_TYPE_Q8_0:
+		(draft.quant_k==28?GGML_TYPE_IQ4_NL:
+		(draft.quant_k==27?GGML_TYPE_IQ4_NL:
+		(draft.quant_k==26?GGML_TYPE_Q5_0:
+		(draft.quant_k==25?GGML_TYPE_Q5_0:
+		(draft.quant_k==24?GGML_TYPE_Q5_0:
+		(draft.quant_k==23?GGML_TYPE_Q5_1:
+		(draft.quant_k==22?GGML_TYPE_Q5_1:
+		(draft.quant_k==21?GGML_TYPE_Q5_1:
+		(draft.quant_k==20?GGML_TYPE_Q6_0:
+		(draft.quant_k==19?GGML_TYPE_Q6_0:
+		(draft.quant_k==18?GGML_TYPE_Q6_0:
+		(draft.quant_k==17?GGML_TYPE_Q6_0:
+		(draft.quant_k==16?GGML_TYPE_Q6_0:
+		(draft.quant_k==15?GGML_TYPE_Q8_0:
+		(draft.quant_k==14?GGML_TYPE_Q8_0:
+		(draft.quant_k==13?GGML_TYPE_Q8_0:
+		(draft.quant_k==12?GGML_TYPE_Q8_0:
+		(draft.quant_k==11?GGML_TYPE_Q8_0:
+		(draft.quant_k==10?GGML_TYPE_F16:
+		(draft.quant_k==9?GGML_TYPE_F16:
+		(draft.quant_k==8?GGML_TYPE_F16:
+		(draft.quant_k==7?GGML_TYPE_F16:
+		(draft.quant_k==6?GGML_TYPE_F16:
+		(draft.quant_k==5?GGML_TYPE_F16:
+		(draft.quant_k==4?GGML_TYPE_Q4_0:
+		(draft.quant_k==3?GGML_TYPE_Q5_1:
+		(draft.quant_k==2?GGML_TYPE_Q8_0:
+		(draft.quant_k==1?GGML_TYPE_BF16:
+		GGML_TYPE_F16)))))))))))))))))))))))))))))))))));
         draft_ctx_params.type_v =
-		(draft_quant_v==25?GGML_TYPE_F16:
-		(draft_quant_v==24?GGML_TYPE_F16:
-		(draft_quant_v==23?GGML_TYPE_F16:
-		(draft_quant_v==22?GGML_TYPE_F16:
-		(draft_quant_v==21?GGML_TYPE_F16:
-		(draft_quant_v==20?GGML_TYPE_F16:
-		(draft_quant_v==19?GGML_TYPE_F16:
-		(draft_quant_v==18?GGML_TYPE_IQ4_NL:
-		(draft_quant_v==17?GGML_TYPE_IQ4_NL:
-		(draft_quant_v==16?GGML_TYPE_Q5_0:
-		(draft_quant_v==15?GGML_TYPE_IQ4_NL:
-		(draft_quant_v==14?GGML_TYPE_Q5_0:
-		(draft_quant_v==13?GGML_TYPE_Q5_1:
-		(draft_quant_v==12?GGML_TYPE_IQ4_NL:
-		(draft_quant_v==11?GGML_TYPE_Q5_0:
-		(draft_quant_v==10?GGML_TYPE_Q6_0:
-		(draft_quant_v==9?GGML_TYPE_IQ4_NL:
-		(draft_quant_v==8?GGML_TYPE_Q5_0:
-		(draft_quant_v==7?GGML_TYPE_Q6_0:
-		(draft_quant_v==6?GGML_TYPE_Q6_0:
-		(draft_quant_v==5?GGML_TYPE_Q8_0:
-		(draft_quant_v==4?GGML_TYPE_Q4_0:
-		(draft_quant_v==3?GGML_TYPE_Q5_1:
-		(draft_quant_v==2?GGML_TYPE_Q8_0:
-		(draft_quant_v==1?GGML_TYPE_BF16:
-		GGML_TYPE_F16))))))))))))))))))))))));
+		(draft.quant_v==35?GGML_TYPE_F16:
+		(draft.quant_v==34?GGML_TYPE_F16:
+		(draft.quant_v==33?GGML_TYPE_F16:
+		(draft.quant_v==32?GGML_TYPE_F16:
+		(draft.quant_v==31?GGML_TYPE_F16:
+		(draft.quant_v==30?GGML_TYPE_F16:
+		(draft.quant_v==29?GGML_TYPE_F16:
+		(draft.quant_v==28?GGML_TYPE_IQ4_NL:
+		(draft.quant_v==27?GGML_TYPE_Q4_0:
+		(draft.quant_v==26?GGML_TYPE_IQ4_NL:
+		(draft.quant_v==25?GGML_TYPE_Q4_0:
+		(draft.quant_v==24?GGML_TYPE_Q5_0:
+		(draft.quant_v==23?GGML_TYPE_IQ4_NL:
+		(draft.quant_v==22?GGML_TYPE_Q4_0:
+		(draft.quant_v==21?GGML_TYPE_Q5_0:
+		(draft.quant_v==20?GGML_TYPE_IQ4_NL:
+		(draft.quant_v==19?GGML_TYPE_Q4_0:
+		(draft.quant_v==18?GGML_TYPE_Q5_0:
+		(draft.quant_v==17?GGML_TYPE_Q5_1:
+		(draft.quant_v==16?GGML_TYPE_Q6_0:
+		(draft.quant_v==15?GGML_TYPE_IQ4_NL:
+		(draft.quant_v==14?GGML_TYPE_Q4_0:
+		(draft.quant_v==13?GGML_TYPE_Q5_0:
+		(draft.quant_v==12?GGML_TYPE_Q5_1:
+		(draft.quant_v==11?GGML_TYPE_Q6_0:
+		(draft.quant_v==10?GGML_TYPE_IQ4_NL:
+		(draft.quant_v==9?GGML_TYPE_Q4_0:
+		(draft.quant_v==8?GGML_TYPE_Q5_0:
+		(draft.quant_v==7?GGML_TYPE_Q5_1:
+		(draft.quant_v==6?GGML_TYPE_Q6_0:
+		(draft.quant_v==5?GGML_TYPE_Q8_0:
+		(draft.quant_v==4?GGML_TYPE_Q4_0:
+		(draft.quant_v==3?GGML_TYPE_Q5_1:
+		(draft.quant_v==2?GGML_TYPE_Q8_0:
+		(draft.quant_v==1?GGML_TYPE_BF16:
+		GGML_TYPE_F16)))))))))))))))))))))))))))))))))));
     }
-
+	
     draft_ctx_params.swa_full = base_ctx_params.swa_full;
 
     llama_model * draftmodel = llama_model_load_from_file(spec_model_filename.c_str(), draft_model_params);
@@ -2867,19 +2887,22 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
         // llama_ctx_params.type_v = (inputs.quant_v==4?GGML_TYPE_Q4_0:(inputs.quant_v==3?GGML_TYPE_Q5_1:(inputs.quant_v==2?GGML_TYPE_Q8_0:(inputs.quant_v==1?GGML_TYPE_BF16:GGML_TYPE_F16))));
 
         llama_ctx_params.type_k =
-		(inputs.quant_k==32?GGML_TYPE_IQ4_NL:
-		(inputs.quant_k==31?GGML_TYPE_Q4_0:
-		(inputs.quant_k==30?GGML_TYPE_Q4_1:
-		(inputs.quant_k==29?GGML_TYPE_Q5_0:
-		(inputs.quant_k==28?GGML_TYPE_Q5_1:
-		(inputs.quant_k==27?GGML_TYPE_Q6_0:
-		(inputs.quant_k==16?GGML_TYPE_Q8_0:
-		(inputs.quant_k==25?GGML_TYPE_IQ4_NL:
+		(inputs.quant_k==35?GGML_TYPE_IQ4_NL:
+		(inputs.quant_k==34?GGML_TYPE_Q4_0:
+		(inputs.quant_k==33?GGML_TYPE_Q4_1:
+		(inputs.quant_k==32?GGML_TYPE_Q5_0:
+		(inputs.quant_k==31?GGML_TYPE_Q5_1:
+		(inputs.quant_k==30?GGML_TYPE_Q6_0:
+		(inputs.quant_k==29?GGML_TYPE_Q8_0:
+		(inputs.quant_k==28?GGML_TYPE_IQ4_NL:
+		(inputs.quant_k==27?GGML_TYPE_IQ4_NL:
+		(inputs.quant_k==26?GGML_TYPE_Q5_0:
+		(inputs.quant_k==25?GGML_TYPE_Q5_0:
 		(inputs.quant_k==24?GGML_TYPE_Q5_0:
-		(inputs.quant_k==23?GGML_TYPE_Q5_0:
+		(inputs.quant_k==23?GGML_TYPE_Q5_1:
 		(inputs.quant_k==22?GGML_TYPE_Q5_1:
 		(inputs.quant_k==21?GGML_TYPE_Q5_1:
-		(inputs.quant_k==20?GGML_TYPE_Q5_1:
+		(inputs.quant_k==20?GGML_TYPE_Q6_0:
 		(inputs.quant_k==19?GGML_TYPE_Q6_0:
 		(inputs.quant_k==18?GGML_TYPE_Q6_0:
 		(inputs.quant_k==17?GGML_TYPE_Q6_0:
@@ -2899,22 +2922,25 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
 		(inputs.quant_k==3?GGML_TYPE_Q5_1:
 		(inputs.quant_k==2?GGML_TYPE_Q8_0:
 		(inputs.quant_k==1?GGML_TYPE_BF16:
-		GGML_TYPE_F16))))))))))))))))))))))));
+		GGML_TYPE_F16)))))))))))))))))))))))))))))))))));
         llama_ctx_params.type_v =
+		(inputs.quant_v==35?GGML_TYPE_F16:
+		(inputs.quant_v==34?GGML_TYPE_F16:
+		(inputs.quant_v==33?GGML_TYPE_F16:
 		(inputs.quant_v==32?GGML_TYPE_F16:
 		(inputs.quant_v==31?GGML_TYPE_F16:
 		(inputs.quant_v==30?GGML_TYPE_F16:
 		(inputs.quant_v==29?GGML_TYPE_F16:
-		(inputs.quant_v==28?GGML_TYPE_F16:
-		(inputs.quant_v==27?GGML_TYPE_F16:
-		(inputs.quant_v==26?GGML_TYPE_F16:
-		(inputs.quant_v==25?GGML_TYPE_IQ4_NL:
-		(inputs.quant_v==24?GGML_TYPE_IQ4_NL:
-		(inputs.quant_v==23?GGML_TYPE_Q5_0:
-		(inputs.quant_v==22?GGML_TYPE_IQ4_NL:
+		(inputs.quant_v==28?GGML_TYPE_IQ4_NL:
+		(inputs.quant_v==27?GGML_TYPE_Q4_0:
+		(inputs.quant_v==26?GGML_TYPE_IQ4_NL:
+		(inputs.quant_v==25?GGML_TYPE_Q4_0:
+		(inputs.quant_v==24?GGML_TYPE_Q5_0:
+		(inputs.quant_v==23?GGML_TYPE_IQ4_NL:
+		(inputs.quant_v==22?GGML_TYPE_Q4_0:
 		(inputs.quant_v==21?GGML_TYPE_Q5_0:
-		(inputs.quant_v==20?GGML_TYPE_Q5_1:
-		(inputs.quant_v==19?GGML_TYPE_IQ4_NL:
+		(inputs.quant_v==20?GGML_TYPE_IQ4_NL:
+		(inputs.quant_v==19?GGML_TYPE_Q4_0:
 		(inputs.quant_v==18?GGML_TYPE_Q5_0:
 		(inputs.quant_v==17?GGML_TYPE_Q5_1:
 		(inputs.quant_v==16?GGML_TYPE_Q6_0:
@@ -2933,7 +2959,7 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
 		(inputs.quant_v==3?GGML_TYPE_Q5_1:
 		(inputs.quant_v==2?GGML_TYPE_Q8_0:
 		(inputs.quant_v==1?GGML_TYPE_BF16:
-		GGML_TYPE_F16))))))))))))))))))))))));
+		GGML_TYPE_F16)))))))))))))))))))))))))))))))))));
 
         //apply overrides from autofit
         float tensor_split_temp[128] = {0}; //temp buffer for autofit

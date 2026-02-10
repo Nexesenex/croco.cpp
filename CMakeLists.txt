@@ -200,22 +200,23 @@ if (LLAMA_CUBLAS)
                 ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q6_0-q6_0.cu
                 ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q6_0-q5_1.cu
                 ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q6_0-q5_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q6_0-q4_0.cu
                 ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q6_0-iq4_nl.cu
                 ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_1-q5_1.cu
                 ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_1-q5_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_1-q4_0.cu
                 ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_1-iq4_nl.cu
                 ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_0-q5_0.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_0-q4_0.cu
                 ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_0-iq4_nl.cu
+                ggml/src/ggml-cuda/template-instances/fattn-vec-instance-iq4_nl-q4_0.cu
                 ggml/src/ggml-cuda/template-instances/fattn-vec-instance-iq4_nl-iq4_nl.cu
                 ggml/src/ggml-cuda/template-instances/fattn-vec-instance-bf16-bf16.cu
             
                 # all quants necessary for Kobold CPP Frankenstein are compiled
                 # the other are ignored but not deleted from the ggml_cuda templates directory
-                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q4_1-q4_0.cu
                 # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q4_1-q4_1.cu
-                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_0-q4_0.cu
                 # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_0-q4_1.cu
-                # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_1-q4_0.cu
                 # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_1-q4_1.cu
                 # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q4_1.cu
                 # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-f16.cu

@@ -2018,18 +2018,18 @@ def load_model(model_filename):
         inputs.quant_k = inputs.quant_v = 0
     if args.quantkv==1:
         inputs.quant_k = inputs.quant_v = 1
-    if args.quantkv>=2 and args.quantkv<=25:
+    if args.quantkv>=1 and args.quantkv<=28:
         inputs.quant_k = inputs.quant_v = args.quantkv
     # if args.quantkv>=8 and args.quantkv<=10:
         # inputs.use_contextshift = 0
     # if args.quantkv==16 or args.quantkv==19 or args.quantkv==24:
         # inputs.use_contextshift = 0  
-    if args.quantkv>=26 and args.quantkv<=32:
+    if args.quantkv>=29 and args.quantkv<=35:
         args.noflashattention
         inputs.quant_k = args.quantkv
         inputs.quant_v = 0
         print("\nWarning: quantkv was used without flashattention! This is NOT RECOMMENDED!\nOnly K cache can be quantized, and performance can suffer.\nIn some cases, it might even use more VRAM when doing a full offload.\nYou are strongly encouraged to use flashattention if you want to use quantkv.")
-    if args.quantkv<0 or args.quantkv>32:
+    if args.quantkv<0 or args.quantkv>35:
         inputs.quant_k = inputs.quant_v = 0
         inputs.draft_quant_k = inputs.draft_quant_v = 0
 
@@ -2049,18 +2049,18 @@ def load_model(model_filename):
         inputs.draft_quant_k = inputs.draft_quant_v = 0
     if args.draft_quantkv==1:
         inputs.draft_quant_k = inputs.draft_quant_v = 1
-    if args.draft_quantkv>=2 and args.draft_quantkv<=25:
+    if args.draft_quantkv>=2 and args.draft_quantkv<=28:
         inputs.draft_quant_k = inputs.draft_quant_v = args.draft_quantkv
     # if args.draft_quantkv>=8 and args.draft_quantkv<=10:
         # inputs.use_contextshift = 0
     # if args.draft_quantkv==16 or args.draft_quantkv==19 or args.draft_quantkv==24:
         # inputs.use_contextshift = 0  
-    if args.draft_quantkv>=26 and args.draft_quantkv<=32:
+    if args.draft_quantkv>=29 and args.draft_quantkv<=35:
         args.noflashattention
         inputs.draft_quant_k = args.draft_quantkv
         inputs.draft_quant_v = 0
         print("\nWarning: draft_quantkv was used without flashattention! This is NOT RECOMMENDED!\nOnly K cache can be draft_quantized, and performance can suffer.\nIn some cases, it might even use more VRAM when doing a full offload.\nYou are strongly encouraged to use flashattention if you want to use draft_quantkv.")
-    if args.draft_quantkv<0 or args.draft_quantkv>32:
+    if args.draft_quantkv<0 or args.draft_quantkv>35:
         inputs.draft_quant_k = inputs.draft_quant_v = args.quantkv
 
     inputs.blasbatchsize = args.blasbatchsize
@@ -11549,75 +11549,81 @@ def show_gui():
     quantkv_values = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31"]
 
     quantkv_text = ["0 - F16 (16BPW) - FA or not. Very reliable.",
-    "1 - BF16 (16BPW) - no FA, experimental for Cuda, not tested on other backends.",
+    "1 - BF16 (16BPW) - FA or not",
     "2 - q8_0 - (8.5BPW) - FA. Reliable, except on partial offload of MOEs with lowram.",
-    "3* - K q5_1 - V q5_1 (6BPW) - FA.",
+    "3 - q5_1 - (6BPW) - FA, recommanded all rounder.",
     "4 - q4_0 - (4.5BPW) - FA. Reliable.",
     "5* - K F16 - V q8_0 (12.25BPW) - FA. Very reliable.",
     "6* - K F16 - V q6_0 (11.25BPW) - FA. Doesn't work on Gemma 2 FA.",
     "7* - K F16 - V q5_1 (11BPW) - FA. Doesn't work on Gemma 2 FA.",
     "8* - K F16 - V q5_0 (10.75BPW) - FA. Doesn't work on Gemma 2 FA.",
     "9* - K F16 - V q4_0 (10.25BPW) - FA. Doesn't work on Gemma 2 FA.",
-    "10* - K F16 - V iq4_nl (10.25BPW) - FA. Doesn't work on Gemma 2 FA.",
+    "10* - K F16 - V iq4_nl (10.25BPW) - FA. Faulty ATM.",
     "11 - K q8_0 - V q6_0 (7.5BPW) - FA. Doesn't work on Gemma 2 FA.",
     "12* - K q8_0 - V q5_1 (7.25BPW) - FA.",
     "13* - K q8_0 - V q5_0 (7BPW) - FA.",
     "14 - K q8_0 - V q4_0 (6.5BPW) - FA. Reliable, except on Gemma 2 FA.",
-    "15 - K q8_0 - V iq4_nl (6.5BPW) - FA. Reliable, except on Gemma 2 FA.",
+    "15 - K q8_0 - V iq4_nl (6.5BPW) - FA. Faulty ATM.",
     "16* - K q6_0 - V q6_0 (6.5BPW) - FA. Reliable, except on Gemma 2 FA.",
     "17* - K q6_0 - V q5_1 (6.25BPW) - FA. Reliable, except on Gemma 2 FA.",
     "18 - K q6_0 - V q5_0 (6BPW) - FA. Best game in FA town. Faulty on some models.",
-    "19* - K q6_0 - V iq4_nl (5.5BPW) - FA. Faulty on some models. (Gemma 2 FA. Qwen 2.5 1.5b?)",
-    "20 - K q5_1 - V q5_1 (6BPW) - FA. Very reliable, recommanded all rounder.",
+    "19 - K q6_0 - V q4_0 (5.5BPW) - FA.",
+    "20* - K q6_0 - V iq4_nl (5.5BPW) - FA. Faulty ATM.",
     "21 - K q5_1 - V q5_0 (5.75BPW) - FA. Faulty on some models.",
-    "22* - K q5_1 - V iq4_nl (5.25BPW) - FA. Faulty on some models.",
-    "23 - K q5_0 - V q5_0 (5.5BPW) - FA. Possibly faulty on some models. (Qwen 2.5 1.5b?)",
-    "24 - K q5_0 - V iq4_nl (5BPW) - FA. Reliable, except on Qwen?",
-    "25 - K iq4_nl - V iq4_nl (4.5BPW) - FA. Reliable.",
-    "26 - K q8_0 - V F16 (12.25BPW) - NO FA. Slower.",
-    "27 - K q6_0 - V F16 (11.25BPW) - NO FA. Slower, best game in non-FA town.",
-    "28 - K q5_1 - V F16 (11BPW) - NO FA. Slower, possibly faulty on some models. (Qwen 2.5 1.5b?)",
-    "29 - K q5_0 - V F16 (11.75BPW) - NO FA. Slower, possibly faulty on some models. (Qwen 2.5 1.5b?)",
-    "30 - K q4_1 - V F16 (10.5BPW) - NO FA. Slower, possibly faulty on some models. (Qwen 2.5 1.5b?)",
-    "31 - K q4-0 - V F16 (10.25BPW) - NO FA. Slower, possibly faulty on some models. (Qwen 2.5 1.5b?)",
-    "32 - K iq4_nl - V F16 (10.25BPW) - NO FA, slower"]
+    "22 - K q5_1 - V q4_0 (6BPW) - FA.",
+    "23* - K q5_1 - V iq4_nl (5.25BPW) - FA. Faulty ATM.",
+    "24 - K q5_0 - V q5_0 (5.5BPW) - FA. Possibly faulty on some models. (Qwen 2.5 1.5b?)"
+    "25 - K q5_0 - V q4_0 (5BPW) - FA.",
+    "26 - K q5_0 - V iq4_nl (5BPW) - FA. Faulty ATM.",
+    "27 - K iq4_nl - V q4_0 (4.5BPW) - FA.",
+    "28 - K iq4_nl - V iq4_nl (4.5BPW) - FA. Faulty ATM.",
+    "29 - K q8_0 - V F16 (12.25BPW) - NO FA. Slower.",
+    "30 - K q6_0 - V F16 (11.25BPW) - NO FA. Slower, best game in non-FA town.",
+    "31 - K q5_1 - V F16 (11BPW) - NO FA. Slower, possibly faulty on some models. (Qwen 2.5 1.5b?)",
+    "32 - K q5_0 - V F16 (11.75BPW) - NO FA. Slower, possibly faulty on some models. (Qwen 2.5 1.5b?)",
+    "33 - K q4_1 - V F16 (10.5BPW) - NO FA. Slower, possibly faulty on some models. (Qwen 2.5 1.5b?)",
+    "34 - K q4-0 - V F16 (10.25BPW) - NO FA. Slower, possibly faulty on some models. (Qwen 2.5 1.5b?)",
+    "35 - K iq4_nl - V F16 (10.25BPW) - NO FA, slower"]
 
     draft_quantkv_values = ["-1", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31"]
 
     draft_quantkv_text = ["Draft -1 - same as main model Quant KV",
     "Draft 0 - F16 (16BPW) - FA or not",
     "Draft 1 - BF16 (16BPW) - no FA, experimental for Cuda, not tested on other backends.",
-    "Draft 2- q8_0 - (8.5BPW) - FA",
-    "Draft 3* - K q5_1 - V q5_1 (6BPW) - FA.",
+    "Draft 2 - q8_0 - (8.5BPW) - FA",
+    "Draft 3* - q5_1 - (6BPW) - FA, recommanded all rounder.",
     "Draft 4 - q4_0 - (4.5BPW) - FA - possibly faulty on some models",
     "Draft 5* - K F16 - V q8_0 (12.25BPW) - FA. Very reliable.",
     "Draft 6* - K F16 - V q6_0 (11.25BPW) - FA. Doesn't work on Gemma 2 FA.",  
     "Draft 7* - K F16 - V q5_1 (11BPW) - FA. Doesn't work on Gemma 2 FA.", 
     "Draft 8* - K F16 - V q5_0 (10.75BPW) - FA. Doesn't work on Gemma 2 FA.", 
     "Draft 9* - K F16 - V q4_0 (10.25BPW) - FA. Doesn't work on Gemma 2 FA.", 
-    "Draft 10* - K F16 - V iq4_nl (10.25BPW) - FA. Doesn't work on Gemma 2 FA.", 
+    "Draft 10* - K F16 - V iq4_nl (10.25BPW) - FA. Faulty ATM.", 
     "Draft 11 - K q8_0 - V q6_0 (7.5BPW) - FA. Doesn't work on Gemma 2 FA.",
     "Draft 12* - K q8_0 - V q5_1 (7.25BPW) - FA.",
     "Draft 13* - K q8_0 - V q5_0 (7BPW) - FA.",
     "Draft 14 - K q8_0 - V q4_0 (6.5BPW) - FA. Reliable, except on Gemma 2 FA.",
-    "Draft 15 - K q8_0 - V iq4_nl (6.5BPW) - FA. Reliable, except on Gemma 2 FA.",
+    "Draft 15 - K q8_0 - V iq4_nl (6.5BPW) - FA. Faulty ATM.",
     "Draft 16* - K q6_0 - V q6_0 (6.5BPW) - FA. Reliable, except on Gemma 2 FA.",
     "Draft 17* - K q6_0 - V q5_1 (6.25BPW) - FA. Reliable, except on Gemma 2 FA.",
     "Draft 18 - K q6_0 - V q5_0 (6BPW) - FA. Best game in FA town. Faulty on some models.",
-    "Draft 19* - K q6_0 - V iq4_nl (5.5BPW) - FA. Faulty on some models. (Gemma 2 FA. Qwen 2.5 1.5b?)",
-    "Draft 20 - K q5_1 - V q5_1 (6BPW) - FA. Very reliable, recommanded all rounder.",
+    "Draft 19* - K q6_0 - V q4_0 (5.5BPW) - FA.",
+    "Draft 20* - K q6_0 - V iq4_nl (5.5BPW) - FA. Faulty ATM.",
     "Draft 21 - K q5_1 - V q5_0 (5.75BPW) - FA. Faulty on some models.",
-    "Draft 22* - K q5_1 - V iq4_nl (5.25BPW) - FA. Faulty on some models.",
-    "Draft 23 - K q5_0 - V q5_0 (5.5BPW) - FA. Possibly faulty on some models. (Qwen 2.5 1.5b?)",
-    "Draft 24 - K q5_0 - V iq4_nl (5BPW) - FA. Reliable, except on Qwen?",
-    "Draft 25 - K iq4_nl - V iq4_nl (4.5BPW) - FA. Reliable.",
-    "Draft 26 - K q8_0 - V F16 (12.25BPW) - NO FA. Slower.",
-    "Draft 27 - K q6_0 - V F16 (11.25BPW) - NO FA. Slower, best game in non-FA town.",
-    "Draft 28 - K q5_1 - V F16 (11BPW) - NO FA. Slower, possibly faulty on some models. (Qwen 2.5 1.5b?)",
-    "Draft 29 - K q5_0 - V F16 (11.75BPW) - NO FA. Slower, possibly faulty on some models. (Qwen 2.5 1.5b?)",
-    "Draft 30 - K q4_1 - V F16 (10.5BPW) - NO FA. Slower, possibly faulty on some models. (Qwen 2.5 1.5b?)",
-    "Draft 31 - K q4-0 - V F16 (10.25BPW) - NO FA. Slower, possibly faulty on some models. (Qwen 2.5 1.5b?)",
-    "Draft 32 - K iq4_nl - V F16 (10.25BPW) - NO FA, slower"]
+    "Draft 22* - K q5_1 - V q4_0 (5.25BPW) - FA.",
+    "Draft 23* - K q5_1 - V iq4_nl (5.25BPW) - FA. Faulty ATM.",
+    "Draft 24 - K q5_0 - V q5_0 (5.5BPW) - FA. Possibly faulty on some models. (Qwen 2.5 1.5b?)",
+    "Draft 25 - K q5_0 - V q4_0 (5BPW) - FA.",
+    "Draft 26 - K q5_0 - V iq4_nl (5BPW) - FA. Faulty ATM.",
+    "Draft 27 - K iq4_nl - V q4_0 (4.5BPW) - FA.",
+    "Draft 28 - K iq4_nl - V iq4_nl (4.5BPW) - FA. Faulty ATM.",
+    "Draft 29 - K q8_0 - V F16 (12.25BPW) - NO FA. Slower.",
+    "Draft 30 - K q6_0 - V F16 (11.25BPW) - NO FA. Slower, best game in non-FA town.",
+    "Draft 31 - K q5_1 - V F16 (11BPW) - NO FA. Slower, possibly faulty on some models. (Qwen 2.5 1.5b?)",
+    "Draft 32 - K q5_0 - V F16 (11.75BPW) - NO FA. Slower, possibly faulty on some models. (Qwen 2.5 1.5b?)",
+    "Draft 33 - K q4_1 - V F16 (10.5BPW) - NO FA. Slower, possibly faulty on some models. (Qwen 2.5 1.5b?)",
+    "Draft 34 - K q4-0 - V F16 (10.25BPW) - NO FA. Slower, possibly faulty on some models. (Qwen 2.5 1.5b?)",
+    "Draft 35 - K iq4_nl - V F16 (10.25BPW) - NO FA, slower"]
 
     if not any(runopts):
         exitcounter = 999
@@ -12469,7 +12475,7 @@ def show_gui():
     makecheckbox(context_tab, "Custom RoPE Config", variable=customrope_var, row=22, command=togglerope,tooltiptxt="Override the default RoPE configuration with custom RoPE scaling.")
     noqkvlabel = makelabel(context_tab,"(Note: QuantKV works best with flash attention)",30,0,"Only K cache can be quantized, and performance can suffer.\nIn some cases, it might even use more VRAM when doing a full offload.",padx=160)
     noqkvlabel.configure(text_color="#ff5555")
-    qkvslider,qkvlabel,qkvtitle = makeslider(context_tab, "Quantize KV Cache:", quantkv_text, quantkv_var, 30, set=0,tooltip="Enable quantization of KV cache (KVQ). Mode 0 (F16) is default. Modes 1-25 requires FlashAttention.\nModes involving q6_0 or iq4_nl may not work with ContextShift.\nModes 26-32 work for the K cache only and without FA, for incompatible models.")
+    qkvslider,qkvlabel,qkvtitle = makeslider(context_tab, "Quantize KV Cache:", quantkv_text, quantkv_var, 30, set=0,tooltip="Enable quantization of KV cache (KVQ). Mode 0 (F16) is default. Modes 1-28 requires FlashAttention.\nModes involving q6_0 or iq4_nl may not work with ContextShift.\nModes 29-35 work for the K cache only and without FA, for incompatible models.")
     quantkv_var.trace_add("write", toggleflashattn)
     makecheckbox(context_tab, "No BOS Token", nobostoken_var, 43, tooltiptxt="Prevents BOS token from being added at the start of any prompt. Usually NOT recommended for most models.")
     makecheckbox(context_tab, "Enable Guidance", enableguidance_var, 43,padx=(140), tooltiptxt="Enables the use of Classifier-Free-Guidance, which allows the use of negative prompts. Has performance and memory impact.")
@@ -12548,7 +12554,7 @@ def show_gui():
     makelabelentry(model_tab, "Draft Amount: ", draftamount_var, 13, 50,padx=(100),singleline=True,tooltip="How many tokens to draft per chunk before verifying results")
     makelabelentry(model_tab, "Splits: ", draftgpusplit_str_vars, 13, 50,padx=(210),singleline=True,tooltip="Distribution of draft model layers. Leave blank to follow main model's gpu split. Only works if multi-gpu (All) selected in main model.", labelpadx=(160))
     makelabelentry(model_tab, "Layers: ", draftgpulayers_var, 13, 50,padx=(320),singleline=True,tooltip="How many layers to GPU offload for the draft model", labelpadx=(270))
-    makeslider(model_tab, "Quantize Draft KV Cache:", draft_quantkv_text, draft_quantkv_var, 0, 32, 30, set=-1,tooltip="Enable quantization of Draft KV cache (D_KVQ). Mode -1 (same as main) is default. Mode 0 (F16) is FA and non-FA both.\nModes 24-31 work without FA, for incompatible models.")
+    makeslider(model_tab, "Quantize Draft KV Cache:", draft_quantkv_text, draft_quantkv_var, 0, 36, 30, set=-1,tooltip="Enable quantization of Draft KV cache (D_KVQ). Mode -1 (same as main) is default. Mode 0 (F16) is FA and non-FA both.\nModes 28-35 work without FA, for incompatible models.")
     makefileentry(model_tab, "Embeds Model:", "Select Embeddings Model File", embeddings_model_var, 15, width=130,singlerow=True, filetypes=[("*.gguf","*.gguf")], tooltiptxt="Select an embeddings GGUF model that can be used to generate embedding vectors.")
     makelabelentry(model_tab, "ECtx: ", embeddings_ctx_var, 15, 50,padx=(335),singleline=True,tooltip="If set above 0, limits max context for embedding model to save memory.", labelpadx=(302))
     makecheckbox(model_tab, "GPU", embeddings_gpu_var, 15, 0,padx=(390),tooltiptxt="Uses the GPU for Embeddings.")
@@ -14748,13 +14754,13 @@ def main(launch_args, default_args):
         save_config_cli(args.exporttemplate,True)
         return
 
-    #prevents quantkv 1-23 from being used without flash attn, and 25-31 to be used without.
+    #prevents quantkv 1-27 from being used without flash attn, and 29-35 to be used without.
     if args.quantkv and args.quantkv ==0:
         print("KV f16 cache can work in both FA and no-FA mode.")
-    if args.quantkv and args.quantkv >0 and args.quantkv <26 and args.noflashattention:
-        print("Error: Using --quantkv 1 to 25, are FA modes and require --flashattention. Switching to FA.")
-    if args.quantkv and args.quantkv >=26 and args.quantkv <=31 and not args.noflashattention:
-        print("Error: The --quantkv 26 <-> 32 (quantum cache K, and V F16) are non-FA modes. Switching to NoFA")
+    if args.quantkv and args.quantkv >0 and args.quantkv <29 and args.noflashattention:
+        print("Error: Using --quantkv 1 to 28, are FA modes and require --flashattention. Switching to FA.")
+    if args.quantkv and args.quantkv >=29 and args.quantkv <=35 and not args.noflashattention:
+        print("Error: The --quantkv 29 <-> 35 (quantum cache K, and V F16) are non-FA modes. Switching to NoFA")
 
     # if args.failsafe: #failsafe implies noavx2
         # args.noavx2 = True
@@ -16266,11 +16272,11 @@ if __name__ == '__main__':
     advparser.add_argument("--noflashattention","--no-flash-attn","-nofa", help="Disables flash attention.", action='store_true')
     advparser.add_argument("--lowvram","-nkvo","--no-kv-offload", help="If supported by the backend, do not offload KV to GPU (lowvram mode). Not recommended, will be slow.", action='store_true')
 
-    advparser.add_argument("--quantkv", help="Sets the KV cache data Quantization (KVQ) type to save RAM/VRAM. Requires Flash Attention for full effect, otherwise only K cache is quantized. 0 - F16 (16BPW) - FA or not, 1 - BF16 (16BPW) - no FA, slower, 2 - q8_0 - (8.5BPW) - FA, 3 - q5_1 - (6BPW) - FA, 4 - q4_0 - (4.5BPW) - FA, 5 - K F16 - V q8_0 (12.25BPW) - FA, 6 - K F16 - V q6_0 (11.25BPW) - FA, 7 - K q8_0 - V q6_0 (7.5BPW) - FA, 8 - K q8_0 - V q5_0 (7BPW), slower, best FA game in town, 9 - K q8_0 - V iq4_nl (6.5BPW) - FA, 10 - K q6_0 - V q6_0 (6.5BPW) - FA, 11 - K q6_0 - V q5_0 (6BPW) - FA, 12 - K q6_0 - V iq4_nl (5.5BPW) - FA, 13 - K q5_1 - V q5_1 (6BPW) - FA, 14 - K q5_1 - V q5_0 (5.75BPW) - FA, 15 - K q5_1 - V iq4_nl (5.25BPW) - FA, 16 - K q5_0 - V q5_0 (5.5BPW) - FA, 17 - K q5_0 - V iq4_nl (5BPW) - FA, 18 - K iq4_nl - V iq4_nl (4.5BPW) - FA, 19 - K q8_0 - V F16 (12.25BPW) - NO FA, slower, 20 - K q6_0 - V F16 (11.25BPW) - NO FA, slower, best non-FA game in town, 21 - K q5_1 - V F16 (11BPW) - NO FA, slower, 22 - K q5_0 - V F16 (11.75BPW) - NO FA, slower, 23 - K q4_1 - V F16 (10.5BPW) - NO FA, slower, 24 - K q4-0 - V F16 (10.25BPW) - NO FA, slower, 25 - K iq4_nl - V F16 (10.25BPW) - NO FA, slower.", metavar=('[quantization level 0/1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18/19/20/21/22/23/24/25]'), type=check_range(int,0,32, default=0)
-
-    advparser.add_argument("--draft_quantkv", help="Sets the KV cache data Quantization (KVQ) type to save RAM/VRAM. Requires Flash Attention for full effect, otherwise only K cache is quantized. -1 - same as main model Quant KV, 0 - F16 (16BPW) - FA or not, 1 - BF16 (16BPW) - no FA, slower, 2 - q8_0 - (8.5BPW) - FA, 3 - q5_1 - (6BPW) - FA, 4 - q4_0 - (4.5BPW) - FA, 5 - K F16 - V q8_0 (12.25BPW) - FA, 6 - K F16 - V q6_0 (11.25BPW) - FA, 7 - K q8_0 - V q6_0 (7.5BPW) - FA, 8 - K q8_0 - V q5_0 (7BPW), slower, best FA game in town, 9 - K q8_0 - V iq4_nl (6.5BPW) - FA, 10 - K q6_0 - V q6_0 (6.5BPW) - FA, 11 - K q6_0 - V q5_0 (6BPW) - FA, 12 - K q6_0 - V iq4_nl (5.5BPW) - FA, 13 - K q5_1 - V q5_1 (6BPW) - FA, 14 - K q5_1 - V q5_0 (5.75BPW) - FA, 15 - K q5_1 - V iq4_nl (5.25BPW) - FA, 16 - K q5_0 - V q5_0 (5.5BPW) - FA, 17 - K q5_0 - V iq4_nl (5BPW) - FA, 18 - K iq4_nl - V iq4_nl (4.5BPW) - FA, 19 - K q8_0 - V F16 (12.25BPW) - NO FA, slower, 20 - K q6_0 - V F16 (11.25BPW) - NO FA, slower, best non-FA game in town, 21 - K q5_1 - V F16 (11BPW) - NO FA, slower, 22 - K q5_0 - V F16 (11.75BPW) - NO FA, slower, 23 - K q4_1 - V F16 (10.5BPW) - NO FA, slower, 24 - K q4-0 - V F16 (10.25BPW) - NO FA, slower, 25 - K iq4_nl - V F16 (10.25BPW) - NO FA, slower.", metavar=('[draft quantization level -1/0/1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18/19/20/21/22/23/24/25]'), type=check_range(int,-1,32), default=-1)
-
     # choices=["f16","bf16","q8_0","q5_1","q4_0","-1", "0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25"], default="-1")
+
+    advparser.add_argument("--quantkv", help="Sets the KV cache data Quantization (KVQ) type to save RAM/VRAM. Requires Flash Attention for full effect, otherwise only K cache is quantized. 0 - F16 (16BPW) - FA or not, 1 - BF16 (16BPW) - no FA, slower, 2 - q8_0 - (8.5BPW) - FA, 3 - q5_1 - (6BPW) - FA, 4 - q4_0 - (4.5BPW) - FA, 3 - K F16 - V q8_0 (12.25BPW) - FA, 4 - K F16 - V q6_0 (11.25BPW) - FA, 5 - K F16 - V q5_1 (11BPW) - FA, 6 - K F16 - V q5_0 (10.75BPW) - FA, 7 - K F16 - V q4_0 (11.25BPW) - FA, 8 - K F16 - V iq4_nl (10.25BPW) - FA, 9 - K q8_0 - V q6_0 (7.5BPW) - FA, 10 - K q8_0 - V q5_1 (7.25BPW), slower, 11 - K q8_0 - V q5_0 (7BPW) - FA, 12 - K q8_0 - V q4_0 (6.5BPW) - FA, 13 - K q8_0 - V iq4_nl (6.5BPW) - FA, 14 - K q6_0 - V q6_0 (6.5BPW) - FA, 15 - K q6_0 - V q5_1 (6.25BPW) - FA, 16 - K q6_0 - V q5_0 (6BPW) - FA, slower, best FA game in town, 17 - K q6_0 - V iq4_nl (5.5BPW) - FA, 18 - K q5_1 - V q5_1 (6BPW) - FA, 19 - K q5_1 - V q5_0 (5.75BPW) - FA, 20 - K q5_1 - V iq4_nl (5.25BPW) - FA, 21 - K q5_0 - V q5_0 (5.5BPW) - FA, 22 - K q5_0 - V iq4_nl (5BPW) - FA, 27 - K iq4_nl - V iq4_nl (4.5BPW) - FA, 28 - BF16 (16BPW) - no FA, slower, 29 - K q8_0 - V F16 (12.25BPW) - NO FA, slower, 30 - K q6_0 - V F16 (11.25BPW) - NO FA, slower, best non-FA game in town, 31 - K q5_1 - V F16 (11BPW) - NO FA, slower, 32 - K q5_0 - V F16 (11.75BPW) - NO FA, slower, 33 - K q4_1 - V F16 (10.5BPW) - NO FA, slower, 34 - K q4-0 - V F16 (10.25BPW) - NO FA, slower, 35 - K iq4_nl - V F16 (10.25BPW) - NO FA, slower.", metavar=('[quantization level 0/1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18/19/20/21/22/23/24/25/26/27/28/29/30/31/32/33/34/35]'), type=check_range(int,0,35), default=0)
+
+    advparser.add_argument("--draft_quantkv", help="Sets the KV cache data Quantization (KVQ) type to save RAM/VRAM. Requires Flash Attention for full effect, otherwise only K cache is quantized. -1 - same as main model Quant KV, 0 - F16 (16BPW) - FA or not, 1 - BF16 (16BPW) - no FA, slower, 2 - q8_0 - (8.5BPW) - FA, 3 - q5_1 - (6BPW) - FA, 4 - q4_0 - (4.5BPW) - FA, 3 - K F16 - V q8_0 (12.25BPW) - FA, 4 - K F16 - V q6_0 (11.25BPW) - FA, 5 - K F16 - V q5_1 (11BPW) - FA, 6 - K F16 - V q5_0 (10.75BPW) - FA, 7 - K F16 - V q4_0 (11.25BPW) - FA, 8 - K F16 - V iq4_nl (10.25BPW) - FA, 9 - K q8_0 - V q6_0 (7.5BPW) - FA, 10 - K q8_0 - V q5_1 (7.25BPW), slower, 11 - K q8_0 - V q5_0 (7BPW) - FA, 12 - K q8_0 - V q4_0 (6.5BPW) - FA, 13 - K q8_0 - V iq4_nl (6.5BPW) - FA, 14 - K q6_0 - V q6_0 (6.5BPW) - FA, 15 - K q6_0 - V q5_1 (6.25BPW) - FA, 16 - K q6_0 - V q5_0 (6BPW) - FA, slower, best FA game in town, 17 - K q6_0 - V iq4_nl (5.5BPW) - FA, 18 - K q5_1 - V q5_1 (6BPW) - FA, 19 - K q5_1 - V q5_0 (5.75BPW) - FA, 20 - K q5_1 - V iq4_nl (5.25BPW) - FA, 21 - K q5_0 - V q5_0 (5.5BPW) - FA, 22 - K q5_0 - V iq4_nl (5BPW) - FA, 27 - K iq4_nl - V iq4_nl (4.5BPW) - FA, 28 - BF16 (16BPW) - no FA, slower, 29 - K q8_0 - V F16 (12.25BPW) - NO FA, slower, 30 - K q6_0 - V F16 (11.25BPW) - NO FA, slower, best non-FA game in town, 31 - K q5_1 - V F16 (11BPW) - NO FA, slower, 32 - K q5_0 - V F16 (11.75BPW) - NO FA, slower, 23 - K q4_1 - V F16 (10.5BPW) - NO FA, slower, 34 - K q4-0 - V F16 (10.25BPW) - NO FA, slower, 35 - K iq4_nl - V F16 (10.25BPW) - NO FA, slower.", metavar=('[draft quantization level -1/0/1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18/19/20/21/22/23/24/25/26/27/28/29/30/31/32/33/34/35]'), type=check_range(int,-1,35), default=-1)
 
     advparser.add_argument("--forceversion", help="If the model file format detection fails (e.g. rogue modified model) you can set this to override the detected format (enter desired version, e.g. 401 for GPTNeoX-Type2).",metavar=('[version]'), type=int, default=0)
     advparser.add_argument("--smartcontext", help="Reserving a portion of context to try processing less frequently. Outdated. Not recommended.", action='store_true')
