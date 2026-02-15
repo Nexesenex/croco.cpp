@@ -175,81 +175,76 @@ static __device__ __forceinline__ int get_one_int_from_table_16(const int & q4) 
     return *((const int *) &val0_8);
 }
 
-template<typename T, int D, int warp_size>
-static __device__ __forceinline__ T vec_dot_fattn_vec_KQ_iq4_nl(
+template<int D, int nthreads>
+static __device__ __forceinline__ float vec_dot_fattn_vec_KQ_iq4_nl(
     const char * __restrict__ K_c, const void * __restrict__ Q_v, const int * __restrict__ Q_q8, const void * __restrict__ Q_ds_v) {
 
     const block_iq4_nl * K_iq4_nl = (const block_iq4_nl *) K_c;
     GGML_UNUSED(Q_v);
 
-    T sum = 0.0f;
+    float sum = 0.0f;
 
 #pragma unroll
-    for (int k_KQ_0 = 0; k_KQ_0 < D/sizeof(int); k_KQ_0 += warp_size) {
-        const int k_KQ = k_KQ_0 + threadIdx.x;
+    for (int k_KQ_0 = 0; k_KQ_0 < int(D/sizeof(int)); k_KQ_0 += nthreads) {
+        const int k_KQ = k_KQ_0 + (nthreads == WARP_SIZE ? threadIdx.x : threadIdx.x % nthreads);
 
         const int ib    = k_KQ /  QI8_1;
         const int iqs4  = k_KQ %  QI4_NL;
         const int shift = k_KQ & (QI8_1/2);
 
-        const int v = get_one_int_from_table_16((get_int_b2(K_iq4_nl[ib].qs, iqs4) >> shift) & 0x0F0F0F0F);
-        const int u = Q_q8[k_KQ_0/warp_size];
+        int v;
+        ggml_cuda_memcpy_1<sizeof(int), 2>(&v, K_iq4_nl[ib].qs + sizeof(int)*iqs4);
+        v = (v >> shift) & 0x0F0F0F0F;
+        v = get_one_int_from_table_16(v);
+
+        const int u = Q_q8[k_KQ_0/nthreads];
 
         const int sumi = ggml_cuda_dp4a(v, u, 0);
 
-#ifdef FP16_AVAILABLE
-        if (std::is_same<T, half>::value) {
-            const half2  * Q_ds = (const half2  *) Q_ds_v;
-            sum += (T) (((half)sumi) * K_iq4_nl[ib].d * Q_ds[k_KQ_0/warp_size].x);
-        } else
-#endif // FP16_AVAILABLE
-        {
-            const float2 * Q_ds = (const float2 *) Q_ds_v;
-            sum += (T) ((float)sumi * __half2float(K_iq4_nl[ib].d) * Q_ds[k_KQ_0/warp_size].x);
-        }
+        const float2 Q_ds = ((const float2 *) Q_ds_v)[k_KQ_0/nthreads];
+        const float d = __half2float(K_iq4_nl[ib].d);
+        sum += d * sumi * Q_ds.x;
     }
 
     return sum;
 }
 
-template <typename T, int D, int warp_size>
-static __device__ __forceinline__ T vec_dot_fattn_vec_KQ_q6_0(
+template<int D, int nthreads>
+static __device__ __forceinline__ float vec_dot_fattn_vec_KQ_q6_0(
     const char * __restrict__ K_c, const void * __restrict__ Q_v, const int * __restrict__ Q_q8, const void * __restrict__ Q_ds_v) {
 
     const block_q6_0 * K_q6_0 = (const block_q6_0 *) K_c;
     GGML_UNUSED(Q_v);
 
-    T sum = 0.0f;
+    float sum = 0.0f;
 
 #pragma unroll
-    for (int k_KQ_0 = 0; k_KQ_0 < D/sizeof(int); k_KQ_0 += warp_size) {
-        const int k_KQ = k_KQ_0 + threadIdx.x;
+    for (int k_KQ_0 = 0; k_KQ_0 < int(D/sizeof(int)); k_KQ_0 += nthreads) {
+        const int k_KQ = k_KQ_0 + (nthreads == WARP_SIZE ? threadIdx.x : threadIdx.x % nthreads);
 
         const int ib    = k_KQ /  QI8_1;
         const int iqs4  = k_KQ %  QI6_0;  // 0...3
         const int shift = k_KQ & (QI8_1/2);
 
-        const int vh = (get_int_b2(K_q6_0[ib].qh, iqs4%2) >> (4*(iqs4/2) + shift/2)) & 0x03030303;
-        const int vl = (get_int_b2(K_q6_0[ib].qs, iqs4) >> shift) & 0x0F0F0F0F;
-        const int v  = vl | (vh << 4);
+        int vl;
+        ggml_cuda_memcpy_1<sizeof(int), 2>(&vl, K_q6_0[ib].qs + sizeof(int)*iqs4);
+        vl = (vl >> shift) & 0x0F0F0F0F;
 
-        const int u = Q_q8[k_KQ_0/warp_size];
+        int vh;
+        ggml_cuda_memcpy_1<sizeof(int), 2>(&vh, K_q6_0[ib].qh + sizeof(int)*(iqs4%2));
+        const int shift_vh = 4*(iqs4/2) + shift/2;
+        vh >>= shift_vh;
+        vh &= 0x03030303;
+
+        const int v = vl | (vh << 4);
+
+        const int u = Q_q8[k_KQ_0/nthreads];
 
         const int sumi = ggml_cuda_dp4a(v, u, 0);
 
-#ifdef FP16_AVAILABLE
-        if (std::is_same<T, half>::value) {
-            const half2  * Q_ds = (const half2  *) Q_ds_v;
-
-            const half2 sum2 = __half2half2(K_q6_0[ib].d) * Q_ds[k_KQ_0/warp_size];
-            sum += (T) (((half) sumi)*__low2half(sum2) - __high2half(sum2)*__float2half(4.0f)) /* *32/QI8_1 == 4 */;
-        } else
-#endif // FP16_AVAILABLE
-        {
-            const float2 * Q_ds = (const float2 *) Q_ds_v;
-
-            sum += (T) (__half2float(K_q6_0[ib].d) * (sumi*Q_ds[k_KQ_0/warp_size].x - (32/QI8_1)*Q_ds[k_KQ_0/warp_size].y));
-        }
+        const float2 Q_ds = ((const float2 *) Q_ds_v)[k_KQ_0/nthreads];
+        const float d = __half2float(K_q6_0[ib].d);
+        sum += d * (sumi*Q_ds.x - (32/QI8_1)*Q_ds.y);
     }
 
     return sum;
