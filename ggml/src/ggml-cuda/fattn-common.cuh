@@ -632,28 +632,54 @@ static __device__ __forceinline__ void dequantize_V_iq4_nl(const void * __restri
     }
 }
 
-template <typename T>
-static __device__ __forceinline__ T dequantize_1_q6_0(const void * __restrict__ vx, const int64_t i) {
+template <typename T, int ne>
+static __device__ __forceinline__ void dequantize_V_q6_0(const void * __restrict__ vx, void * __restrict__ dst, const int64_t i0) {
     const block_q6_0 * x = (const block_q6_0 *) vx;
 
-    const int64_t ib    =  i  /  QK6_0;
-    const int     idq   =  i  %  QK6_0;
-    const int     iqs   =  i  % (QK6_0/2);
-    const int     shift = idq / (QK6_0/2);
-    //const int     shift = (i % QK6_0) / (QK6_0/2);
+    const int64_t ib    =  i0          /  QK6_0;
+    const int     idq   =  i0          %  QK6_0;
+    const int     iqs   =  i0          % (QK6_0/2);
+    const int     shift = (i0 % QK6_0) / (QK6_0/2);
 
-    const T   d  = x[ib].d;
-    const int ql = x[ib].qs[iqs] >> 4*shift;
-    const int qh = x[ib].qh[idq%(QK6_0/4)] >> (4*((idq/(QK6_0/4))%2) + 2*shift);
-    const int q  = ((ql & 0x0f) | ((qh & 0x03) << 4)) - 32;
+    static_assert(ne == 2 || ne == 4, "bad ne");
+    
+    int q;
+    ggml_cuda_memcpy_1<ne, 2>(&q, x[ib].qs + iqs);
+    q >>= 4*shift;
+    q &= 0x0F0F0F0F;
+
+    int qh;
+    ggml_cuda_memcpy_1<ne, 2>(&qh, x[ib].qh);
+    
+    const int shift_vh = 4*(idq/(QK6_0/4)) + shift/2;
+    qh >>= shift_vh;
+    qh &= 0x03030303;
+
+    q |= (qh << 4);
 
 #ifdef FP16_AVAILABLE
-    if (std::is_same<T, half>::value) {
-        return ((half) d)*((half) q);
-    }
-#endif // FP16_AVAILABLE
+    if constexpr (std::is_same_v<T, half>) {
+        const half2 d = __half2half2(x[ib].d);
 
-    return ((float) d)*((float) q);
+#pragma unroll
+        for (int l0 = 0; l0 < ne; l0 += 2) {
+            const int8_t q8 = (int8_t)(q >> (8*l0)) & 0xFF;
+            const int8_t q8_1 = (int8_t)(q >> (8*l0+4)) & 0xFF;
+            ((half2 *) dst)[l0/2] = d * make_half2(q8 - 32, q8_1 - 32);
+        }
+    } else
+#endif // FP16_AVAILABLE
+    if constexpr (std::is_same_v<T, float>) {
+        const float d = x[ib].d;
+
+#pragma unroll
+        for (int l = 0; l < ne; ++l) {
+            const int8_t q8 = (int8_t)((q >> (8*l)) & 0xFF);
+            ((float *) dst)[l] = d * (q8 - 32);
+        }
+    } else {
+        static_assert(std::is_same_v<T, void>, "bad type");
+    }
 }
 
 template <typename T, int ne>
