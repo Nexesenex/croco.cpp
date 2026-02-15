@@ -639,25 +639,28 @@ static __device__ __forceinline__ void dequantize_V_q6_0(const void * __restrict
     const int64_t ib    =  i0          /  QK6_0;
     const int     idq   =  i0          %  QK6_0;
     const int     iqs   =  i0          % (QK6_0/2);
-    const int     shift = idq / (QK6_0/2);
+    const int     shift = (i0 % QK6_0) / (QK6_0/2);
 
+    int q;
     static_assert(ne == 2 || ne == 4, "bad ne");
-    int vl;
-    ggml_cuda_memcpy_1<ne, 2>(&vl, x[ib].qs + iqs);
-    vl = (vl >> 4*shift) & 0x0F0F0F0F;
+    ggml_cuda_memcpy_1<ne, 2>(&q, x[ib].qs + iqs);
+    q >>= 4*shift;
+    q &= 0x0F0F0F0F;
 
-    int vh;
-    ggml_cuda_memcpy_1<ne, 2>(&vh, x[ib].qh + sizeof(int)*(idq%(QK6_0/4)));
-    const int shift_vh = 4*((idq/(QK6_0/4))%2) + 2*shift;
+    {
+        int qh;
+        ggml_cuda_memcpy_1<ne, 2>(&qh, x[ib].qh + sizeof(int)*(idq%(QK6_0/4)));
+        const int shift_vh = 4*(idq/(QK6_0/4)) + 2*shift;
 #pragma unroll
-    for (int l = 0; l < ne; ++l) {
-        vh >>= shift_vh;
-        vh &= 0x03030303;
+        for (int l = 0; l < ne; ++l) {
+            const int qh_bit = (qh >> (shift_vh + l*8)) & 0x03;
+            q |= (qh_bit << (4 + l*8));
+        }
     }
 
-    const int v = vl | (vh << 4);
+    q = __vsubss4(q, 0x20202020);
 
-    const int8_t * q8 = (const int8_t *) &v;
+    const int8_t * q8 = (const int8_t *) &q;
 
 #ifdef FP16_AVAILABLE
     if constexpr (std::is_same_v<T, half>) {
@@ -665,7 +668,7 @@ static __device__ __forceinline__ void dequantize_V_q6_0(const void * __restrict
 
 #pragma unroll
         for (int l0 = 0; l0 < ne; l0 += 2) {
-            ((half2 *) dst)[l0/2] = d * make_half2(q8[l0 + 0] - 32, q8[l0 + 1] - 32);
+            ((half2 *) dst)[l0/2] = d * make_half2(q8[l0 + 0], q8[l0 + 1]);
         }
     } else
 #endif // FP16_AVAILABLE
@@ -674,7 +677,7 @@ static __device__ __forceinline__ void dequantize_V_q6_0(const void * __restrict
 
 #pragma unroll
         for (int l = 0; l < ne; ++l) {
-            ((float *) dst)[l] = d * (q8[l] - 32);
+            ((float *) dst)[l] = d * q8[l];
         }
     } else {
         static_assert(std::is_same_v<T, void>, "bad type");
