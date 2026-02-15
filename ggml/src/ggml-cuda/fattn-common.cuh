@@ -642,20 +642,20 @@ static __device__ __forceinline__ void dequantize_V_q6_0(const void * __restrict
     const int     shift = (i0 % QK6_0) / (QK6_0/2);
 
     static_assert(ne == 2 || ne == 4, "bad ne");
-    
-    int q;
-    ggml_cuda_memcpy_1<ne, 2>(&q, x[ib].qs + iqs);
-    q >>= 4*shift;
-    q &= 0x0F0F0F0F;
+    int ql;
+    ggml_cuda_memcpy_1<ne, 2>(&ql, x[ib].qs + iqs);
+    ql >>= 4*shift;
+    ql &= 0x0F0F0F0F;
 
     int qh;
-    ggml_cuda_memcpy_1<ne, 2>(&qh, x[ib].qh);
-    
-    const int shift_vh = 4*(idq/(QK6_0/4)) + shift/2;
+    ggml_cuda_memcpy_1<ne, 2>(&qh, x[ib].qh + sizeof(int)*(idq%(QK6_0/4)));
+    const int shift_vh = 4*((idq/(QK6_0/4))%2) + 2*shift;
     qh >>= shift_vh;
     qh &= 0x03030303;
 
-    q |= (qh << 4);
+    const int q = (ql & 0x0f) | ((qh & 0x03) << 4);
+
+    const int8_t * q8 = (const int8_t *) &q;
 
 #ifdef FP16_AVAILABLE
     if constexpr (std::is_same_v<T, half>) {
@@ -663,9 +663,7 @@ static __device__ __forceinline__ void dequantize_V_q6_0(const void * __restrict
 
 #pragma unroll
         for (int l0 = 0; l0 < ne; l0 += 2) {
-            const int8_t q8 = (int8_t)(q >> (8*l0)) & 0xFF;
-            const int8_t q8_1 = (int8_t)(q >> (8*l0+4)) & 0xFF;
-            ((half2 *) dst)[l0/2] = d * make_half2(q8 - 32, q8_1 - 32);
+            ((half2 *) dst)[l0/2] = d * make_half2(q8[l0 + 0] - 32, q8[l0 + 1] - 32);
         }
     } else
 #endif // FP16_AVAILABLE
@@ -674,8 +672,7 @@ static __device__ __forceinline__ void dequantize_V_q6_0(const void * __restrict
 
 #pragma unroll
         for (int l = 0; l < ne; ++l) {
-            const int8_t q8 = (int8_t)((q >> (8*l)) & 0xFF);
-            ((float *) dst)[l] = d * (q8 - 32);
+            ((float *) dst)[l] = d * (q8[l] - 32);
         }
     } else {
         static_assert(std::is_same_v<T, void>, "bad type");
