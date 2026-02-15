@@ -639,23 +639,25 @@ static __device__ __forceinline__ void dequantize_V_q6_0(const void * __restrict
     const int64_t ib    =  i0          /  QK6_0;
     const int     idq   =  i0          %  QK6_0;
     const int     iqs   =  i0          % (QK6_0/2);
-    const int     shift = (i0 % QK6_0) / (QK6_0/2);
+    const int     shift = idq / (QK6_0/2);
 
     static_assert(ne == 2 || ne == 4, "bad ne");
-    int ql;
-    ggml_cuda_memcpy_1<ne, 2>(&ql, x[ib].qs + iqs);
-    ql >>= 4*shift;
-    ql &= 0x0F0F0F0F;
+    int vl;
+    ggml_cuda_memcpy_1<ne, 2>(&vl, x[ib].qs + iqs);
+    vl = (vl >> 4*shift) & 0x0F0F0F0F;
 
-    int qh;
-    ggml_cuda_memcpy_1<ne, 2>(&qh, x[ib].qh + sizeof(int)*(idq%(QK6_0/4)));
+    int vh;
+    ggml_cuda_memcpy_1<ne, 2>(&vh, x[ib].qh + sizeof(int)*(idq%(QK6_0/4)));
     const int shift_vh = 4*((idq/(QK6_0/4))%2) + 2*shift;
-    qh >>= shift_vh;
-    qh &= 0x03030303;
+#pragma unroll
+    for (int l = 0; l < ne; ++l) {
+        vh >>= shift_vh;
+        vh &= 0x03030303;
+    }
 
-    const int q = (ql & 0x0f) | ((qh & 0x03) << 4);
+    const int v = vl | (vh << 4);
 
-    const int8_t * q8 = (const int8_t *) &q;
+    const int8_t * q8 = (const int8_t *) &v;
 
 #ifdef FP16_AVAILABLE
     if constexpr (std::is_same_v<T, half>) {
