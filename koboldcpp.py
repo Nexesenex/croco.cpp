@@ -1697,14 +1697,14 @@ def load_model(model_filename):
     inputs.use_fastforward = (0 if args.nofastforward else 1)
     inputs.flash_attention =  (False if args.noflashattention else True)
 
-    if args.quantkv>=1 and args.quantkv<=24:
+    if args.quantkv>=1 and args.quantkv<=27:
         inputs.quant_k = inputs.quant_v = args.quantkv
     # if args.quantkv>=8 and args.quantkv<=10:
         # inputs.use_contextshift = 0
     # if args.quantkv==16 or args.quantkv==19 or args.quantkv==24:
         # inputs.use_contextshift = 0  
-    if args.quantkv==24:
-        inputs.quant_k = inputs.quant_v = 24
+    if args.quantkv==28:
+        inputs.quant_k = inputs.quant_v = 0
         # inputs.use_contextshift = 0
     if args.quantkv>=29 and args.quantkv<=35:
         args.noflashattention
@@ -1729,14 +1729,14 @@ def load_model(model_filename):
         # inputs.draft_quant_k = inputs.draft_quant_v = args.quantkv
     if args.draft_quantkv==0:
         inputs.draft_quant_k = inputs.draft_quant_v = 0
-    if args.draft_quantkv>=1 and args.draft_quantkv<=24:
+    if args.draft_quantkv>=1 and args.draft_quantkv<=27:
         inputs.draft_quant_k = inputs.draft_quant_v = args.draft_quantkv
     # if args.draft_quantkv>=8 and args.draft_quantkv<=10:
         # inputs.use_contextshift = 0
     # if args.draft_quantkv==16 or args.draft_quantkv==19 or args.draft_quantkv==24:
         # inputs.use_contextshift = 0  
-    if args.draft_quantkv==24:
-        inputs.draft_quant_k = inputs.draft_quant_v = 24
+    if args.draft_quantkv==28:
+        inputs.draft_quant_k = inputs.draft_quant_v = 0
         # inputs.use_contextshift = 0
     if args.draft_quantkv>=29 and args.draft_quantkv<=35:
         args.noflashattention
