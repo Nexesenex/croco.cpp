@@ -481,23 +481,42 @@ static __device__ __forceinline__ void dequantize_V_q4_1(const void * __restrict
     }
 }
 
-template <typename T>
-static __device__ __forceinline__ T dequantize_1_iq4_nl(const void * __restrict__ vx, const int64_t i) {
+template <typename T, int ne>
+static __device__ __forceinline__ void dequantize_V_iq4_nl(const void * __restrict__ vx, void * __restrict__ dst, const int64_t i0) {
     const block_iq4_nl * x = (const block_iq4_nl *) vx;
 
-    const int64_t ib    =  i           /  QK4_NL;
-    const int     iqs   =  i           % (QK4_NL/2);
-    const int     shift = (i % QK4_NL) / (QK4_NL/2);
+    const int64_t ib    =  i0          /  QK4_NL;
+    const int     iqs   =  i0          % (QK4_NL/2);
+    const int     shift = (i0 % QK4_NL) / (QK4_NL/2);
+
+    static_assert(ne == 2 || ne == 4, "bad ne");
+    int q;
+    ggml_cuda_memcpy_1<ne, 2>(&q, x[ib].qs + iqs);
+    q >>= 4*shift;
+    q &= 0x0F0F0F0F;
+
+    const uint8_t * q8 = (const uint8_t *) &q;
 
 #ifdef FP16_AVAILABLE
-    if constexpr (std::is_same<T, half>::value) {
-        return x[ib].d * ((half) kvalues_iq4nl[(x[ib].qs[iqs] >> 4*(shift)) & 0xf]);
+    if constexpr (std::is_same_v<T, half>) {
+        const half2 d = __half2half2(x[ib].d);
+
+#pragma unroll
+        for (int l0 = 0; l0 < ne; l0 += 2) {
+            ((half2 *) dst)[l0/2] = d * make_half2(kvalues_iq4nl[q8[l0 + 0]], kvalues_iq4nl[q8[l0 + 1]]);
+        }
+    } else
+#endif // FP16_AVAILABLE
+    if constexpr (std::is_same_v<T, float>) {
+        const float d = x[ib].d;
+
+#pragma unroll
+        for (int l = 0; l < ne; ++l) {
+            ((float *) dst)[l] = d * kvalues_iq4nl[q8[l]];
+        }
     } else {
-        return (float)x[ib].d * ((float) kvalues_iq4nl[(x[ib].qs[iqs] >> 4*(shift)) & 0xf]);
+        static_assert(std::is_same_v<T, void>, "bad type");
     }
-#endif
-    T result = (float)x[ib].d * ((float) kvalues_iq4nl[(x[ib].qs[iqs] >> 4*(shift)) & 0xf]);
-    return result;
 }
 
 template <typename T>
