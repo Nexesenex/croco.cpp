@@ -555,12 +555,13 @@ static __device__ __forceinline__ T dequantize_1_q6_0(const void * __restrict__ 
     const int     idq   =  i  %  QK6_0;
     const int     iqs   =  i  % (QK6_0/2);
     const int     shift = idq / (QK6_0/2);
-    //const int     shift = (i % QK6_0) / (QK6_0/2);
 
-    const T   d  = x[ib].d;
-    const int ql = x[ib].qs[iqs] >> 4*shift;
-    const int qh = x[ib].qh[idq%(QK6_0/4)] >> (4*((idq/(QK6_0/4))%2) + 2*shift);
-    const int q  = ((ql & 0x0f) | ((qh & 0x03) << 4)) - 32;
+    const T   d   = x[ib].d;
+    const int ql0 = x[ib].qs[iqs];
+    const int qh0 = get_int_b4(x[ib].qh, idq%(QK6_0/4));
+    const int ql  = ((ql0 >> 4*shift) & 0x0F);
+    const int qh  = ((qh0 >> (2*shift)) & 0x03);
+    const int q   = (ql | (qh << 4)) - 32;
 
 #ifdef FP16_AVAILABLE
     if (std::is_same<T, half>::value) {
