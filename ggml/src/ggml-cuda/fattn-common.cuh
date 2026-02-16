@@ -599,24 +599,32 @@ static __device__ __forceinline__ void dequantize_V_q6_0(const void * __restrict
     const int64_t ib    = i0 / QK6_0;
     const int     idq   = i0 % QK6_0;
     const int     iqs   = i0 % (QK6_0/2);
-    const int     shift = idq / (QK6_0/2); // constant for all ne values
+    const int     shift = idq / (QK6_0/2);
 
     static_assert(ne == 2 || ne == 4, "bad ne");
+    
+    // Load qs bytes
     int qs_bytes;
     ggml_cuda_memcpy_1<ne, 2>(&qs_bytes, x[ib].qs + iqs);
-
+    
+    // Load qh bytes
     int qh_bytes;
     ggml_cuda_memcpy_1<ne, 2>(&qh_bytes, x[ib].qh + (idq % 8));
-
+    
+    // Precompute group shifts for all ne values
+    int group_shifts[ne];
+#pragma unroll
+    for (int l = 0; l < ne; ++l) {
+        group_shifts[l] = 4 * (((idq + l) / 8) % 2);
+    }
+    
     int q[ne];
 #pragma unroll
     for (int l = 0; l < ne; ++l) {
         const uint8_t qs_byte = (qs_bytes >> (8*l)) & 0xFF;
         const uint8_t qh_byte = (qh_bytes >> (8*l)) & 0xFF;
         const int ql = (qs_byte >> (4*shift)) & 0x0F;
-        const int group_index = (idq + l) / 8;
-        const int group_shift = 4 * (group_index % 2);
-        const int qh = (qh_byte >> (group_shift + 2*shift)) & 0x03;
+        const int qh = (qh_byte >> (group_shifts[l] + 2*shift)) & 0x03;
         q[l] = ((ql & 0x0f) | ((qh & 0x03) << 4)) - 32;
     }
 
