@@ -636,48 +636,48 @@ template <typename T, int ne>
 static __device__ __forceinline__ void dequantize_V_q6_0(const void * __restrict__ vx, void * __restrict__ dst, const int64_t i0) {
     const block_q6_0 * x = (const block_q6_0 *) vx;
 
-    const int64_t ib    =  i0          /  QK6_0;
-    const int     idq   =  i0          %  QK6_0;
-    const int     iqs   =  i0          % (QK6_0/2);
-    const int     shift = (i0 % QK6_0) / (QK6_0/2);
+    const int64_t ib    = i0 / QK6_0;
+    const int     idq   = i0 % QK6_0;
+    const int     iqs   = i0 % (QK6_0/2);
+    const int     shift = idq / (QK6_0/2); // constant for all ne values
 
-    int q;
     static_assert(ne == 2 || ne == 4, "bad ne");
-    ggml_cuda_memcpy_1<ne, 2>(&q, x[ib].qs + iqs);
-    q >>= 4*shift;
-    q &= 0x0F0F0F0F;
+    int qs_bytes;
+    ggml_cuda_memcpy_1<ne, 2>(&qs_bytes, x[ib].qs + iqs);
 
-    {
-        int qh;
-        ggml_cuda_memcpy_1<ne, 2>(&qh, x[ib].qh + sizeof(int)*(idq%(QK6_0/4)));
-        const int shift_vh = 4*(idq/(QK6_0/4)) + 2*shift;
+    int qh_bytes;
+    ggml_cuda_memcpy_1<ne, 2>(&qh_bytes, x[ib].qh + (idq % 8));
+
+    int q[ne];
 #pragma unroll
-        for (int l = 0; l < ne; ++l) {
-            const int qh_bit = (qh >> (shift_vh + l*8)) & 0x03;
-            q |= (qh_bit << (4 + l*8));
-        }
+    for (int l = 0; l < ne; ++l) {
+        const uint8_t qs_byte = (qs_bytes >> (8*l)) & 0xFF;
+        const uint8_t qh_byte = (qh_bytes >> (8*l)) & 0xFF;
+        const int ql = (qs_byte >> (4*shift)) & 0x0F;
+        const int group_index = (idq + l) / 8;
+        const int group_shift = 4 * (group_index % 2);
+        const int qh = (qh_byte >> (group_shift + 2*shift)) & 0x03;
+        q[l] = ((ql & 0x0f) | ((qh & 0x03) << 4)) - 32;
     }
-
-    q = __vsubss4(q, 0x20202020);
-
-    const int8_t * q8 = (const int8_t *) &q;
 
 #ifdef FP16_AVAILABLE
     if constexpr (std::is_same_v<T, half>) {
         const half2 d = __half2half2(x[ib].d);
-
-#pragma unroll
-        for (int l0 = 0; l0 < ne; l0 += 2) {
-            ((half2 *) dst)[l0/2] = d * make_half2(q8[l0 + 0], q8[l0 + 1]);
+        if constexpr (ne == 2) {
+            ((half2 *) dst)[0] = d * make_half2((half)q[0], (half)q[1]);
+        } else {
+            ((half2 *) dst)[0] = d * make_half2((half)q[0], (half)q[1]);
+            ((half2 *) dst)[1] = d * make_half2((half)q[2], (half)q[3]);
         }
     } else
 #endif // FP16_AVAILABLE
     if constexpr (std::is_same_v<T, float>) {
         const float d = x[ib].d;
-
-#pragma unroll
-        for (int l = 0; l < ne; ++l) {
-            ((float *) dst)[l] = d * q8[l];
+        if constexpr (ne == 2) {
+            ((float2 *) dst)[0] = make_float2(d * q[0], d * q[1]);
+        } else {
+            ((float2 *) dst)[0] = make_float2(d * q[0], d * q[1]);
+            ((float2 *) dst)[1] = make_float2(d * q[2], d * q[3]);
         }
     } else {
         static_assert(std::is_same_v<T, void>, "bad type");
