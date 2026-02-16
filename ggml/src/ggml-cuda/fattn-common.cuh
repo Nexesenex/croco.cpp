@@ -485,11 +485,13 @@ template <typename T, int ne>
 static __device__ __forceinline__ void dequantize_V_iq4_nl(const void * __restrict__ vx, void * __restrict__ dst, const int64_t i0) {
     const block_iq4_nl * x = (const block_iq4_nl *) vx;
 
-    const int64_t ib    =  i0          /  QK4_NL;
-    const int     iqs   =  i0          % (QK4_NL/2);
+    const int64_t ib    = i0 / QK4_NL;
+    const int     iqs   = i0 % (QK4_NL/2);
     const int     shift = (i0 % QK4_NL) / (QK4_NL/2);
 
     static_assert(ne == 2 || ne == 4, "bad ne");
+    
+    // Load ne bytes from qs
     int q;
     ggml_cuda_memcpy_1<ne, 2>(&q, x[ib].qs + iqs);
     q >>= 4*shift;
@@ -500,19 +502,46 @@ static __device__ __forceinline__ void dequantize_V_iq4_nl(const void * __restri
 #ifdef FP16_AVAILABLE
     if constexpr (std::is_same_v<T, half>) {
         const half2 d = __half2half2(x[ib].d);
-
-#pragma unroll
-        for (int l0 = 0; l0 < ne; l0 += 2) {
-            ((half2 *) dst)[l0/2] = d * make_half2(kvalues_iq4nl[q8[l0 + 0]], kvalues_iq4nl[q8[l0 + 1]]);
+        
+        // Vectorized lookup and multiply for half
+        if constexpr (ne == 2) {
+            const half2 vals = make_half2(
+                __int2half_rd(kvalues_iq4nl[q8[0]]),
+                __int2half_rd(kvalues_iq4nl[q8[1]])
+            );
+            ((half2 *) dst)[0] = d * vals;
+        } else { // ne == 4
+            const half2 vals0 = make_half2(
+                __int2half_rd(kvalues_iq4nl[q8[0]]),
+                __int2half_rd(kvalues_iq4nl[q8[1]])
+            );
+            const half2 vals1 = make_half2(
+                __int2half_rd(kvalues_iq4nl[q8[2]]),
+                __int2half_rd(kvalues_iq4nl[q8[3]])
+            );
+            ((half2 *) dst)[0] = d * vals0;
+            ((half2 *) dst)[1] = d * vals1;
         }
     } else
 #endif // FP16_AVAILABLE
     if constexpr (std::is_same_v<T, float>) {
         const float d = x[ib].d;
-
-#pragma unroll
-        for (int l = 0; l < ne; ++l) {
-            ((float *) dst)[l] = d * kvalues_iq4nl[q8[l]];
+        
+        // Vectorized lookup and multiply for float
+        if constexpr (ne == 2) {
+            ((float2 *) dst)[0] = make_float2(
+                d * kvalues_iq4nl[q8[0]],
+                d * kvalues_iq4nl[q8[1]]
+            );
+        } else { // ne == 4
+            ((float2 *) dst)[0] = make_float2(
+                d * kvalues_iq4nl[q8[0]],
+                d * kvalues_iq4nl[q8[1]]
+            );
+            ((float2 *) dst)[1] = make_float2(
+                d * kvalues_iq4nl[q8[2]],
+                d * kvalues_iq4nl[q8[3]]
+            );
         }
     } else {
         static_assert(std::is_same_v<T, void>, "bad type");
