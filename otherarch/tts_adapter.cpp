@@ -1205,7 +1205,7 @@ static tts_generation_outputs ttstype_generate_outetts(const tts_generation_inpu
     else
     {
         // spectral operations
-        const int n_embd = llama_model_n_embd(model_cts);
+        const int n_embd = llama_model_n_embd_out(model_cts);
         const float * embd = llama_get_embeddings(cts_ctx);
         std::vector<float> audio = embd_to_audio(embd, n_codes, n_embd, nthreads);
 
