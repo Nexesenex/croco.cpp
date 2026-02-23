@@ -114,6 +114,38 @@ void quantize_row_q8_K_generic(const float * GGML_RESTRICT x, void * GGML_RESTRI
     quantize_row_q8_K_ref(x, y, k);
 }
 
+//===================================== IQ_K ==============================================
+
+void quantize_row_iq2_k(const float * x, void * vy, int64_t k) {
+    assert(k % QK_K == 0);
+    block_iq2_k * y = (block_iq2_k *)vy;
+    quantize_row_iq2_k_ref(x, y, k);
+}
+
+void quantize_row_iq3_k(const float * x, void * vy, int64_t k) {
+    assert(k % QK_K == 0);
+    block_iq3_k * y = (block_iq3_k *)vy;
+    quantize_row_iq3_k_ref(x, y, k);
+}
+
+void quantize_row_iq4_k(const float * x, void * vy, int64_t k) {
+    assert(k % QK_K == 0);
+    block_iq4_k * y = (block_iq4_k *)vy;
+    quantize_row_iq4_k_ref(x, y, k);
+}
+
+void quantize_row_iq5_k(const float * x, void * vy, int64_t k) {
+    assert(k % QK_K == 0);
+    block_iq5_k * y = (block_iq5_k *)vy;
+    quantize_row_iq5_k_ref(x, y, k);
+}
+
+void quantize_row_iq6_k(const float * x, void * vy, int64_t k) {
+    assert(k % QK_K == 0);
+    block_iq6_k * y = (block_iq6_k *)vy;
+    quantize_row_iq6_k_ref(x, y, k);
+}
+
 //===================================== Dot products =================================
 
 void ggml_vec_dot_q4_0_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
