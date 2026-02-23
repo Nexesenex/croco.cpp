@@ -141,3 +141,4 @@ a.out.*
 
 ggml/src/kompute/
 ggml/src/ggml-kompute/kompute/
+CMakeSettings.json
