@@ -74,12 +74,6 @@ static const std::vector<quant_option> QUANT_OPTIONS = {
     { "COPY",     LLAMA_FTYPE_ALL_F32,         "only copy tensors, no quantizing",  },
     // IQ_K Quants first gen 
     { "IQ2_K",    LLAMA_FTYPE_MOSTLY_IQ2_K,    " 2.375 bpw non-linear quantization",},
-    { "IQ2_K_R4", LLAMA_FTYPE_MOSTLY_IQ2_K_R4, "IQ2_K repacked",},
-    { "IQ2_KS",   LLAMA_FTYPE_MOSTLY_IQ2_KS,   " 2.1875 bpw non-linear quantization",},
-    { "IQ1_KT",   LLAMA_FTYPE_MOSTLY_IQ1_KT,   " 1.75 bpw trellis quantization",   },
-    { "IQ2_KT",   LLAMA_FTYPE_MOSTLY_IQ2_KT,   " 2.125 bpw trellis quantization",   },
-    { "IQ2_KL",   LLAMA_FTYPE_MOSTLY_IQ2_KL,   " 2.69 bpw non-linear quantization", },
-    { "IQ3_KS",   LLAMA_FTYPE_MOSTLY_IQ3_KS,   " 3.19 bpw non-linear quantization", },
     { "IQ3_K",    LLAMA_FTYPE_MOSTLY_IQ3_K,    " 3.44 bpw non-linear quantization", },
     { "IQ4_K",    LLAMA_FTYPE_MOSTLY_IQ4_K,    " 4.5 bpw non-linear quantization",  },
     { "IQ5_K",    LLAMA_FTYPE_MOSTLY_IQ5_K,    " 5.5 bpw non-linear quantization",  },
