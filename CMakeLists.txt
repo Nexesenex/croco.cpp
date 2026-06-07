@@ -215,6 +215,7 @@ if (LLAMA_CUBLAS)
                 ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_0-iq4_nl.cu
                 ggml/src/ggml-cuda/template-instances/fattn-vec-instance-iq4_nl-iq4_nl.cu
                 ggml/src/ggml-cuda/template-instances/fattn-vec-instance-bf16-bf16.cu
+            
                 # all quants necessary for Kobold CPP Frankenstein are compiled
                 # the other are ignored but not deleted from the ggml_cuda templates directory
                 # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q4_1-q4_0.cu
@@ -226,8 +227,8 @@ if (LLAMA_CUBLAS)
                 # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q4_1.cu
                 # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-f16.cu
                 # ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-q4_1.cu
-            add_compile_definitions(GGML_CUDA_FA_ALL_QUANTS)
             )
+            add_compile_definitions(GGML_CUDA_FA_ALL_QUANTS)
         else ()
             # only build minimal quants required for fattn quant kv
             list(APPEND GGML_SOURCES_CUDA
