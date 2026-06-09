@@ -844,7 +844,7 @@ ggml_type llama_ftype_get_default_type(llama_ftype ftype) {
         case LLAMA_FTYPE_MOSTLY_IQ5_K:   return GGML_TYPE_IQ5_K;   break;
         case LLAMA_FTYPE_MOSTLY_IQ6_K:   return GGML_TYPE_IQ6_K;   break;
 
-        default: return GGML_TYPE_COUNT;
+        // default: return GGML_TYPE_COUNT;
 
         // IQ_K-new-quants
         // case LLAMA_FTYPE_MOSTLY_Q2_K_R4:    return GGML_TYPE_Q2_K_R4;    break;
