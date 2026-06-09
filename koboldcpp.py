@@ -12545,7 +12545,7 @@ def show_gui():
         if "blasbatchsize" in mydict and mydict["blasbatchsize"]:
             blas_size_var.set(blasbatchsize_values.index(str(mydict["blasbatchsize"])))
 
-        version_var.set(str(dict["forceversion"]) if ("forceversion" in dict and dict["forceversion"]) else "0")
+        version_var.set(str(mydict["forceversion"]) if ("forceversion" in mydict and mydict["forceversion"]) else "0")
         autofit_var.set(1 if "autofit" in mydict and mydict["autofit"] else 0)
         model_var.set(mydict["model_param"] if ("model_param" in mydict and mydict["model_param"]) else "")
 
