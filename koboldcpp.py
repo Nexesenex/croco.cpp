@@ -62,11 +62,12 @@ bias_max_value = 100.0
 logprobs_max = 10
 default_draft_amount = 8
 default_ttsmaxlen = 4096
+default_embeddingsmaxctx = 4096
 default_visionmaxres = 1024
 net_save_slots = 12
 savestate_limit_default = 5
 savestate_limit = 0 #savestate slots start at 0, only set when load model
-default_vae_tile_threshold = 768
+default_vae_tile_threshold = 640
 default_sdvaedevice = 'main'
 default_sdclipdevice = 'CPU'
 default_native_ctx = 16384
@@ -86,7 +87,7 @@ dry_seq_break_max = 128
 extra_images_max = 4 # for kontext/qwen img
 
 # global vars
-KcppVersion = "1.114"
+KcppVersion = "1.115"
 showdebug = True
 kcpp_instance = None #global running instance
 global_memory = {"tunnel_url": "", "restart_target":"", "input_to_exit":False, "load_complete":False, "restart_model": "", "currentConfig": None, "currentBaseConfig": None, "modelOverride": None, "currentModel": None, "last_active_timestamp":datetime.now(), "triggered_sleeping":False, "current_model":"initial_model", "base_config":"", "swapReqType": None, "autoswapmode": False, "autoswapSettings": {}, "fs": {"files": {}, "current_size_bytes": 0, "max_size_bytes": 0, "source_dir": "", "mode": "memory", "initialized": False}, "restart_override_base_config": "", "current_model_override": "", "OpenLumara": False}
@@ -423,6 +424,7 @@ class sd_generation_inputs(ctypes.Structure):
                 ("mask", ctypes.c_char_p),
                 ("extra_images_len", ctypes.c_int),
                 ("extra_images", ctypes.POINTER(ctypes.c_char_p)),
+                ("reverse_refimg", ctypes.c_bool),
                 ("flip_mask", ctypes.c_bool),
                 ("denoising_strength", ctypes.c_float),
                 ("cfg_scale", ctypes.c_float),
@@ -455,6 +457,7 @@ class sd_generation_outputs(ctypes.Structure):
                 ("animated", ctypes.c_int),
                 ("data", ctypes.c_char_p),
                 ("data_extra", ctypes.c_char_p),
+                ("final_frame", ctypes.c_char_p),
                 ("info", ctypes.c_char_p)]
 
 class sd_upscale_inputs(ctypes.Structure):
@@ -2515,6 +2518,7 @@ def sd_load_model(model_filename,vae_filename,t5xxl_filename,clip1_filename,clip
     inputs.clip2_filename = clip2_filename.encode("UTF-8")
     inputs.photomaker_filename = photomaker_filename.encode("UTF-8")
     inputs.upscaler_filename = upscaler_filename.encode("UTF-8")
+    inputs.max_vram = (args.sdvramlimit/1024.0) if args.sdvramlimit > 0 else 0
 
     lora_filenames, lora_multipliers = prepare_initial_lora_multipliers()
     inputs.lora_len = len(lora_filenames)
@@ -2848,10 +2852,11 @@ def sd_generate(genparams):
     if flow_shift is not None and flow_shift < 0:
         flow_shift = None # fall back to the default
     sample_steps = (1 if sample_steps < 1 else (forced_steplimit if sample_steps > forced_steplimit else sample_steps))
-    vid_req_frames = (1 if vid_req_frames < 1 else (160 if vid_req_frames > 160 else vid_req_frames))
-    vid_fps = (16 if vid_fps < 16 else (24 if vid_fps > 24 else vid_fps))
+    vid_req_frames = (1 if vid_req_frames < 1 else (400 if vid_req_frames > 400 else vid_req_frames))
+    vid_fps = (16 if vid_fps < 16 else (32 if vid_fps > 32 else vid_fps))
 
     swap_refimg = (True if tryparseint(genparams.get("send_as_refimg", 0),0) else False)
+    reverse_refimg = (True if tryparseint(genparams.get("reverse_refimg", 0),0) else False)
     if len(extra_images_arr)==0 and swap_refimg and init_images and init_images!="" and not mask:
         extra_images_arr = [init_images]
         init_images = ""
@@ -2866,6 +2871,7 @@ def sd_generate(genparams):
     for n, estr in enumerate(extra_images_arr):
         extra_image = strip_base64_prefix(estr)
         inputs.extra_images[n] = extra_image.encode("UTF-8")
+    inputs.reverse_refimg = reverse_refimg
     inputs.flip_mask = flip_mask
     inputs.cfg_scale = cfg_scale
     if distilled_guidance is not None:
@@ -2899,15 +2905,17 @@ def sd_generate(genparams):
     ret = handle.sd_generate(inputs)
     data_main = ""
     data_extra = ""
+    final_frame = ""
     info = {}
     animated = False
     if ret.status==1:
         data_main = ret.data.decode("UTF-8","ignore")
         data_extra = ret.data_extra.decode("UTF-8","ignore")
+        final_frame = ret.final_frame.decode("UTF-8","ignore")
         info = json.loads(ret.info.decode("UTF-8","ignore"))
         animated = True if ret.animated else False
     info["job_timestamp"] = job_timestamp
-    return {"animated": animated, "data":data_main, "data_extra":data_extra, "info": info}
+    return {"animated": animated, "data":data_main, "data_extra":data_extra, "final_frame":final_frame, "info": info}
 
 
 def whisper_load_model(model_filename):
@@ -10845,6 +10853,7 @@ Change Mode<br>
                         gendat = gen["data"]
                         genanim = gen["animated"]
                         gendatextra = gen["data_extra"]
+                        genfinalframe = gen["final_frame"]
                         geninfo = json.dumps(gen["info"]) # sdapi really expects a stringified JSON
                         genresp = None
                         if is_comfyui_imggen:
@@ -10856,7 +10865,7 @@ Change Mode<br>
                         elif is_oai_imggen:
                             genresp = (json.dumps({"created":int(time.time()),"data":[{"b64_json":gendat}],"background":"opaque","output_format":"png","size":"1024x1024","quality":"medium"}).encode())
                         else:
-                            genresp = (json.dumps({"images":[gendat],"parameters":{},"info":geninfo,"animated":genanim,"extra_data":gendatextra}).encode())
+                            genresp = (json.dumps({"images":[gendat],"parameters":{},"info":geninfo,"animated":genanim,"extra_data":gendatextra, "final_frame":genfinalframe}).encode())
                         self.send_response(200)
                         self.send_header('content-length', str(len(genresp)))
                         self.end_headers(content_type='application/json')
@@ -11391,7 +11400,7 @@ def show_gui():
     def actually_resize(windowwidth,windowheight,lastpos,smallratio):
         root.geometry(str(windowwidth) + "x" + str(windowheight) + str(lastpos))
         ctk.set_widget_scaling(smallratio)
-        changerunmode(1,1,1)
+        update_runmode_gui()
         togglerope(1,1,1)
         toggleflashattn(1,1,1)
         togglectxshift(1,1,1)
@@ -11624,6 +11633,7 @@ def show_gui():
     sd_threads_var = ctk.StringVar(value=str(default_threads))
     sd_quant_var = ctk.StringVar(value=sd_quant_choices[0])
     sd_main_gpu_var = ctk.StringVar(value="main")
+    sd_vram_limit_var = ctk.StringVar(value="")
 
     gen_defaults_var = ctk.StringVar()
     gen_defaults_overwrite_var = ctk.IntVar(value=0)
@@ -11643,7 +11653,7 @@ def show_gui():
     musiclowvram_var = ctk.IntVar(value=0)
 
     embeddings_model_var = ctk.StringVar()
-    embeddings_ctx_var = ctk.StringVar(value=str(""))
+    embeddings_ctx_var = ctk.StringVar(value=str(default_embeddingsmaxctx))
     embeddings_gpu_var = ctk.IntVar(value=0)
 
     admin_var = ctk.IntVar(value=0)
@@ -11951,7 +11961,7 @@ def show_gui():
 
         #autopick cublas if suitable, requires at least 3.5GB VRAM to auto pick
         #we do not want to autoselect hip/cublas if the user has already changed their desired backend!
-        if eligible_cuda and exitcounter < 100 and MaxMemory[0]>3500000000 and (("Use CUDA" in runopts and CUDevicesNames[0]!="") or "Use hipBLAS (ROCm)" in runopts) and (any(CUDevicesNames)) and runmode_untouched:
+        if eligible_cuda and exitcounter < 100 and MaxMemory[0]>3500000000 and runmode_untouched and (("Use CUDA" in runopts and CUDevicesNames[0]!="") or "Use hipBLAS (ROCm)" in runopts) and (any(CUDevicesNames)):
             if "Use CUDA" in runopts:
                 runopts_var.set("Use CUDA")
                 gpu_choice_var.set("0")
@@ -12011,7 +12021,7 @@ def show_gui():
     def changed_autofit(*args):
         global runmode_untouched
         orig_rmu = runmode_untouched
-        changerunmode(1,1,1)
+        update_runmode_gui()
         runmode_untouched = orig_rmu
         changed_gpulayers_estimate()
 
@@ -12111,6 +12121,9 @@ def show_gui():
     def changerunmode(a,b,c):
         global runmode_untouched
         runmode_untouched = False
+        update_runmode_gui()
+
+    def update_runmode_gui():
         index = runopts_var.get()
         if index == "Use Vulkan" or index == "Use Vulkan (Old CPU)" or index == "Use Vulkan (Older CPU)" or index == "Use CUDA" or index == "Use hipBLAS (ROCm)":
             quick_gpuname_label.grid(row=3, column=1, padx=75, sticky="W")
@@ -12492,7 +12505,7 @@ def show_gui():
             rpcdevicebox.grid_remove()
             rpcdevicelbl.grid_remove()
             rpcdesc.configure(text="RPC is disabled and will not be used")
-        changerunmode(1,1,1)
+        update_runmode_gui()
     makelabelcombobox(network_tab, "RPC Mode:", rpcmode_var, row=40, padx=(100), width=90, command=togglerpcmode, tooltiptxt="RPC functionality to connect to remote RPC instances or host one, allowing GPUs to be shared over a network.", values=["disabled","connect","host"])
     rpcdesc = makelabel(network_tab, "RPC is disabled and will not be used", row=42)
     rpcepbox, rpceplbl = makelabelentry(network_tab, "RPC Endpoints: ", rpcendpoints_var, row=44, padx=(100), width=200, singleline=True,tooltip="Specify a comma separated list of remote RPC endpoints to connect to e.g. 127.0.0.1:5551,127.0.0.1:5552")
@@ -12594,6 +12607,8 @@ def show_gui():
     makecheckbox(images_tab, "Model Offload", sd_offload_cpu_var, 50,padx=8, tooltiptxt="Offload image weights in RAM to save VRAM, swap into VRAM when needed.")
     makelabelcombobox(images_tab, "VAE dev:", sd_vae_device_var, 50,labelpadx=(140),padx=(200), width=70, tooltiptxt="Change VAE device for image generation.", values=sd_device_choices)
     makelabelcombobox(images_tab, "CLIP dev:", sd_clip_device_var, 50,labelpadx=(280),padx=340, width=70, tooltiptxt="Change CLIP / T5 / LLM device for image generation.", values=sd_device_choices)
+    makelabelentry(images_tab, "VRAM Limiter (MB):", sd_vram_limit_var, 60, 50, padx=(144),singleline=True,tooltip="If set, prevent VRAM usage from image gen from using more than this many MB.")
+
 
     # audio tab
     audio_tab = tabcontent["Audio"]
@@ -12756,7 +12771,7 @@ def show_gui():
 
     # refresh
     runopts_var.trace_add("write", changerunmode)
-    changerunmode(1,1,1)
+    update_runmode_gui()
     togglerope(1,1,1)
     toggleflashattn(1,1,1)
     togglectxshift(1,1,1)
@@ -12967,6 +12982,7 @@ def show_gui():
         args.sdvaedevice = sd_resolve_device(sd_vae_device_var.get())
         args.sdclipdevice = sd_resolve_device(sd_clip_device_var.get())
         args.sdthreads = (0 if sd_threads_var.get()=="" else int(sd_threads_var.get()))
+        args.sdvramlimit = (0 if sd_vram_limit_var.get()=="" else int(sd_vram_limit_var.get()))
         args.sdclamped = (0 if int(sd_clamped_var.get())<=0 else int(sd_clamped_var.get()))
         args.sdclampedsoft = (0 if int(sd_clamped_soft_var.get())<=0 else int(sd_clamped_soft_var.get()))
         args.sdtiledvae = (default_vae_tile_threshold if sd_tiled_vae_var.get()=="" else int(sd_tiled_vae_var.get()))
@@ -13088,7 +13104,7 @@ def show_gui():
             elif qkvstr=="q4_0" or qkvstr=="2":
                 qkvval = 4
             quantkv_var.set(qkvval)
-        if "usecuda" in mydict and mydict["usecuda"]:
+        if "usecuda" in mydict and mydict["usecuda"] is not None:
             if cublas_option is not None or hipblas_option is not None:
                 if cublas_option:
                     runopts_var.set(cublas_option)
@@ -13311,6 +13327,7 @@ def show_gui():
             sd_runtime_loras_var.set(1)
         else:
             sd_runtime_loras_var.set(0)
+        sd_vram_limit_var.set(str(mydict["sdvramlimit"]) if ("sdvramlimit" in mydict and mydict["sdvramlimit"]) else "")
 
         gendefaults = (mydict["gendefaults"] if ("gendefaults" in mydict and mydict["gendefaults"]) else "")
         if isinstance(gendefaults, type({})):
@@ -15350,18 +15367,17 @@ def kcpp_main_process(launch_args, g_memory=None, gui_launcher=False):
         elif args.gpulayers==-1 and sys.platform=="darwin" and args.model_param and os.path.exists(args.model_param):
             print("MacOS detected: Auto GPU layers set to maximum")
             args.gpulayers = 200
-        elif not shouldavoidgpu and args.model_param and os.path.exists(args.model_param):
+        elif not shouldavoidgpu:
             if (args.usecuda is None) and (args.usevulkan is None):
                 print("No GPU or CPU backend was selected. Trying to assign one for you automatically...")
                 auto_set_backend_cli()
             if MaxMemory[0] == 0: #try to get gpu vram for cuda if not picked yet
                 fetch_gpu_properties(True,True)
-                pass
             if args.autofit:
                 print("Forced autofit is selected, moecpu and overridetensors will be set automatically.")
                 args.overridetensors = ""
                 args.moecpu = 0
-            if args.gpulayers==-1:
+            if args.gpulayers==-1 and args.model_param and os.path.exists(args.model_param):
                 if (not args.usecpu) and ((args.usecuda is not None) or (args.usevulkan is not None) or sys.platform=="darwin"):
                     if MaxMemory[0] > 0:
                         extract_modelfile_params(args.model_param,args.sdmodel,args.whispermodel,args.mmproj,args.draftmodel,args.ttsmodel if args.ttsgpu else "",args.embeddingsmodel if args.embeddingsgpu else "", args.musicllm, args.musicdiffusion)
@@ -16159,6 +16175,7 @@ if __name__ == '__main__':
     sdparsergroup.add_argument("--sdloramult", metavar=('[amounts]'), help="Multipliers for the image LoRA model to be applied.", type=float, nargs='+', default=[1.0])
     sdparsergroup.add_argument("--sdtiledvae", metavar=('[maxres]'), help="Adjust the automatic VAE tiling trigger for images above this size. 0 disables vae tiling.", type=int, default=default_vae_tile_threshold)
     sdparsergroup.add_argument("--sdmaingpu", metavar=('[Device ID]'), help="If specified, Image Generation weights will be placed on the selected GPU index. GPU index, -1 or 'main' for the main GPU, or 'CPU' (default: 'main')", type=sd_get_device_number, default=None)
+    sdparsergroup.add_argument("--sdvramlimit", metavar=('[limit MB]'), help="If set, prevent VRAM usage from image gen from using more than this many MB.", type=int, default=0)
 
     whisperparsergroup = parser.add_argument_group('Whisper Transcription Commands')
     whisperparsergroup.add_argument("--whispermodel", metavar=('[filename]'), help="Specify a Whisper .bin model to enable Speech-To-Text transcription.", default="")
@@ -16180,7 +16197,7 @@ if __name__ == '__main__':
 
     embeddingsparsergroup = parser.add_argument_group('Embeddings Model Commands')
     embeddingsparsergroup.add_argument("--embeddingsmodel", metavar=('[filename]'), help="Specify an embeddings model to be loaded for generating embedding vectors.", default="")
-    embeddingsparsergroup.add_argument("--embeddingsmaxctx", metavar=('[amount]'), help="Overrides the default maximum supported context of an embeddings model (defaults to trained context).", type=int, default=0)
+    embeddingsparsergroup.add_argument("--embeddingsmaxctx", metavar=('[amount]'), help="Overrides the default maximum supported context of an embeddings model (defaults to trained context).", type=int, default=default_embeddingsmaxctx)
     embeddingsparsergroup.add_argument("--embeddingsgpu", help="Attempts to offload layers of the embeddings model to GPU. Usually not needed.", action='store_true')
 
     rpcgroup = parser.add_argument_group('RPC Commands')

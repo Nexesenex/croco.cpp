@@ -127,6 +127,7 @@ static std::string media_composite_image_signature = ""; //for identifying when 
 static int current_media_identifier = MEDIA_TOKEN_IDENTIFIER_A;
 static int vision_max_res = 2048;
 static bool use_mrope = false;
+static bool vision_use_non_casual = false;
 
 static kcpp_params * kcpp_data = nullptr;
 static int max_context_limit_at_load = 0;
@@ -2007,14 +2008,26 @@ static bool kcpp_eval_media(llama_context * ctx_llama, const media_chunk & media
     const int image_n_past = *n_past;
 
     kcpp_embd_batch media_batch = kcpp_embd_batch(img_embd, num_img_tokens, image_n_past, use_mrope, is2d, img_nx, img_ny);
-
+    const bool non_casual = (vision_use_non_casual && !mediachunk.is_audio);
+    if(non_casual)
+    {
+        llama_set_causal_attn(llama_ctx_v4, false);
+    }
     for (int i = 0; i < num_img_tokens; i += n_batch) {
         const int n_eval = std::min(n_batch, num_img_tokens - i);
         llama_batch batch_embd_view = media_batch.get_view(i, n_eval, n_embd_mmproj);
         if (llama_decode(ctx_llama, batch_embd_view)) {
             fprintf(stderr, "\n%s : failed to eval image\n", __func__);
+            if(non_casual)
+            {
+                llama_set_causal_attn(llama_ctx_v4, true);
+            }
             return false;
         }
+    }
+    if(non_casual)
+    {
+        llama_set_causal_attn(llama_ctx_v4, true);
     }
     *n_past += num_img_tokens;
     return true;
@@ -2278,6 +2291,9 @@ void kcpp_init_audio_proj(clip_ctx * ctx_a)
             break;
         case PROJECTOR_TYPE_GEMMA4A:
             audio_preproc = std::make_unique<mtmd_audio_preprocessor_gemma4a>(ctx_a);
+            break;
+        case PROJECTOR_TYPE_GEMMA4UA:
+            audio_preproc = std::make_unique<mtmd_audio_preprocessor_gemma4ua>(ctx_a);
             break;
         default:
             GGML_ABORT("unsupported audio projector type");
@@ -3019,6 +3035,16 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
             if(clp_ctx_v)
             {
                 vision_multimodal_supported = true;
+                int proj_type = clip_get_projector_type_ext(clp_ctx_v);
+                switch (proj_type) {
+                    case PROJECTOR_TYPE_GEMMA3:
+                    case PROJECTOR_TYPE_GEMMA4V:
+                    case PROJECTOR_TYPE_GEMMA4UV:
+                        vision_use_non_casual = true;
+                        break;
+                    default:
+                        break;
+                }
             }
             clp_img_data = clip_image_u8_init();
             if(clp_ctx_a) //init audio
@@ -4516,6 +4542,7 @@ static void PrepareMediaEmbds(const int nctx, const std::vector<int> & media_int
                         printf("\nCreating clip image embed...");
                     }
                     media_chunk chunk;
+                    chunk.is_audio = media_objects[i].is_audio;
                     if (!llava_image_embed_make_with_clip_img(clp_ctx_v, kcpp_data->n_threads, clp_img_data, &chunk.clp_img_embd, &chunk.clp_image_tokens, &chunk.nx, &chunk.ny, clip_is_mrope)) {
                         printf("\nError: Clip image %d failed to create embd!",i);
                     }
@@ -4563,6 +4590,7 @@ static void PrepareMediaEmbds(const int nctx, const std::vector<int> & media_int
                 int total_chunk_tokens = 0;
                 for (auto & mel_spec : mel_spec_chunks) {
                     media_chunk chunk;
+                    chunk.is_audio = media_objects[i].is_audio;
                     bool ok = audio_embd_make_with_clip_img(clp_ctx_a, kcpp_data->n_threads, mel_spec, &chunk.clp_img_embd, &chunk.clp_image_tokens);
                     if (!ok) {
                         printf("\nError: Clip audio chunk in %d failed to make embd!",i);
@@ -4786,7 +4814,16 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
 
     std::vector<int> media_intro; //added before media list
     std::vector<int> media_outro; //added before media list
-    TokenizeString("\nAttached Media:\n", media_intro, file_format, true);
+    std::string intro = "\nAttached Media:\n";
+    if(clp_ctx_v) //ugly fix for gemma4uv vision coherency
+    {
+        int ptype = clip_get_projector_type_ext(clp_ctx_v);
+        if(ptype==PROJECTOR_TYPE_GEMMA4UV)
+        {
+            intro = "\n<|channel><channel|>" + intro;
+        }
+    }
+    TokenizeString(intro, media_intro, file_format, true);
 
     //clear previous run llava embd memory, just-in-time free
     for(int i=0;i<media_objects.size();++i)
@@ -4830,7 +4867,7 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
                     img_start = "<|begin_of_image|>";
                     img_end = "<|end_of_image|>\n\n";
                 }
-                else if(ptype==PROJECTOR_TYPE_GEMMA4V)
+                else if(ptype==PROJECTOR_TYPE_GEMMA4V || ptype==PROJECTOR_TYPE_GEMMA4UV)
                 {
                     img_start = "<|image>";
                     img_end = "<image|>\n\n";
@@ -4870,7 +4907,7 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
                     aud_start = "[INST][BEGIN_AUDIO]";
                     aud_end = "[/INST]\n";
                 }
-                else if(ptype==PROJECTOR_TYPE_GEMMA4A)
+                else if(ptype==PROJECTOR_TYPE_GEMMA4A || ptype==PROJECTOR_TYPE_GEMMA4UA)
                 {
                     aud_start = "<|audio>";
                     aud_end = "<audio|>\n";

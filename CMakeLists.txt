@@ -101,7 +101,7 @@ if (LLAMA_CUBLAS)
     if (CUDAToolkit_FOUND)
         message(STATUS "cuBLAS found")
 
-        add_compile_options("$<$<COMPILE_LANGUAGE:CUDA>:-Xcudafe;--diag_suppress=177>")
+        add_compile_options("$<$<COMPILE_LANGUAGE:CUDA>:-Xcudafe=--diag_suppress=177,--diag_suppress=550>")
 
         enable_language(CUDA)
 

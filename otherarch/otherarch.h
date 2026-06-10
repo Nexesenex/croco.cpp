@@ -511,10 +511,11 @@ struct mpt_model {
 
 struct media_chunk
 {
-   int32_t clp_image_tokens = 0; //holds number of tokens llava used in this chunk
-   float * clp_img_embd = nullptr; //this holds dynamic memory and must be freed each use!
-   int32_t nx = 0; //only used for 2d roped images
-   int32_t ny = 0;
+    bool is_audio = false; //if true its audio, otherwise its vision
+    int32_t clp_image_tokens = 0; //holds number of tokens llava used in this chunk
+    float * clp_img_embd = nullptr; //this holds dynamic memory and must be freed each use!
+    int32_t nx = 0; //only used for 2d roped images
+    int32_t ny = 0;
 };
 struct media_object
 {

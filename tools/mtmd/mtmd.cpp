@@ -482,6 +482,7 @@ struct mtmd_context {
                     image_preproc = std::make_unique<mtmd_image_preprocessor_dyn_size>(ctx_v);
                 } break;
             case PROJECTOR_TYPE_GEMMA4V:
+            case PROJECTOR_TYPE_GEMMA4UV:
                 {
                     // <|image> ... (image embeddings) ... <image|>
                     img_beg = "<|image>";
@@ -503,6 +504,13 @@ struct mtmd_context {
                     // note: these use fullwidth ｜ (U+FF5C) and ▁ (U+2581) to match the tokenizer vocabulary
                     img_beg = "<｜hy_place▁holder▁no▁100｜>";
                     img_end = "<｜hy_place▁holder▁no▁101｜>";
+                    image_preproc = std::make_unique<mtmd_image_preprocessor_dyn_size>(ctx_v);
+                } break;
+            case PROJECTOR_TYPE_EXAONE4_5:
+                {
+                    // <vision> ... (image embeddings) ... </vision>
+                    img_beg = "<vision>";
+                    img_end = "</vision>";
                     image_preproc = std::make_unique<mtmd_image_preprocessor_dyn_size>(ctx_v);
                 } break;
             default:
@@ -568,6 +576,12 @@ struct mtmd_context {
                     aud_beg = "<|audio>";
                     aud_end = "<audio|>";
                     audio_preproc = std::make_unique<mtmd_audio_preprocessor_gemma4a>(ctx_a);
+                } break;
+            case PROJECTOR_TYPE_GEMMA4UA:
+                {
+                    aud_beg = "<|audio>";
+                    aud_end = "<audio|>";
+                    audio_preproc = std::make_unique<mtmd_audio_preprocessor_gemma4ua>(ctx_a);
                 } break;
             default:
                 throw std::runtime_error(string_format("%s: unexpected audio projector type %d\n", __func__, proj));
@@ -1135,6 +1149,7 @@ bool mtmd_decode_use_non_causal(const mtmd_context * ctx, const mtmd_input_chunk
     switch (proj_type) {
         case PROJECTOR_TYPE_GEMMA3:
         case PROJECTOR_TYPE_GEMMA4V:
+        case PROJECTOR_TYPE_GEMMA4UV:
             return true;
         default:
             return false;

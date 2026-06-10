@@ -395,6 +395,35 @@ async function fetchVoices(){
   }
 }
 
+var has_llm_loaded = false;
+async function fetchStats(){
+  try{
+    const base = document.getElementById("baseUrl").value.trim();
+    const url = (base ? base.replace(/\/$/,"") : "") + "/api/extra/version";
+
+    let headers =  {"Content-Type": "application/json"};
+    if(document.getElementById("baseUrlKey").value!="")
+    {
+      headers["Authorization"] = `Bearer ${document.getElementById("baseUrlKey").value}`;
+    }
+
+    const res = await fetch(url,{
+      method: "GET",
+      headers: headers
+    });
+    if(!res.ok) throw new Error();
+
+    const perf = await res.json();
+    if(perf && perf.llm)
+    {
+      has_llm_loaded = true;
+    }
+
+  }catch(e){
+
+  }
+}
+
 function populateVoiceList(list){
   const select = document.getElementById("tts_voice");
   select.innerHTML = "";
@@ -624,7 +653,15 @@ async function planSongNative(){
     const data=await res.json();
     if(data && data.error && data.error != "")
     {
-      showMessage(`Plan failed! Error: ${data.error}`);
+      //if llm is loaded, retry with that
+      if(has_llm_loaded)
+      {
+        await planSongWithLLM();
+      }
+      else
+      {
+        showMessage(`Plan failed! Error: ${data.error}`);
+      }
     }else{
       updateForm(data);
       showMessage("Plan generated.");
@@ -894,6 +931,7 @@ function importPlan(event){
 
 initDB().then(loadLibrary);
 fetchVoices();
+fetchStats();
 </script>
 
 </body>

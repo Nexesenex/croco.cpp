@@ -161,11 +161,13 @@ static bool remove_limits = false;
 static struct {
     std::string data;
     std::string data_extra;
+    std::string final_frame;
     std::string info;
     bool animated;
     void reset() {
         data = "";
         data_extra = "";
+        final_frame = "";
         info = "{}";
         animated = false;
     }
@@ -174,6 +176,7 @@ static struct {
         output.status = status;
         output.data = data.c_str();
         output.data_extra = data_extra.c_str();
+        output.final_frame = final_frame.c_str();
         output.info = info.c_str();
         output.animated = animated;
         return output;
@@ -200,105 +203,74 @@ static std::string read_str_from_disk(std::string filepath)
     return output;
 }
 
+static std::string load_embd_file(std::string& cache, const char* filename)
+{
+    if (cache.empty()) {
+        std::string filepath = executable_path + filename;
+        cache = read_str_from_disk(filepath);
+    }
+    return cache;
+}
+
 std::string load_clip_merges()
 {
-    static std::string mergesstr;  // cached string
-    if (!mergesstr.empty()) {
-        return mergesstr;  // already loaded
-    }
-    std::string filepath = executable_path + "embd_res/merges_utf8_c_str.embd";
-    mergesstr = read_str_from_disk(filepath);
-    return mergesstr;
+    static std::string cache;
+    return load_embd_file(cache, "embd_res/merges_utf8_c_str.embd");
 }
 std::string load_qwen2_merges()
 {
-    static std::string qwenmergesstr;  // cached string
-    if (!qwenmergesstr.empty()) {
-        return qwenmergesstr;  // already loaded
-    }
-    std::string filepath = executable_path + "embd_res/qwen2_merges_utf8_c_str.embd";
-    qwenmergesstr = read_str_from_disk(filepath);
-    return qwenmergesstr;
+    static std::string cache;
+    return load_embd_file(cache, "embd_res/qwen2_merges_utf8_c_str.embd");
 }
 std::string load_gemma_merges()
 {
-    static std::string gemmamergesstr;  // cached string
-    if (!gemmamergesstr.empty()) {
-        return gemmamergesstr;  // already loaded
-    }
-    std::string filepath = executable_path + "embd_res/gemma2_merges_utf8_c_str.embd";
-    gemmamergesstr = read_str_from_disk(filepath);
-    return gemmamergesstr;
+    static std::string cache;
+    return load_embd_file(cache, "embd_res/gemma_merges_utf8_c_str.embd");
 }
 std::string load_gemma_vocab_json()
 {
-    static std::string gemmavocabstr;  // cached string
-    if (!gemmavocabstr.empty()) {
-        return gemmavocabstr;  // already loaded
-    }
-    std::string filepath = executable_path + "embd_res/gemma2_vocab_json.embd";
-    gemmavocabstr = read_str_from_disk(filepath);
-    return gemmavocabstr;
+    static std::string cache;
+    return load_embd_file(cache, "embd_res/gemma_vocab_json.embd");
+}
+std::string load_gemma2_merges()
+{
+    static std::string cache;
+    return load_embd_file(cache, "embd_res/gemma2_merges_utf8_c_str.embd");
+}
+std::string load_gemma2_vocab_json()
+{
+    static std::string cache;
+    return load_embd_file(cache, "embd_res/gemma2_vocab_json.embd");
 }
 std::string load_mistral_merges()
 {
-    static std::string mistralmergesstr;  // cached string
-    if (!mistralmergesstr.empty()) {
-        return mistralmergesstr;  // already loaded
-    }
-    std::string filepath = executable_path + "embd_res/mistral2_merges_utf8_c_str.embd";
-    mistralmergesstr = read_str_from_disk(filepath);
-    return mistralmergesstr;
+    static std::string cache;
+    return load_embd_file(cache, "embd_res/mistral2_merges_utf8_c_str.embd");
 }
 std::string load_mistral_vocab_json()
 {
-    static std::string mistralvocabstr;  // cached string
-    if (!mistralvocabstr.empty()) {
-        return mistralvocabstr;  // already loaded
-    }
-    std::string filepath = executable_path + "embd_res/mistral2_vocab_json.embd";
-    mistralvocabstr = read_str_from_disk(filepath);
-    return mistralvocabstr;
+    static std::string cache;
+    return load_embd_file(cache, "embd_res/mistral2_vocab_json.embd");
 }
 std::string load_t5_tokenizer_json()
 {
-    static std::string t5str = "";
-    if (!t5str.empty()) {
-        return t5str;  // already loaded
-    }
-    std::string filepath = executable_path + "embd_res/t5_tokenizer_json.embd";
-    t5str = read_str_from_disk(filepath);
-    return t5str;
+    static std::string cache;
+    return load_embd_file(cache, "embd_res/t5_tokenizer_json.embd");
 }
 std::string load_umt5_tokenizer_json()
 {
-    static std::string umt5str = "";
-    if (!umt5str.empty()) {
-        return umt5str;  // already loaded
-    }
-    std::string filepath = executable_path + "embd_res/umt5_tokenizer_json.embd";
-    umt5str = read_str_from_disk(filepath);
-    return umt5str;
+    static std::string cache;
+    return load_embd_file(cache, "embd_res/umt5_tokenizer_json.embd");
 }
 std::string load_gpt_oss_merges()
 {
-    static std::string mergesstr;  // cached string
-    if (!mergesstr.empty()) {
-        return mergesstr;  // already loaded
-    }
-    std::string filepath = executable_path + "embd_res/gpt_oss_merges_utf8_c_str.embd";
-    mergesstr = read_str_from_disk(filepath);
-    return mergesstr;
+    static std::string cache;
+    return load_embd_file(cache, "embd_res/gpt_oss_merges_utf8_c_str.embd");
 }
 std::string load_gpt_oss_vocab_json()
 {
-    static std::string vocabstr;  // cached string
-    if (!vocabstr.empty()) {
-        return vocabstr;  // already loaded
-    }
-    std::string filepath = executable_path + "embd_res/gpt_oss_vocab_json.embd";
-    vocabstr = read_str_from_disk(filepath);
-    return vocabstr;
+    static std::string cache;
+    return load_embd_file(cache, "embd_res/gpt_oss_vocab_json.embd");
 }
 
 static std::string get_device_override(int value, const char * module = nullptr)
@@ -444,7 +416,7 @@ bool sdtype_load_model(const sd_load_model_inputs inputs) {
         printf("Using mmap for I/O\n");
     }
     if(inputs.max_vram != 0.f) {
-        printf("Using max VRAM = %0.2f\n", inputs.max_vram);
+        printf("Using max VRAM = %0.2f GB\n", inputs.max_vram);
     }
     if(inputs.quant > 0)
     {
@@ -1301,6 +1273,10 @@ sd_generation_outputs sdtype_generate(const sd_generation_inputs inputs)
         params.vae_tiling_params.tile_size_x = vae_tile_size;
         params.vae_tiling_params.tile_size_y = vae_tile_size;
     }
+    if(dotile)
+    {
+        params.vae_tiling_params.temporal_tiling = true;
+    }
     parse_cache_options(params.cache, sd_params->cache_mode, sd_params->cache_options);
 
     LoraMap lora_map = sd_params->lora_map;
@@ -1363,15 +1339,17 @@ sd_generation_outputs sdtype_generate(const sd_generation_inputs inputs)
         vid_gen_params.seed = params.seed;
         vid_gen_params.video_frames = vid_req_frames;
         vid_gen_params.fps = vid_fps;
-        if(wan_imgs.size()>0)
-        {
-            if(wan_imgs.size()>=1)
-            {
+        vid_gen_params.vae_tiling_params = params.vae_tiling_params;
+        if (wan_imgs.size() > 0) {
+            if (wan_imgs.size() >= 2) {
                 vid_gen_params.init_image = wan_imgs[0];
-            }
-            if(wan_imgs.size()>=2)
-            {
-                vid_gen_params.end_image = wan_imgs[1];
+                vid_gen_params.end_image  = wan_imgs[1];
+            } else if (wan_imgs.size() == 1) {
+                if (inputs.reverse_refimg) {
+                    vid_gen_params.end_image = wan_imgs[0];
+                } else {
+                    vid_gen_params.init_image = wan_imgs[0];
+                }
             }
         }
         if(!sd_is_quiet && sddebugmode==1)
@@ -1529,6 +1507,7 @@ sd_generation_outputs sdtype_generate(const sd_generation_inputs inputs)
     upscaled_image.data = nullptr;
     std::string gen_data;
     std::string gen_data2;
+    std::string final_frame_data;
 
     if (is_passthrough)
     {
@@ -1571,6 +1550,12 @@ sd_generation_outputs sdtype_generate(const sd_generation_inputs inputs)
                 if(video_output_type==1 || video_output_type==2)
                 {
                     status2 = create_mjpg_avi_membuf_from_sd_images(results, generated_num_results, vid_fps, 40, &out_data2,&out_len2, generated_audio);
+                }
+
+                if(generated_num_results>1)
+                {
+                    sd_image_t *final_frame_image = &results[generated_num_results-1];
+                    final_frame_data = raw_image_to_png_base64(*final_frame_image);
                 }
 
                 if(!sd_is_quiet && sddebugmode==1)
@@ -1641,6 +1626,7 @@ sd_generation_outputs sdtype_generate(const sd_generation_inputs inputs)
 
     sd_generation.data = gen_data;
     sd_generation.data_extra = gen_data2;
+    sd_generation.final_frame = final_frame_data;
     sd_generation.animated = isanim;
     sd_generation.info = jsoninfo.dump();
     return sd_generation.outputs(1);

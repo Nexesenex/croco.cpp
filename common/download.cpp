@@ -1009,9 +1009,7 @@ std::vector<common_cached_model_info> common_list_cached_models() {
 // }
 
 common_download_model_result common_download_model(const common_params_model  & model,
-                                                   const common_download_opts & opts,
-                                                   bool download_mmproj,
-                                                   bool download_mtp) {
+                                                   const common_download_opts & opts) {
     throw std::runtime_error("download functionality is not enabled in this build");
 }
 

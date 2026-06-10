@@ -79,7 +79,7 @@ bool llava_image_embed_make_with_clip_img(clip_ctx * ctx_clip, int n_threads, co
         }
         image_embd = (float *)malloc(clip_embd_nbytes_by_img(ctx_clip, max_nx, max_ny));
     }
-    else if(clip_is_gemma4(ctx_clip)) //gemma4 vision
+    else if(clip_is_gemma4v(ctx_clip)) //gemma4 vision
     {
         const size_t n_imgs = clip_image_f32_batch_n_images(preprocessed_img.get());
         clip_image_f32 * img_res = clip_image_f32_get_img(preprocessed_img.get(), 0);
