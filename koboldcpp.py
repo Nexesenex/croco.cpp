@@ -1503,7 +1503,7 @@ def dump_gguf_metadata(file_path): #if you're gonna copy this into your own proj
         data = None
         fptr = 0
         dt_table = ["u8","i8","u16","i16","u32","i32","f32","bool","str","arr","u64","i64","f64"] #13 types, else error
-        tt_table = ["f32","f16","q4_0","q4_1","q4_2","q4_3","q5_0","q5_1","q8_0","q8_1","q2_k","q3_k","q4_k","q5_k","q6_k","q8_k","iq2_xxs","iq2_xs","iq3_xxs","iq1_s","iq4_nl","iq3_s","iq2_s","iq4_xs","i8","i16","i32","i64","f64","iq1_m","bf16","q4_0_4_4","q4_0_4_8","q4_0_8_8","tq1_0","tq2_0","iq4_nl_4_4","unknown","unknown","unknown","unknown","unknown"]
+        tt_table = ["f32","f16","q4_0","q4_1","q4_2","q4_3","q5_0","q5_1","q8_0","q8_1","q2_k","q3_k","q4_k","q5_k","q6_k","q8_k","iq2_xxs","iq2_xs","iq3_xxs","iq1_s","iq4_nl","iq3_s","iq2_s","iq4_xs","i8","i16","i32","i64","f64","iq1_m","bf16","q4_0_4_4","q4_0_4_8","q4_0_8_8","tq1_0","tq2_0","iq4_nl_4_4","iq4_nl_4_8","iq4_nl_8_8","mxfp4","nvfp4","q1_0","unknown","unknown","unknown","unknown"]
         def read_data(datatype):
             nonlocal fptr, data, dt_table
             if datatype=="u32":
@@ -11739,10 +11739,11 @@ def show_gui():
             temp.bind("<Leave>", hide_tooltip)
         return temp
 
-    def makeslider(parent, label, options, var, from_ , to,  row=0, width=160, height=10, set=0, tooltip=""):
+    def makeslider(parent, label, options, var, row=0, width=160, height=10, set=0, tooltip=""):
         sliderLabel = makelabel(parent, options[set], row + 1, 0, columnspan=2, padx=(width+12))
         titleLabel = makelabel(parent, label, row,0,tooltip)
-
+        from_ = 0
+        to = len(options)-1
         def sliderUpdate(a,b,c):
             sliderLabel.configure(text = options[int(var.get())])
         var.trace_add("write", sliderUpdate)
@@ -12086,7 +12087,7 @@ def show_gui():
             smartcontextbox.grid_remove()
         qkvslider.grid()
         qkvlabel.grid()
-        if flashattention_var.get()==0 and (quantkv_var.get()>0 and quantkv_var.get()!=3):
+        if flashattention_var.get()==0 and (quantkv_var.get()>1):
             noqkvlabel.grid()
         else:
             noqkvlabel.grid_remove()
@@ -12095,7 +12096,7 @@ def show_gui():
     def toggleflashattn(a,b,c):
         qkvslider.grid()
         qkvlabel.grid()
-        if flashattention_var.get()==0 and (quantkv_var.get()>0 and quantkv_var.get()!=3):
+        if flashattention_var.get()==0 and (quantkv_var.get()>1):
             noqkvlabel.grid()
         else:
             noqkvlabel.grid_remove()
@@ -12282,7 +12283,7 @@ def show_gui():
         makecheckbox(hardware_tab, name, properties[0], int(idx/2) + 30, 0, padx=(160 if idx % 2 else 8), tooltiptxt=properties[1])
 
     # blas batch size
-    makeslider(hardware_tab, "Batch Size:", batchsize_text, blas_size_var, 0, len(batchsize_values)-1, 16,width=200, set=6,tooltip="How many tokens to process at once per batch.\nLarger values use more memory.")
+    makeslider(hardware_tab, "Batch Size:", batchsize_text, blas_size_var, 16,width=200, set=6,tooltip="How many tokens to process at once per batch.\nLarger values use more memory.")
     blas_size_var.trace_add("write", changed_gpulayers_estimate)
 
     makecheckbox(hardware_tab, "Use FlashAttention", flashattention_var, 100, command=toggleflashattn,  tooltiptxt="Enable flash attention for GGUF models.")
@@ -12337,7 +12338,7 @@ def show_gui():
     makecheckbox(context_tab, "Custom RoPE Config", variable=customrope_var, row=22, command=togglerope,tooltiptxt="Override the default RoPE configuration with custom RoPE scaling.")
     noqkvlabel = makelabel(context_tab,"(Note: QuantKV works best with flash attention)",30,0,"Only K cache can be quantized, and performance can suffer.\nIn some cases, it might even use more VRAM when doing a full offload.",padx=160)
     noqkvlabel.configure(text_color="#ff5555")
-    qkvslider,qkvlabel,qkvtitle = makeslider(context_tab, "Quantize KV Cache:", quantkv_text, quantkv_var, 0, 3, 30, set=0,tooltip="Enable quantization of KV cache.\nRequires Flash Attention for full effect, otherwise only K cache is quantized.")
+    qkvslider,qkvlabel,qkvtitle = makeslider(context_tab, "Quantize KV Cache:", quantkv_text, quantkv_var, 30, set=0,tooltip="Enable quantization of KV cache.\nRequires Flash Attention for full effect, otherwise only K cache is quantized.")
     quantkv_var.trace_add("write", toggleflashattn)
     makecheckbox(context_tab, "No BOS Token", nobostoken_var, 43, tooltiptxt="Prevents BOS token from being added at the start of any prompt. Usually NOT recommended for most models.")
     makecheckbox(context_tab, "Enable Guidance", enableguidance_var, 43,padx=(140), tooltiptxt="Enables the use of Classifier-Free-Guidance, which allows the use of negative prompts. Has performance and memory impact.")
