@@ -210,7 +210,6 @@ OBJS_CUDA_TEMP_INST += $(patsubst %.cu,%.o,$(wildcard ggml/src/ggml-cuda/templat
 OBJS_CUDA_TEMP_INST += \
     ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-f16.o \
     ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q4_0-q4_0.o \
-	ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_1-q5_1.o \
     ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q8_0.o \
     ggml/src/ggml-cuda/template-instances/fattn-vec-instance-bf16-bf16.o
 

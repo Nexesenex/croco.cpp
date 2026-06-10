@@ -115,7 +115,6 @@ if (LLAMA_CUBLAS)
         list(APPEND GGML_SOURCES_CUDA
             ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-f16.cu
             ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q4_0-q4_0.cu
-            ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_1-q5_1.cu
             ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q8_0.cu
             ggml/src/ggml-cuda/template-instances/fattn-vec-instance-bf16-bf16.cu
         )
@@ -204,7 +203,6 @@ if (LLAMA_HIPBLAS)
         list(APPEND GGML_SOURCES_ROCM
             ggml/src/ggml-cuda/template-instances/fattn-vec-instance-f16-f16.cu
             ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q4_0-q4_0.cu
-            ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q5_1-q5_1.cu
             ggml/src/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q8_0.cu
             ggml/src/ggml-cuda/template-instances/fattn-vec-instance-bf16-bf16.cu
         )
