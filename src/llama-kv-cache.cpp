@@ -245,7 +245,7 @@ llama_kv_cache::llama_kv_cache(
 
             map_layer_ids[il] = map_layer_ids[il_reuse];
 
-            // LLAMA_LOG_DEBUG("%s: - layer %3d: reuse layer %d, is_swa = %d\n", __func__, il, il_reuse, hparams.is_swa(il));
+            LLAMA_LOG_DEBUG("%s: - layer %3d: reuse layer %d, is_swa = %d\n", __func__, il, il_reuse, hparams.is_swa(il));
         }
     }
 
