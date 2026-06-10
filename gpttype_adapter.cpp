@@ -2331,9 +2331,9 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
         if (inputs.use_contextshift) {
             kcpp_data->swa_full = true;  //can't use SWA
             printf("\nTest kcpp_data->swa_full manually validated :\nSWA Mode IS DISABLED!\nSWA Mode Cannot be used with Context Shifting!\n");
-        // } else if (inputs.use_fastforward) {
-            // kcpp_data->swa_full = true;  //won't use SWA
-            // printf("\nTest kcpp_data->swa_full manually validated :\nSWA Mode is DISABLED!\nNote that using SWA Mode could lead to degraded recall when combined with Fast Forwarding, so no SWA!\n");
+        } else if (inputs.use_fastforward) {
+            kcpp_data->swa_full = false;  //won't use SWA
+            printf("\nTest kcpp_data->swa_full manually invalidated :\nSWA Mode is ENABLED!\nNote that using SWA Mode cannot be used with Context Shifting, and can lead to degraded recall when combined with Fast Forwarding!\n");
         } else {
             kcpp_data->swa_full = false;  //can use SWA
             printf("\nTest kcpp_data->swa_full manually invalidated :\nSWA Mode IS ENABLED!\nNote that using SWA Mode cannot be used with Context Shifting\n");
