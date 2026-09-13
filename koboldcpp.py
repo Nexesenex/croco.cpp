@@ -9605,7 +9605,35 @@ def show_gui():
     makecheckbox(model_tab, "GPU", embeddings_gpu_var, 15, 0,padx=(390),tooltiptxt="Uses the GPU for Embeddings.")
     embeddings_gpu_var.trace_add("write", gui_changed_modelfile)
     makefileentry(model_tab, "Preload Story:", "Select Preloaded Story File", preloadstory_var, 17,width=280,singlerow=True,tooltiptxt="Select an optional KoboldAI JSON savefile \nto be served on launch to any client.")
-    makefileentry(model_tab, "SaveData File:", "Select or Create New SaveData Database File", savedatafile_var, 19,width=280,filetypes=[("KoboldCpp SaveDB", "*.jsondb")],singlerow=True,dialog_type=1,tooltiptxt="Selecting a file will allow data to be loaded and saved persistently to this KoboldCpp server remotely. File is created if it does not exist.")
+    savedatafile_tooltip = "Allows connected users to save and load data on this server. File is created automatically on launch if it does not exist. Clear the filename to disable."
+    savedatafile_label, savedatafile_entry, savedatafile_button = makefileentry(model_tab, "SaveData File:", "Select or Create New SaveData Database File", savedatafile_var, 19,width=280,filetypes=[("KoboldCpp SaveDB", "*.jsondb")],singlerow=True,dialog_type=1,tooltiptxt=savedatafile_tooltip)
+    savedatafile_enabled_var = ctk.IntVar(value=0)
+    savedatafile_checkbox = makecheckbox(model_tab, "Enable Server Side SaveData File", savedatafile_enabled_var, row=19, tooltiptxt=savedatafile_tooltip)
+    savedatafile_checkbox.configure(command=lambda: savedatafile_var.set("savedatafile.jsondb"))
+    savedatafile_editing = False
+
+    def update_savedatafile_row(*unused):
+        show_file = bool(savedatafile_var.get()) or savedatafile_editing
+        for widget in (savedatafile_label, savedatafile_entry, savedatafile_button):
+            if show_file:
+                widget.grid()
+            else:
+                widget.grid_remove()
+        if show_file:
+            savedatafile_checkbox.grid_remove()
+        else:
+            savedatafile_enabled_var.set(0)
+            savedatafile_checkbox.grid()
+
+    def savedatafile_focus_changed(editing):
+        nonlocal savedatafile_editing
+        savedatafile_editing = editing
+        update_savedatafile_row()
+
+    savedatafile_entry.bind("<FocusIn>", lambda event: savedatafile_focus_changed(True))
+    savedatafile_entry.bind("<FocusOut>", lambda event: savedatafile_focus_changed(False))
+    savedatafile_var.trace_add("write", update_savedatafile_row)
+    update_savedatafile_row()
     makefileentry(model_tab, "MCP JSON:", "Select a mcp.json configuration file", mcpfile_var, 21,width=280,filetypes=[("MCP JSON", "*.json")],singlerow=True,tooltiptxt="Specify path to mcp.json which contains the Claude Desktop compatible MCP server config.")
     makefileentry(model_tab, "Chat Adapter:", "Select ChatCompletions Adapter File", chatcompletionsadapter_var, 24, width=184, filetypes=[("JSON Adapter", "*.json")], singlerow=True, tooltiptxt="Select an optional ChatCompletions Adapter JSON file to force custom instruct tags.")
     def pickpremadetemplate():
