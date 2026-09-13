@@ -1114,7 +1114,7 @@ static speculative_draft_result speculative_decoding_eval_chunk(llama_context * 
     auto & dp = common_speculative_get_draft_params(draft_spec, 0);
     dp.drafting = true;
     dp.n_max = n_draft_max;
-    dp.n_past = n_past;
+    dp.pos0 = n_past;
     dp.id_last = embd[0];
     dp.prompt = &prompt_tokens;
     dp.result = &drafted_ids;
