@@ -12360,16 +12360,16 @@ def kcpp_main_process(launch_args, g_memory=None, gui_launcher=False):
             print("WARNING: Selected Text Model does not seem to be a GGUF file! Are you sure you picked the right file?")
         loadok = load_model(modelname)
         print("Load Text Model OK: " + str(loadok))
+        if not loadok:
+            exitcounter = 999
+            exit_with_error(3,"Could not load text model: " + modelname)
+
         if args.mmproj and args.mmproj!="": # multimodal vision and audio support is only known at runtime
             has_audio_support = handle.has_audio_support()
             has_vision_support = handle.has_vision_support()
         else:
             has_audio_support = False
             has_vision_support = False
-
-        if not loadok:
-            exitcounter = 999
-            exit_with_error(3,"Could not load text model: " + modelname)
 
         # The chat completions adapter is a list that needs derivation from chat templates
         # Try to derive chat completions adapter from chat template, now that we have the model loaded

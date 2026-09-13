@@ -3564,6 +3564,11 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
         }
 
         llama_model * llamamodel = llama_model_load_from_file(kcpp_data->model_filename.c_str(), model_params);
+        if (llamamodel == nullptr)
+        {
+            fprintf(stderr, "%s: error: failed to load model '%s'\n", __func__, kcpp_data->model_filename.c_str());
+            return ModelLoadResult::FAIL;
+        }
 
         //now that the model is loaded, immediately check if SWA is used
         bool model_has_swa = (llama_model_n_swa(llamamodel)!=0);
