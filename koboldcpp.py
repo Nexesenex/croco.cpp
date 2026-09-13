@@ -118,6 +118,8 @@ maxctx = default_maxctx
 maxhordectx = 0 #set to whatever maxctx is if 0
 maxhordelen = 1024
 modelbusy = threading.Lock()
+token_count_lock = threading.Lock()
+detokenize_lock = threading.Lock()
 batched_lock = threading.Lock()
 batched_cond = threading.Condition(batched_lock)
 batched_request_runner_count = 0 #incremented when a batched request is running, prevents all non-batched requests
@@ -3436,14 +3438,16 @@ def music_generate_audio(genparams):
     return outstr
 
 def tokenize_ids(countprompt,tcaddspecial):
-    rawcountdata = handle.token_count(countprompt.encode("UTF-8"),tcaddspecial)
-    count = rawcountdata.count
-    hardlimit = (2**31) - 1
-    countlimit = count if (count>=0 and count<=hardlimit) else 0
-    if count > hardlimit:
-        utfprint("Warning: TokenCount exceeds max limit.")
-    # the above protects the server in case the count limit got corrupted
-    countdata = [rawcountdata.ids[i] for i in range(countlimit)]
+    # The native result points into a shared vector; keep it locked until copied.
+    with token_count_lock:
+        rawcountdata = handle.token_count(countprompt.encode("UTF-8"),tcaddspecial)
+        count = rawcountdata.count
+        hardlimit = (2**31) - 1
+        countlimit = count if (count>=0 and count<=hardlimit) else 0
+        if count > hardlimit:
+            utfprint("Warning: TokenCount exceeds max limit.")
+        # the above protects the server in case the count limit got corrupted
+        countdata = [rawcountdata.ids[i] for i in range(countlimit)]
     return countdata
 
 def detokenize_ids(tokids,addspecial):
@@ -3456,8 +3460,10 @@ def detokenize_ids(tokids,addspecial):
         inputs.ids = (ctypes.c_int * tokidslen)()
         for i, cid in enumerate(tokids):
             inputs.ids[i] = cid
-        detok = handle.detokenize(inputs)
-        detokstr = ctypes.string_at(detok).decode("UTF-8","ignore")
+        # The native function writes a shared string; serialize calls and copying.
+        with detokenize_lock:
+            detok = handle.detokenize(inputs)
+            detokstr = ctypes.string_at(detok).decode("UTF-8","ignore")
     return detokstr
 
 # Performs a web search using DuckDuckGo and extracts text content from the top results.

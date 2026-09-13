@@ -162,13 +162,12 @@ static std::unordered_multimap<gpt_vocab::id, std::vector<gpt_vocab::id>> dry_se
 static std::vector<int> dry_repeat_count; // Indexed as last_n_tokens
 static std::unordered_map<gpt_vocab::id, int> dry_max_token_repeat;
 static std::vector<TopPicksData> top_picks_history;
+static std::mutex top_picks_history_mtx;
 static int remaining_tokens = 0;
 static std::atomic<bool> early_abort = false;
 static std::mutex concat_output_mtx;
 static std::string concat_output = "";
-static std::string concat_output_reader_copy_poll = ""; //for streaming
 static std::string concat_output_reader_copy_res = ""; //for gen response
-static std::string generated_token_reader_copy = ""; //stable copy for streaming token readers
 static std::vector<logit_bias> logit_biases;
 static bool add_bos_token = true; // if set to false, mmproj handling breaks. dont disable unless you know what you're doing
 static bool load_guidance = false; //whether to enable cfg for negative prompts
@@ -813,13 +812,16 @@ bool ContextRewind(std::vector<int> &embd, std::vector<int> &current_context_tok
         last_n_tokens.resize(last_n_tokens.size() - amount_rewind);
     }
 
-    if(amount_rewind >= top_picks_history.size())
     {
-        top_picks_history.clear();
-    }
-    else
-    {
-        top_picks_history.resize(top_picks_history.size() - amount_rewind);
+        std::lock_guard<std::mutex> lock(top_picks_history_mtx);
+        if(amount_rewind >= top_picks_history.size())
+        {
+            top_picks_history.clear();
+        }
+        else
+        {
+            top_picks_history.resize(top_picks_history.size() - amount_rewind);
+        }
     }
 
     if (amount_rewind >= current_context_tokens.size())
@@ -1329,7 +1331,10 @@ llama_token sample_token(llama_token_data_array * candidates, std::mt19937 & rng
         newpick.tokenid.push_back(candidates->data[i].id);
     }
 
-    top_picks_history.push_back(newpick);
+    {
+        std::lock_guard<std::mutex> lock(top_picks_history_mtx);
+        top_picks_history.push_back(newpick);
+    }
 
     llama_token result = candidates->data[idx].id;
     return result;
@@ -4334,7 +4339,6 @@ struct BatchGenerateRequest
     bool i_batch_is_prefill = false;
     llama_sampler * sampler = nullptr;
     std::vector<std::string> generated_pieces;
-    std::string stream_reader_copy;
     std::string output;
     int prompt_token_count = 0;
     int completion_token_count = 0;
@@ -5033,29 +5037,33 @@ int gpttype_batch_generate_stream_count(int request_id)
 
 const char * gpttype_batch_generate_new_token(int request_id, int idx)
 {
+    static thread_local std::string reader_copy;
     std::lock_guard<std::mutex> lock(batch_mutex);
     BatchGenerateRequest * req = batch_find_request_locked(request_id);
     if(!req || idx < 0 || idx >= (int) req->generated_pieces.size())
     {
         return nullptr;
     }
-    req->stream_reader_copy = req->generated_pieces[idx];
-    return req->stream_reader_copy.c_str();
+    reader_copy = req->generated_pieces[idx];
+    return reader_copy.c_str();
 }
 
 const char * gpttype_batch_generate_pending_output(int request_id)
 {
+    static thread_local std::string reader_copy;
     std::lock_guard<std::mutex> lock(batch_mutex);
     BatchGenerateRequest * req = batch_find_request_locked(request_id);
     if(!req)
     {
         return batch_empty_string.c_str();
     }
-    return req->output.c_str();
+    reader_copy = req->output;
+    return reader_copy.c_str();
 }
 
 generation_outputs gpttype_batch_generate_result(int request_id)
 {
+    static thread_local std::string reader_copy;
     std::unique_lock<std::mutex> lock(batch_mutex);
     batch_cv.wait(lock, [request_id](){
         BatchGenerateRequest * req = batch_find_request_locked(request_id);
@@ -5072,8 +5080,10 @@ generation_outputs gpttype_batch_generate_result(int request_id)
         output.text = batch_empty_string.c_str();
         return output;
     }
-    req->result.text = req->output.c_str();
-    return req->result;
+    reader_copy = req->output;
+    generation_outputs output = req->result;
+    output.text = reader_copy.c_str();
+    return output;
 }
 
 bool gpttype_batch_generate_abort(int request_id)
@@ -5279,14 +5289,15 @@ std::string gpttype_detokenize(const std::vector<int> & inputids, bool render_sp
 
 const std::string & gpttype_get_pending_output()
 {
+    // Keep the returned storage alive until this thread's next call.
+    static thread_local std::string concat_output_reader_copy_poll;
     if(kcpp_data==nullptr)
     {
         printf("\nWarning: KCPP text generation not initialized!\n");
         return concat_output_reader_copy_poll;
     }
-    concat_output_mtx.lock();
+    std::lock_guard<std::mutex> lock(concat_output_mtx);
     concat_output_reader_copy_poll = concat_output;
-    concat_output_mtx.unlock();
     return concat_output_reader_copy_poll;
 }
 
@@ -5298,6 +5309,7 @@ int gpttype_get_stream_count()
 
 const char * gpttype_new_token(int idx)
 {
+    static thread_local std::string generated_token_reader_copy;
     std::lock_guard<std::mutex> lock(concat_output_mtx);
     if (idx < 0 || idx >= (int) generated_tokens.size())
     {
@@ -5309,6 +5321,7 @@ const char * gpttype_new_token(int idx)
 
 const std::vector<TopPicksData> gpttype_get_top_picks_data()
 {
+    std::lock_guard<std::mutex> lock(top_picks_history_mtx);
     return top_picks_history;
 }
 
@@ -5654,13 +5667,11 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
         std::lock_guard<std::mutex> lock(concat_output_mtx);
         generated_tokens.clear(); // New Generation, new tokens
         generated_tokens.reserve(16);
-        generated_token_reader_copy = "";
     }
     delayed_generated_tokens.clear();
 
     concat_output_mtx.lock();
     concat_output = "";
-    concat_output_reader_copy_poll = "";
     concat_output_reader_copy_res = "";
     concat_output_mtx.unlock();
     last_stop_reason = stop_reason::OUT_OF_TOKENS;
@@ -5669,7 +5680,10 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
     dry_repeat_count.clear();
     dry_sequence_breakers.clear();
     dry_max_token_repeat.clear();
-    top_picks_history.clear();
+    {
+        std::lock_guard<std::mutex> lock(top_picks_history_mtx);
+        top_picks_history.clear();
+    }
     early_abort = false;
 
     double init_time = 0, process_time = 0, gen_time = 0;

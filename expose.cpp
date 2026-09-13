@@ -412,8 +412,9 @@ extern "C"
         return detokenized_str.c_str();
     }
 
-    static std::vector<TopPicksData> last_logprob_toppicks;
-    static std::vector<logprob_item> last_logprob_items;
+    // Returned pointers remain valid until the next call on the same thread.
+    static thread_local std::vector<TopPicksData> last_logprob_toppicks;
+    static thread_local std::vector<logprob_item> last_logprob_items;
     last_logprobs_outputs last_logprobs()
     {
         last_logprobs_outputs output;
