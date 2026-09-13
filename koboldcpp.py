@@ -6320,13 +6320,13 @@ class KcppServerRequestHandler(http.server.SimpleHTTPRequestHandler):
                 except asyncio.CancelledError:
                     pass
 
-    async def send_json_keepalives(self, cancel_fn, interval=60):
+    async def send_json_keepalives(self, cancel_fn, interval=50):
         # Leading whitespace is valid JSON. Padding also helps small proxy buffers
         # make progress; it cannot bypass a proxy's absolute request time limit.
         try:
             while True:
                 await asyncio.sleep(interval)
-                self.wfile.write(b' ' * 4095 + b'\n')
+                self.wfile.write(b' ' * 2047 + b'\n')
                 self.wfile.flush()
         except OSError:
             if cancel_fn:
@@ -7967,8 +7967,10 @@ Change Mode<br>
                                 genparams['lora'] = lora_map_name_to_path(loras)
                         abort_gen = handle.sd_abort_generation
                         override_abort_gen = genparams.get('kcpp_extra_args', {}).get('keep_image_gen_on_disconnect', gendefaults.get('keep_image_gen_on_disconnect'))
-                        if override_abort_gen is not None and tryparseint(override_abort_gen, 1):
+                        if override_abort_gen is not None and tryparseint(override_abort_gen, 1): #enable keepalive on poor connection mode
                             abort_gen = None
+                            send_keepalive = True
+                        if tryparseint(genparams.get('frames', 1), 1) > 1: #enable keepalive if more than 1 frame
                             send_keepalive = True
                         if send_keepalive:
                             # Close-delimited JSON works with HTTP/1.0 and HTTP/1.1.
