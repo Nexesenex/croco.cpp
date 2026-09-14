@@ -7987,7 +7987,8 @@ Change Mode<br>
                         if override_abort_gen is not None and tryparseint(override_abort_gen, 1): #enable keepalive on poor connection mode
                             abort_gen = None
                             send_keepalive = True
-                        if tryparseint(genparams.get('frames', 1), 1) > 1: #enable keepalive if more than 1 frame
+                        # Cloudflare proxy heuristic, trigger keepalive if cloudflare is detected
+                        if self.headers.get('CF-Connecting-IP'):
                             send_keepalive = True
                         if send_keepalive:
                             # Close-delimited JSON works with HTTP/1.0 and HTTP/1.1.
