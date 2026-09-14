@@ -4707,6 +4707,9 @@ ws ::= | " " | "\n" [ \t]{0,20}
                         break
                 if jinjatools and len(jinjatools)>0:
                     genparams["using_openai_tools"] = True
+                    if api_format == 4 and args.jinja_tools:
+                        # Default Jinja tool requests to 0.5 and cap their temperature at 1.0.
+                        genparams["temperature"] = min(tryparsefloat(genparams.get("temperature", adapter_obj.get("temperature", 0.5)), 0.5), 1.0)
                 # handle media
                 images_added, audio_added = sweep_media_from_messages(messages_array)
             else:
