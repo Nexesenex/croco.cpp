@@ -9,6 +9,7 @@
 // Change JSON_ASSERT from assert() to GGML_ASSERT:
 #define JSON_ASSERT GGML_ASSERT
 #include <nlohmann/json.hpp>
+#include "json-schema.cpp"
 #include "json-schema-to-grammar.cpp"
 #include "llama.h"
 #include "sampling.h"
