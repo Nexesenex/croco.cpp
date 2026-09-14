@@ -3608,7 +3608,7 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
         {
             if(savestate_limit>0)
             {
-                printf("RNN or Hyrbid model with FF and shifting flags enabled - SmartCache will be enabled with extra slots. Disable CtxShift if you do not want this.\n",savestate_limit);
+                printf("RNN or Hybrid model with FF and shifting flags enabled - SmartCache will be enabled with extra slots. Disable CtxShift if you do not want this.\n",savestate_limit);
                 kcpp_data->smartcache = true;
                 savestate_limit += 1;
                 rnn_reusable_slot_idx = savestate_limit - 1;
