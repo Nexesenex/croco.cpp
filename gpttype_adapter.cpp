@@ -5176,12 +5176,18 @@ std::string gpttype_parse_chat_tool_calls(const std::string & generated_text,
         inputs.tool_choice = common_chat_tool_choice_parse_oaicompat(tool_choice.empty() ? "auto" : tool_choice);
         inputs.parallel_tool_calls = parallel_tool_calls;
         inputs.add_generation_prompt = true;
+        // Consume reasoning (including a <think> in the generation prompt) before tools.
+        inputs.reasoning_format = COMMON_REASONING_FORMAT_AUTO;
 
         if(!chat_template_kwargs_json.empty())
         {
             common_json kwargs = common_json::parse(chat_template_kwargs_json);
             if(kwargs.is_object())
             {
+                if(kwargs.contains("enable_thinking") && kwargs["enable_thinking"].is_boolean())
+                {
+                    inputs.enable_thinking = kwargs["enable_thinking"].get<bool>();
+                }
                 for(const auto & item : kwargs.items())
                 {
                     inputs.chat_template_kwargs[item.key()] = item.value().dump();

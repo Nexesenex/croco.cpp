@@ -5643,6 +5643,8 @@ class KcppServerRequestHandler(http.server.SimpleHTTPRequestHandler):
 
         utfprint("\nOutput: " + recvtxt,1)
 
+        # The native parser needs the full output to match reasoning in the generation prompt.
+        native_toolcall_text = recvtxt
         #handle potential think tags, but only chat completions will return them. the others just drop them
         reasoningtxt = ""
         if api_format==4 or api_format==8 or api_format==9: #chat completions, responses and anthropic messages, but only chat has reasoning returned
@@ -5668,7 +5670,7 @@ class KcppServerRequestHandler(http.server.SimpleHTTPRequestHandler):
             using_openai_tools = genparams.get('using_openai_tools', False)
             if using_openai_tools:
                 # first, let llama.cpp's chat parser handle known template-specific tool formats
-                tool_calls = native_parse_toolcall_tags(recvtxt, genparams)
+                tool_calls = native_parse_toolcall_tags(native_toolcall_text, genparams)
                 # fallback: check and potentially segment multiple tags for multi-tool calls
                 if not tool_calls:
                     tool_calls = repack_toolcall_tags(recvtxt,genparams.get('tools', []))
