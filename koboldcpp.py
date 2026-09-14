@@ -9002,7 +9002,7 @@ def show_gui():
             try:
                 selected_index = searchbox2.cget("values").index(modelsearch2_var.get())
                 pickedsize = searchedsizes[selected_index]
-                fileinfotxt_var.set(f"Size: {round(pickedsize/1024/1024/1024,2)} GB")
+                fileinfotxt_var.set(f"Size: {round(pickedsize/1024/1024/1024,2)} GiB" if pickedsize is not None else "Size: Unknown (missing file metadata or parts)")
             except Exception:
                 fileinfotxt_var.set("")
         def fetch_search_quants(a,b,c):
@@ -9012,13 +9012,22 @@ def show_gui():
                     return
                 searchedmodels = []
                 searchedsizes = []
-                resp = make_url_request(f"https://huggingface.co/api/models/{modelsearch1_var.get()}/tree/main?recursive=true",None,'GET',{},10)
-                for m in resp:
-                    if m["type"]=="file" and ".gguf" in m["path"]:
-                        if "-of-0" in m["path"] and "00001" not in m["path"]:
+                # Model metadata includes all files, avoiding a truncated tree page.
+                resp = make_url_request(f"https://huggingface.co/api/models/{modelsearch1_var.get()}/revision/main?blobs=true",None,'GET',{},10)
+                files = {m["rfilename"]: m.get("size") for m in resp["siblings"]}
+                for filename, size in files.items():
+                    if not filename.lower().endswith(".gguf"):
+                        continue
+                    match = re.search(r'-(\d{5})-of-(\d{5})\.gguf$', filename, re.IGNORECASE)
+                    if match:
+                        if int(match.group(1)) != 1:
                             continue
-                        searchedmodels.append(m["path"])
-                        searchedsizes.append(m["size"])
+                        # Sum actual sizes: the final shard is usually smaller.
+                        sizes = [files.get(filename[:match.start(1)] + f"{part:05d}" + filename[match.end(1):])
+                                 for part in range(1, int(match.group(2)) + 1)]
+                        size = sum(sizes) if sizes and all(s is not None for s in sizes) else None
+                    searchedmodels.append(filename)
+                    searchedsizes.append(size)
                 searchbox2.configure(values=searchedmodels)
                 if len(searchedmodels)>0:
                     quants = ["q4k","q4_k","q4", "q3", "q5", "q6", "q8"] #autopick priority
@@ -9052,18 +9061,19 @@ def show_gui():
                 searchbox1.configure(values=[])
                 searchbox2.configure(values=[])
                 searchedmodels = []
-                searchbase = model_search.get()
-                if searchbase.strip()=="":
+                searchbase = model_search.get().strip()
+                if searchbase=="":
                     return
-                urlcode = urllib.parse.urlencode({"search":( "GGUF " + searchbase),"limit":10}, doseq=True)
-                urlcode2 = urllib.parse.urlencode({"search":searchbase,"limit":6}, doseq=True)
+                urlcode = urllib.parse.urlencode({"search":searchbase,"filter":"gguf","limit":100}, doseq=True)
+                urlcode2 = urllib.parse.urlencode({"search":searchbase,"limit":100}, doseq=True)
                 resp = make_url_request(f"https://huggingface.co/api/models?{urlcode}",None,'GET',{},10)
                 for m in resp:
                     searchedmodels.append(m["id"])
-                if len(resp)<=3: #too few results, repeat search without GGUF in the string
+                if len(resp)<=3: # Include repositories whose GGUF tag is missing.
                     resp2 = make_url_request(f"https://huggingface.co/api/models?{urlcode2}",None,'GET',{},10)
                     for m in resp2:
-                        searchedmodels.append(m["id"])
+                        if m["id"] not in searchedmodels:
+                            searchedmodels.append(m["id"])
 
                 if len(searchedmodels)==0:
                     messagebox.showinfo("No Results Found", "Search found no results")
