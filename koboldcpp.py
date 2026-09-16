@@ -5849,6 +5849,33 @@ class KcppServerRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(f'{data}\n'.encode())
         self.wfile.flush()
 
+    async def send_tool_stream_keepalives(self, genparams, api_format, interval=50):
+        # Tool calls may be buffered until generation finishes. Keep the stream
+        # active without adding content to the eventual tool call.
+        try:
+            while True:
+                await asyncio.sleep(interval)
+                if not (genparams.get('sync_toolcall_stream_ineligible', False) or genparams.get('sync_toolcall_potential_triggered', False)):
+                    continue
+                if api_format == 7: # Ollama NDJSON requires a valid JSON line
+                    model_name = friendlymodelname
+                    if autoswapmode and textName is not None:
+                        model_name = textName
+                    keepalive = {
+                        "model": model_name,
+                        "created_at": str(datetime.now(timezone.utc).isoformat()),
+                        "message": {"role": "assistant", "content": ""},
+                        "done": False,
+                    }
+                    packet = json.dumps(keepalive).encode()
+                    self.wfile.write(packet + (b' ' * max(1, 2047 - len(packet))) + b'\n')
+                else: # OpenAI and Anthropic use SSE; comments are client-invisible
+                    self.wfile.write(b': keepalive' + (b' ' * 2035) + b'\n\n')
+                self.wfile.flush()
+        except OSError:
+            self.close_connection = True
+            handle.abort_generate()
+
     async def handle_sse_stream(self, genparams, api_format):
         global friendlymodelname, currfinishreason, thinkformats, tool_call_pairs, cached_chat_template
         global autoswapmode, textName, sttName, ttsName, embedName, musicName, imageName, mmprojName
@@ -6337,6 +6364,7 @@ class KcppServerRequestHandler(http.server.SimpleHTTPRequestHandler):
         tasks = []
         genparams["oai_uniqueid"] = random.randint(100000, 999999)
         monitor_task = None
+        tool_keepalive_task = None
         try:
             if stream_flag:
                 tasks.append(self.handle_sse_stream(genparams, api_format))
@@ -6344,6 +6372,8 @@ class KcppServerRequestHandler(http.server.SimpleHTTPRequestHandler):
             tasks.append(generate_task)
             if stream_flag:
                 monitor_task = asyncio.create_task(self.monitor_connection(handle.abort_generate))
+                if api_format in (4, 7, 9) and genparams.get('using_openai_tools', False):
+                    tool_keepalive_task = asyncio.create_task(self.send_tool_stream_keepalives(genparams, api_format))
             await asyncio.gather(*tasks)
             generate_result = generate_task.result()
             return generate_result
@@ -6360,6 +6390,13 @@ class KcppServerRequestHandler(http.server.SimpleHTTPRequestHandler):
                 try:
                     await monitor_task
                 except asyncio.CancelledError:
+                    pass
+            if tool_keepalive_task:
+                if not tool_keepalive_task.done():
+                    tool_keepalive_task.cancel()
+                try:
+                    await tool_keepalive_task
+                except (asyncio.CancelledError, OSError):
                     pass
 
     async def send_json_keepalives(self, cancel_fn, interval=50):
@@ -7964,6 +8001,7 @@ Change Mode<br>
                                 self.wfile.flush()
                             self.close_connection = True
                     except Exception as ex:
+                        self.close_connection = True
                         utfprint(ex,1)
                         print("Generate: The response could not be sent, maybe connection was terminated?")
                         handle.abort_generate()
