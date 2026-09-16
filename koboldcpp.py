@@ -2296,8 +2296,17 @@ def generate(genparams, stream_flag=False):
             print(f"\n!!! ====== !!!\n(Warning! Request max_context_length={max_context_length} exceeds allocated context size of {maxctx}. It will be reduced to fit. Consider launching with increased --contextsize to avoid issues. This message will only show once per session.)\n!!! ====== !!!")
             showmaxctxwarning = False
         max_context_length = maxctx
-    min_remain_hardlimit = max(min(max_context_length-4, 16),int(max_context_length*0.2))
-    min_remain_softlimit = max(min(max_context_length-4, 16),int(max_context_length*0.4))
+    # Estimate the complete textual input before deciding how much of the
+    # context may be used for output. Media token usage cannot be estimated by
+    # token_count, so retain the more conservative limit for multimodal input.
+    estimated_input_tokens = token_count_text(prompt, True)
+    if estimated_input_tokens >= 0 and memory:
+        memory_token_count = token_count_text(memory, False)
+        estimated_input_tokens = (estimated_input_tokens + memory_token_count) if memory_token_count >= 0 else -1
+    if images or audio:
+        estimated_input_tokens = -1
+    min_remain_hardlimit = calculate_min_remain_hardlimit(max_context_length, estimated_input_tokens)
+    min_remain_softlimit = max(min(max_context_length-4, 16),int(max_context_length*0.45))
     if args.genlimit > 0 and max_length > args.genlimit:
         max_length = args.genlimit
     if max_length >= (max_context_length-min_remain_softlimit):
@@ -3451,6 +3460,22 @@ def tokenize_ids(countprompt,tcaddspecial):
         # the above protects the server in case the count limit got corrupted
         countdata = [rawcountdata.ids[i] for i in range(countlimit)]
     return countdata
+
+def token_count_text(countprompt,tcaddspecial):
+    # Count without copying the shared token ID vector when only its size is needed.
+    with token_count_lock:
+        rawcountdata = handle.token_count(countprompt.encode("UTF-8"),tcaddspecial)
+        count = rawcountdata.count
+    hardlimit = (2**31) - 1
+    if count < 0 or count > hardlimit:
+        utfprint("Warning: TokenCount exceeds max limit.")
+        return -1
+    return count
+
+def calculate_min_remain_hardlimit(max_context_length, input_token_count):
+    # Small inputs (<25% max ctx) may use up to 80% of context for generation. For larger or unknown inputs, max allowed is 65% instead
+    min_remain_ratio = 0.2 if 0 <= input_token_count < max_context_length * 0.25 else 0.35
+    return max(min(max_context_length-4, 16), int(max_context_length*min_remain_ratio))
 
 def detokenize_ids(tokids,addspecial):
     tokidslen = len(tokids)
