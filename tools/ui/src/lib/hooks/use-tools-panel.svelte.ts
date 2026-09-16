@@ -47,7 +47,7 @@ export function useToolsPanel(): UseToolsPanelReturn {
 
 		if (toolsStore.toolGroups.length > 0) return null;
 
-		// Tools endpoint is unreachable (404) — server started without --tools
+		// Tools endpoint unreachable (403) — server started without tools
 		if (toolsStore.isToolsEndpointUnreachable) {
 			return `The KoboldCpp MCP bridge may accessible on the same URL with /mcp at the end but must be added manually.`;
 		}
