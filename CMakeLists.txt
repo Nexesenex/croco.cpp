@@ -517,16 +517,28 @@ endif()
 set_source_files_properties(vendor/hash/sha256/sha256.c PROPERTIES COMPILE_OPTIONS ${KCPP_HASH_NO_WARN_FLAG})
 
 add_library(sdtype_adapter
+            sdcpp_logger_adapter.cpp
             otherarch/sdcpp/sdtype_adapter.cpp
+            otherarch/sdcpp/src/core/compute_workspace.cpp
+            otherarch/sdcpp/src/core/ggml_extend.cpp
+            otherarch/sdcpp/src/core/ggml_runner.cpp
             otherarch/sdcpp/src/core/ggml_graph_cut.cpp
             otherarch/sdcpp/src/core/ggml_graph_cut.h
+            otherarch/sdcpp/src/core/ggml_tensor_utils.cpp
+            otherarch/sdcpp/src/core/runner_cache.cpp
+            otherarch/sdcpp/src/core/segment_graph_bindings.cpp
+            otherarch/sdcpp/src/core/segment_weight_pipeline.cpp
             otherarch/sdcpp/examples/cli/image_metadata.cpp
+            otherarch/sdcpp/src/detailer.cpp
             otherarch/sdcpp/src/model_manager.cpp
             otherarch/sdcpp/src/model_manager.h
+            otherarch/sdcpp/src/model_manager_prefetch.cpp
             otherarch/sdcpp/src/extensions/pulid_extension.cpp
             otherarch/sdcpp/src/model_loader.cpp
+            otherarch/sdcpp/src/model/adapter/lora_ops.cpp
             otherarch/sdcpp/src/extensions/photomaker_extension.cpp
             otherarch/sdcpp/src/runtime/sample-cache.cpp
+            otherarch/sdcpp/src/runtime/tiling.cpp
             otherarch/sdcpp/src/core/util.cpp
             otherarch/sdcpp/src/name_conversion.cpp
             otherarch/sdcpp/src/upscaler.cpp
@@ -553,6 +565,11 @@ add_library(sdtype_adapter
             otherarch/sdcpp/src/core/backend_fit.cpp
             otherarch/sdcpp/src/core/layer_split_partition.cpp
             otherarch/sdcpp/src/core/ggml_extend_backend.cpp)
+set_source_files_properties(
+            otherarch/sdcpp/src/stable-diffusion.cpp
+            otherarch/sdcpp/src/upscaler.cpp
+            PROPERTIES COMPILE_DEFINITIONS
+            "sd_ggml_log_callback=kcpp_sd_ggml_log_callback")
 target_include_directories(sdtype_adapter PUBLIC . ./ggml/include ./ggml/src ./ggml/src/ggml-cpu ./include ./otherarch ./otherarch/tools ./vendor/stb ./vendor/nlohmann ./vendor ./otherarch/sdcpp ./otherarch/sdcpp/include ./otherarch/sdcpp/src ./otherarch/sdcpp/examples ./tools ./common)
 target_compile_features(sdtype_adapter PUBLIC cxx_std_17) # don't bump
 target_link_libraries(sdtype_adapter PRIVATE common2 ggml ${LLAMA_EXTRA_LIBS})

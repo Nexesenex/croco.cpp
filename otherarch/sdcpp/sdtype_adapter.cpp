@@ -18,6 +18,7 @@
 
 #include "otherarch/utils.h"
 #include "model_adapter.h"
+#include "sdcpp_logger_adapter.h"
 
 #include "stable-diffusion.h"
 #include "src/kcpp_sd_extensions.h"
@@ -361,6 +362,8 @@ static bool is_video_model(kcpp_sd::model_info info)
 }
 
 bool sdtype_load_model(const sd_load_model_inputs inputs) {
+
+    kcpp_sd_preserve_ggml_logger();
 
     sd_is_quiet = inputs.quiet;
     set_sd_quiet(sd_is_quiet);
