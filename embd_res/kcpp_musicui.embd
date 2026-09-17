@@ -424,12 +424,14 @@ async function fetchVoices(){
 }
 
 var has_llm_loaded = false;
+var has_music_llm_loaded = false;
 let statsRequestId = 0;
 let plannerSelectionVersion = 0;
 async function fetchStats(){
   const requestId = ++statsRequestId;
   const selectionVersion = plannerSelectionVersion;
   has_llm_loaded = false;
+  has_music_llm_loaded = false;
   document.getElementById("planner").value = "music_lm";
   updatePlannerOptions();
   try{
@@ -451,10 +453,11 @@ async function fetchStats(){
     const perf = await res.json();
     if(requestId !== statsRequestId) return;
     has_llm_loaded = !!(perf && perf.llm);
+    has_music_llm_loaded = !!(perf && perf.musicllm);
     if(selectionVersion === plannerSelectionVersion){
       document.getElementById("planner").value = has_llm_loaded ? "main_llm" : "music_lm";
-      updatePlannerOptions();
     }
+    updatePlannerOptions();
 
   }catch(e){
 
@@ -660,7 +663,7 @@ function deriveTitle(caption){
 
 function updatePlannerOptions(){
   const useLLM = document.getElementById("planner").value === "main_llm";
-  document.getElementById("gen_codes_option").classList.toggle("hidden", useLLM);
+  document.getElementById("gen_codes_option").classList.toggle("hidden", useLLM && !has_music_llm_loaded);
 }
 
 async function planSong()
@@ -735,6 +738,9 @@ async function planSongWithLLM(){
     }
 
     let origPayload = getFormData();
+    const generateCodes = origPayload.gen_codes && has_music_llm_loaded;
+    const planningController = currentController;
+    const codesUrl = buildUrl("/api/extra/music/prepare");
     const songDetails = {caption: origPayload.caption || "an interesting song"};
     ["lyrics", "bpm", "duration", "keyscale", "timesignature", "vocal_language"].forEach(key=>{
       if(origPayload[key] !== undefined) songDetails[key] = origPayload[key];
@@ -768,6 +774,29 @@ async function planSongWithLLM(){
         delete toolres.caption;
       }
       updateForm(toolres);
+      if(generateCodes){
+        document.getElementById("audio_codes").value = "";
+        showMessage("Song details ready. Generating audio codes...");
+        const codesPayload = {...origPayload, ...toolres, gen_codes:true, rewrite_caption:false, audio_codes:""};
+        try{
+          const codesRes = await fetch(codesUrl, {
+            method:"POST",
+            headers:headers,
+            body:JSON.stringify(codesPayload),
+            signal:planningController.signal
+          });
+          if(!codesRes.ok) throw new Error(`HTTP ${codesRes.status}`);
+          const codesData = await codesRes.json();
+          if(codesData.error) throw new Error(codesData.error);
+          if(typeof codesData.audio_codes !== "string" || !codesData.audio_codes.trim()){
+            throw new Error("Music planner returned no audio codes.");
+          }
+          document.getElementById("audio_codes").value = codesData.audio_codes;
+        }catch(e){
+          if(e.name !== "AbortError") showMessage(`Song details saved, but audio code generation failed: ${e.message}`);
+          return;
+        }
+      }
       showMessage("Plan generated.");
     }catch(e){
       console.error(e);

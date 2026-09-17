@@ -1532,7 +1532,7 @@ def get_capabilities():
     has_mcp = True if (args.mcpfile and mcp_connections and len(mcp_connections) > 0) else False
     admin_type = (2 if args.admin and args.admindir and args.adminpassword else (1 if args.admin and args.admindir else 0))
     has_router = True if args.routermode else False
-    return {"result":"KoboldCpp", "version":KcppVersion, "protected":has_password, "llm":has_llm, "txt2img":has_txt2img,"vision":visionSupport,"audio":audioSupport,"transcribe":has_whisper,"multiplayer":has_multiplayer,"websearch":has_search,"tts":has_tts, "embeddings":has_embeddings, "music":has_music, "savedata":(savedata_obj is not None), "admin": admin_type, "router":has_router, "guidance": has_guidance, "jinja": has_jinja, "mcp":has_mcp}
+    return {"result":"KoboldCpp", "version":KcppVersion, "protected":has_password, "llm":has_llm, "txt2img":has_txt2img,"vision":visionSupport,"audio":audioSupport,"transcribe":has_whisper,"multiplayer":has_multiplayer,"websearch":has_search,"tts":has_tts, "embeddings":has_embeddings, "music":has_music, "musicllm":bool(musicllmmodelpath), "savedata":(savedata_obj is not None), "admin": admin_type, "router":has_router, "guidance": has_guidance, "jinja": has_jinja, "mcp":has_mcp}
 
 
 def scan_directory(dirpath, valid_exts, depth):
@@ -3400,7 +3400,7 @@ def embeddings_generate(genparams):
     return {"count":tokcnt, "data":tokarrs}
 
 def music_load_model(musicllm,musicembedding,musicdiffusion,musicvae):
-    global args
+    global args, musicllmmodelpath
     inputs = music_load_model_inputs()
     inputs.musicllm_filename = musicllm.encode("UTF-8")
     inputs.musicembedding_filename = musicembedding.encode("UTF-8")
@@ -3409,6 +3409,7 @@ def music_load_model(musicllm,musicembedding,musicdiffusion,musicvae):
     inputs.lowvram = True if args.musiclowvram else False
     inputs = set_backend_props(inputs)
     ret = handle.music_load_model(inputs)
+    musicllmmodelpath = musicllm if ret else ""
     return ret
 
 def music_generate_codes(genparams):
