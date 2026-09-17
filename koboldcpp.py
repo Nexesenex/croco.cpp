@@ -8748,6 +8748,7 @@ def show_gui():
     # slider data
     batchsize_values = ["-1","16","32","64","128","256","512","1024","2048","4096"]
     batchsize_text = ["Don't Batch","16","32","64","128","256","512","1024","2048","4096"]
+    ubatchsize_text = ["Match Batch Size","16","32","64","128","256","512","1024","2048","4096"]
     contextsize_text = ["256", "512", "1024", "2048", "3072", "4096", "5120", "6144", "7168", "8192", "9216", "10240", "11264", "12288", "13312", "14336", "15360", "16384", "18432", "20480", "22528", "24576", "26624", "28672", "30720", "32768", "36864", "40960", "45056", "49152", "53248", "57344", "61440", "65536", "73728", "81920", "90112", "98304", "106496", "114688", "122880", "131072", "147456", "163840", "180224", "196608", "212992", "229376", "245760", "262144" ]
     quantkv_text = ["f16","bf16","q8_0","q5_1","q4_0"]
 
@@ -8778,6 +8779,7 @@ def show_gui():
     quantkv_var = ctk.IntVar(value=0)
     blas_threads_var = ctk.StringVar()
     blas_size_var = ctk.IntVar()
+    ubatch_size_var = ctk.IntVar()
     autofit_var = ctk.IntVar()
     tensor_split_str_vars = ctk.StringVar(value="")
     splitmode_var = ctk.StringVar(value=splitmode_choices[0])
@@ -8976,16 +8978,23 @@ def show_gui():
             temp.bind("<Leave>", hide_tooltip)
         return temp
 
-    def makeslider(parent, label, options, var, row=0, width=160, height=10, set=0, tooltip=""):
-        sliderLabel = makelabel(parent, options[set], row + 1, 0, columnspan=2, padx=(width+12))
-        titleLabel = makelabel(parent, label, row,0,tooltip)
+    def makeslider(parent, label, options, var, row=0, width=160, height=12, set=0, tooltip=""):
+        slider_row = ctk.CTkFrame(parent, fg_color="transparent")
+        slider_row.grid(row=row, column=0, columnspan=2, padx=8, sticky="w")
+        titleLabel = ctk.CTkLabel(slider_row, text=label)
+        titleLabel.grid(row=0, column=0, padx=(0, 8), sticky="w")
+        if tooltip:
+            titleLabel.bind("<Enter>", lambda event: show_tooltip(event, tooltip))
+            titleLabel.bind("<Leave>", hide_tooltip)
+        sliderLabel = ctk.CTkLabel(slider_row, text=options[set])
+        sliderLabel.grid(row=0, column=2, sticky="w")
         from_ = 0
         to = len(options)-1
         def sliderUpdate(a,b,c):
             sliderLabel.configure(text = options[int(var.get())])
         var.trace_add("write", sliderUpdate)
-        slider = ctk.CTkSlider(parent, from_=from_, to=to, variable = var, width = width, height=height, border_width=5,number_of_steps=len(options) - 1)
-        slider.grid(row=row+1,  column=0, padx = 8, stick="w", columnspan=2)
+        slider = ctk.CTkSlider(slider_row, from_=from_, to=to, variable=var, width=width, height=height, border_width=5, number_of_steps=len(options) - 1)
+        slider.grid(row=0, column=1, padx=(2, 8), sticky="w")
         slider.set(set)
         return slider, sliderLabel, titleLabel
 
@@ -9539,6 +9548,21 @@ def show_gui():
     # blas batch size
     makeslider(hardware_tab, "Batch Size:", batchsize_text, blas_size_var, 16,width=200, set=6,tooltip="How many tokens to process at once per batch.\nLarger values use more memory.")
     blas_size_var.trace_add("write", changed_gpulayers_estimate)
+    ubatch_slider, _, _ = makeslider(hardware_tab, "Physical Batch Size:", ubatchsize_text, ubatch_size_var, 17,width=200, set=0,tooltip="How many tokens to process at once in each physical batch.\nThe default matches Batch Size. Smaller values may use less memory.")
+
+    def update_ubatch_limit(*unused):
+        batch_index = blas_size_var.get()
+        # A batch size of -1 disables batching, so only the default is applicable.
+        ubatch_slider.configure(to=max(1, batch_index), number_of_steps=max(1, batch_index), state="normal" if batch_index else "disabled")
+        ubatch_slider.set(min(ubatch_size_var.get(), batch_index))
+
+    def clamp_ubatch_size(*unused):
+        if ubatch_size_var.get() > blas_size_var.get():
+            ubatch_slider.set(blas_size_var.get())
+
+    blas_size_var.trace_add("write", update_ubatch_limit)
+    ubatch_size_var.trace_add("write", clamp_ubatch_size)
+    update_ubatch_limit()
 
     makecheckbox(hardware_tab, "Use FlashAttention", flashattention_var, 100, command=toggleflashattn,  tooltiptxt="Enable flash attention for GGUF models.")
 
@@ -9590,7 +9614,7 @@ def show_gui():
     manualropebox = makecheckbox(context_tab, "Manual Rope Scale", variable=manualrope_var, row=22, command=togglerope, padx=(200), tooltiptxt="Set RoPE base and scale manually.")
 
     makecheckbox(context_tab, "Custom RoPE Config", variable=customrope_var, row=22, command=togglerope,tooltiptxt="Override the default RoPE configuration with custom RoPE scaling.")
-    noqkvlabel = makelabel(context_tab,"(Note: QuantKV works best with flash attention)",30,0,"Only K cache can be quantized, and performance can suffer.\nIn some cases, it might even use more VRAM when doing a full offload.",padx=160)
+    noqkvlabel = makelabel(context_tab,"(Note: QuantKV works best with flash attention)",31,0,"Only K cache can be quantized, and performance can suffer.\nIn some cases, it might even use more VRAM when doing a full offload.")
     noqkvlabel.configure(text_color="#ff5555")
     qkvslider,qkvlabel,qkvtitle = makeslider(context_tab, "Quantize KV Cache:", quantkv_text, quantkv_var, 30, set=0,tooltip="Enable quantization of KV cache.\nRequires Flash Attention for full effect, otherwise only K cache is quantized.")
     quantkv_var.trace_add("write", toggleflashattn)
@@ -10129,6 +10153,7 @@ def show_gui():
         args.blasthreads = None if blas_threads_var.get()=="" else int(blas_threads_var.get())
         args.device = deviceoverride_var.get()
         args.batchsize = int(batchsize_values[int(blas_size_var.get())])
+        args.ubatchsize = int(batchsize_values[int(ubatch_size_var.get())])
         args.autofit = autofit_var.get() == 1
         args.contextsize = int(contextsize_text[context_var.get()])
         if customrope_var.get()==1:
@@ -10456,6 +10481,10 @@ def show_gui():
 
         if "batchsize" in mydict and mydict["batchsize"]:
             blas_size_var.set(batchsize_values.index(str(mydict["batchsize"])))
+        if "ubatchsize" in mydict and mydict["ubatchsize"] is not None:
+            ubatch_size_var.set(batchsize_values.index(str(mydict["ubatchsize"])))
+        else:
+            ubatch_size_var.set(0)
 
         autofit_var.set(1 if "autofit" in mydict and mydict["autofit"] else 0)
         model_var.set(mydict["model_param"] if ("model_param" in mydict and mydict["model_param"]) else "")
