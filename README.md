@@ -68,6 +68,9 @@ Finally, obtain and load a GGUF model. See [here](#Obtaining-a-GGUF-model)
 - The docker uses a x86-64 Ubuntu Linux based environment interally, and expects a Nvidia or AMD GPU. It may perform suboptimally on some Windows and MacOS devices, and may outright fail for ARM. It applies crude AVX/AVX2 feature detection which may not work correctly on all systems, resulting in the failsafe binaries being loaded (speed will become extremely slow).
 - If you still want to proceed, the official docker can be found at https://hub.docker.com/r/koboldai/koboldcpp
 
+## Running without a model (External Provider)
+- KoboldCpp allows you to run just the frontend without loading any model, and instead connect to a supported online AI provider. Currently, AI Horde, OpenAI Compatible, Anthropic, OpenRouter, Gemini, Grok, Mistral are among the supported services. To run without a model and connect to a third party endpoint, use the `--nomodel` flag or select "Allow Launch without Model" checkbox from the Files tab in the GUI launcher. Alternatively, you can also use the KoboldAI Lite WebUI to connect directly via https://lite.koboldai.net
+
 ## Obtaining a GGUF model
 - KoboldCpp uses GGUF models. They are not included with KoboldCpp, but you can download GGUF files from other places such as [Bartowski's Huggingface](https://huggingface.co/bartowski). Search for "GGUF" on huggingface.co for plenty of compatible models in the `.gguf` format.
 - For beginners, we recommend [Qwen3-VL-8B](https://huggingface.co/unsloth/Qwen3-VL-8B-Instruct-GGUF/resolve/main/Qwen3-VL-8B-Instruct-Q4_K_S.gguf) **(Most Recommended, best all rounder model)**
