@@ -252,6 +252,7 @@ deprecated_keys = {
     "noblas",
     "nommap",
     "pipelineparallel",
+    "nopipelineparallel",
     "sdnotile",
     "forceversion",
     "sdgendefaults",
@@ -328,6 +329,7 @@ class load_model_inputs(ctypes.Structure):
                 ("use_fastforward", ctypes.c_bool),
                 ("kcpp_main_gpu", ctypes.c_int),
                 ("batchsize", ctypes.c_int),
+                ("ubatchsize", ctypes.c_int),
                 ("autofit", ctypes.c_bool),
                 ("autofit_tax_mb", ctypes.c_int),
                 ("gpulayers", ctypes.c_int),
@@ -352,7 +354,6 @@ class load_model_inputs(ctypes.Structure):
                 ("swa_padding", ctypes.c_int),
                 ("smartcache", ctypes.c_bool),
                 ("smartcacheslots", ctypes.c_int),
-                ("pipelineparallel", ctypes.c_bool),
                 ("lora_multiplier", ctypes.c_float),
                 ("devices_override", ctypes.c_char_p),
                 ("quiet", ctypes.c_bool),
@@ -2124,6 +2125,7 @@ def load_model(model_filename):
     else:
         inputs.quant_k = inputs.quant_v = 0
     inputs.batchsize = args.batchsize
+    inputs.ubatchsize = args.ubatchsize
     inputs.autofit = args.autofit
     inputs.autofit_tax_mb = int(args.autofitpadding) + int(calulated_gpu_overhead/(1024*1024))
     inputs.gpulayers = args.gpulayers
@@ -2172,7 +2174,6 @@ def load_model(model_filename):
     sclimit = (savestate_limit_default if scint<=1 else scint)
     savestate_limit = sclimit
     inputs.smartcacheslots = sclimit
-    inputs.pipelineparallel = (not args.nopipelineparallel)
     inputs.continuous_batching_slots = args.parallelrequests if (args.parallelrequests>1) else 0
     inputs.rpc_mode = (2 if args.rpcmode=="host" else (1 if args.rpcmode=="connect" else 0))
     inputs.rpc_targets = (args.rpctargets if args.rpcmode=="connect" else "").encode("UTF-8")
@@ -8768,7 +8769,6 @@ def show_gui():
     debugmode = ctk.IntVar()
     keepforeground = ctk.IntVar()
     terminalonly = ctk.IntVar()
-    pipelineparallel = ctk.IntVar(value=1)
     quietmode = ctk.IntVar(value=0)
     nocertifymode = ctk.IntVar(value=0)
 
@@ -9530,7 +9530,6 @@ def show_gui():
         "Direct I/O": [usedirectio, "Use direct I/O when loading GGUF models. May improve cold-load times on some storage."],
         "Keep Foreground": [keepforeground, "Bring KoboldCpp to the foreground every time there is a new generation."],
         "CLI Terminal Only": [terminalonly, "Does not launch KoboldCpp HTTP server. Instead, enables KoboldCpp from the command line, accepting interactive console input and displaying responses to the terminal."],
-        "Pipeline Parallel": [pipelineparallel, "Enable Pipeline Parallelism for faster multigpu speeds but using more memory, only active for multigpu."],
     }
 
     for idx, (name, properties) in enumerate(hardware_boxes.items()):
@@ -10064,7 +10063,6 @@ def show_gui():
         args.remotetunnel = remotetunnel_var.get()==1
         args.foreground = keepforeground.get()==1
         args.cli = terminalonly.get()==1
-        args.nopipelineparallel = pipelineparallel.get()==0
         args.quiet = quietmode.get()==1
         args.nocertify = nocertifymode.get()==1
         args.nomodel = nomodel.get()==1
@@ -10315,7 +10313,6 @@ def show_gui():
         remotetunnel_var.set(1 if "remotetunnel" in mydict and mydict["remotetunnel"] else 0)
         keepforeground.set(1 if "foreground" in mydict and mydict["foreground"] else 0)
         terminalonly.set(1 if "cli" in mydict and mydict["cli"] else 0)
-        pipelineparallel.set(0 if "nopipelineparallel" in mydict and mydict["nopipelineparallel"] else 1)
         quietmode.set(1 if "quiet" in mydict and mydict["quiet"] else 0)
         nocertifymode.set(1 if "nocertify" in mydict and mydict["nocertify"] else 0)
         nomodel.set(1 if "nomodel" in mydict and mydict["nomodel"] else 0)
@@ -13049,7 +13046,8 @@ if __name__ == '__main__':
     advparser.add_argument("--analyze", metavar=('[filename]'), help="Reads the metadata, weight types and tensor names in any GGUF or safetensors file.", default="")
     advparser.add_argument("--autofit","--fit","-fit", help="Forces autofit, which attempts to fit the model in the best possible way. Overrides everything else.", action='store_true')
     advparser.add_argument("--autofitpadding", metavar=('[padding in MB]'), help="How much spare allowance in MB should autofit reserve? If it's too little, the load might fail.", type=int, default=default_autofit_padding)
-    advparser.add_argument("--batchsize","--blasbatchsize","--batch-size","-b", help="Sets the batch size used in batched processing (default 512). Setting it to -1 disables batched mode, but keeps other benefits like GPU offload.", type=int,choices=[-1,16,32,64,128,256,512,1024,2048,4096], default=512)
+    advparser.add_argument("--batchsize","--blasbatchsize","--batch-size","-b", help="Sets the logical batch size used in batched processing (default 512). Setting it to -1 disables batched mode, but keeps other benefits like GPU offload.", type=int,choices=[-1,16,32,64,128,256,512,1024,2048,4096], default=512)
+    advparser.add_argument("--ubatchsize","--ubatch-size","-ub", help="Sets the physical batch size used in batched processing. Setting it to -1 uses the same value as batchsize (default).", type=int,choices=[-1,16,32,64,128,256,512,1024,2048,4096], default=-1)
     advparser.add_argument("--benchmark", help="Do not start server, instead run benchmarks. If filename is provided, appends results to provided file.", metavar=('[filename]'), nargs='?', const="stdout", type=str, default=None)
     advparser.add_argument("--blasthreads","--batchthreads","--threadsbatch","--threads-batch", help="Use a different number of threads during batching if specified. Otherwise, has the same value as --threads",metavar=('[threads]'), type=int, default=0)
     advparser.add_argument("--chatcompletionsadapter", metavar=('[filename]'), help="Select an optional ChatCompletions Adapter JSON file to force custom instruct tags.", default="AutoGuess")
@@ -13097,7 +13095,6 @@ if __name__ == '__main__':
     advparser.add_argument("--nobostoken", help="Prevents BOS token from being added at the start of any prompt. Usually NOT recommended for most models.", action='store_true')
     advparser.add_argument("--nommq", help="Disables MMQ, only used for cuda backend. This flag may be removed in future.", action='store_true')
     advparser.add_argument("--nomodel", help="Allows you to launch the GUI alone, without selecting any model.", action='store_true')
-    advparser.add_argument("--nopipelineparallel", help="Disable Pipeline Parallelism. Pipeline Parallelism provides faster multigpu speeds but using more memory, only active for multigpu.", action='store_true')
     advparser.add_argument("--noshift","--no-context-shift", help="If set, do not attempt to Trim and Shift the GGUF context.", action='store_true')
     advparser.add_argument("--noswa","--swa-full", help="If set, uses full-size SWA KV Cache. Otherwise, SWA will be enabled automatically on models that support it. SWA saves memory but cannot be used with context shifting.", action='store_true')
     advparser.add_argument("--onready", help="An optional shell command to execute after the model has been loaded.", metavar=('[shell command]'), type=str, default="")
@@ -13216,6 +13213,7 @@ if __name__ == '__main__':
     deprecatedgroup.add_argument("--sdconfig", help=argparse.SUPPRESS, nargs='+')
     compatgroup.add_argument("--noblas", help=argparse.SUPPRESS, action='store_true')
     compatgroup3.add_argument("--nommap","--no-mmap", help=argparse.SUPPRESS, action='store_true')
+    deprecatedgroup.add_argument("--nopipelineparallel", help=argparse.SUPPRESS, action='store_true') #now to automatically enable when ubatch < batchsize and multigpu
     deprecatedgroup.add_argument("--pipelineparallel", help=argparse.SUPPRESS, action='store_true') #changed to nopipelineparallel
     deprecatedgroup.add_argument("--sdnotile", help=argparse.SUPPRESS, action='store_true') # legacy option, see sdtiledvae
     deprecatedgroup.add_argument("--sdvaecpu", help=argparse.SUPPRESS, action='store_true') # legacy option, see sdvaedevice

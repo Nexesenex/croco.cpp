@@ -60,6 +60,7 @@ struct load_model_inputs
     const bool use_fastforward = false;
     const int kcpp_main_gpu = -1;
     const int batchsize = 512;
+    const int ubatchsize = -1;
     const bool autofit = false;
     const int autofit_tax_mb = 0;
     const int gpulayers = 0;
@@ -84,7 +85,6 @@ struct load_model_inputs
     const int swa_padding = 0;
     const bool smartcache = false;
     const int smartcacheslots = 0;
-    const bool pipelineparallel = false;
     const float lora_multiplier = 1.0f;
     const char * devices_override = nullptr;
     const bool quiet = false;

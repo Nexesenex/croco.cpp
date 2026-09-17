@@ -3038,9 +3038,9 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
     kcpp_data->n_threads = inputs.threads;
     kcpp_data->n_blasthreads = inputs.blasthreads;
     bool isGguf = (file_format == FileFormat::GGUF_GENERIC);
-    kcpp_pipeline_parallelism = inputs.pipelineparallel;
+    kcpp_pipeline_parallelism = false;
     kcpp_data->n_batch = GetBatchSize(inputs.batchsize, in_file_format);
-    kcpp_data->n_ubatch = kcpp_data->n_batch;
+    kcpp_data->n_ubatch = inputs.ubatchsize > 0 ? std::min(inputs.ubatchsize, kcpp_data->n_batch) : kcpp_data->n_batch;
     continuous_batching_slots = (isGguf && inputs.continuous_batching_slots > 1) ? inputs.continuous_batching_slots : 0;
     if(continuous_batching_slots > 0)
     {
@@ -3049,11 +3049,6 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
     kcpp_data->vision_min_tokens = inputs.visionmintokens;
     kcpp_data->vision_max_tokens = inputs.visionmaxtokens;
     vision_max_res = inputs.visionmaxres;
-    if(isGguf && kcpp_pipeline_parallelism)
-    {
-        //double the logical batch, while keeping the physical batch the same, pipeline parallel set GGML_SCHED_MAX_COPIES to 2
-        kcpp_data->n_batch *= 2;
-    }
     kcpp_data->flash_attn = inputs.flash_attention;
     kcpp_data->model_filename = inputs.model_filename;
     kcpp_data->use_smartcontext = inputs.use_smartcontext;
@@ -3274,6 +3269,14 @@ ModelLoadResult gpttype_load_model(const load_model_inputs inputs, FileFormat in
         {
             std::string servers = inputs.rpc_targets;
             connect_rpc_servers(servers);
+        }
+
+        if (kcpp_data->n_ubatch < kcpp_data->n_batch) {
+            int gpu_count = 0;
+            for (size_t i = 0; i < ggml_backend_dev_count(); ++i) {
+                gpu_count += ggml_backend_dev_type(ggml_backend_dev_get(i)) == GGML_BACKEND_DEVICE_TYPE_GPU;
+            }
+            kcpp_pipeline_parallelism = gpu_count > 1;
         }
 
         llama_model_params model_params = llama_model_default_params();
