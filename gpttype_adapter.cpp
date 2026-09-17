@@ -6274,16 +6274,25 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
                         {
                             if(identical_slot==-1)
                             {
-                                printf("\n[SmartCache RNN Match of %d tokens in slot %d. Saving into slot %d and switching...]\n",bestlen,bestslot,oldest_slot);
+                                if(!is_quiet)
+                                {
+                                    printf("\n[SmartCache RNN Match of %d tokens in slot %d. Saving into slot %d and switching...]\n",bestlen,bestslot,oldest_slot);
+                                }
                                 gpttype_save_state_kv(oldest_slot);
                             } else {
-                                printf("\n[SmartCache RNN Match of %d tokens in slot %d. Already saved in slot %d, switching...]\n",bestlen,bestslot,identical_slot);
+                                if(!is_quiet)
+                                {
+                                    printf("\n[SmartCache RNN Match of %d tokens in slot %d. Already saved in slot %d, switching...]\n",bestlen,bestslot,identical_slot);
+                                }
                                 touch_slot(identical_slot);
                             }
                         }
                         else
                         {
-                            printf("\n[SmartCache RNN Match of %d tokens in slot %d. Switching...]\n",bestlen,bestslot);
+                            if(!is_quiet)
+                            {
+                                printf("\n[SmartCache RNN Match of %d tokens in slot %d. Switching...]\n",bestlen,bestslot);
+                            }
                         }
                         gpttype_load_state_kv(bestslot);
                     }
@@ -6295,12 +6304,18 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
                         if(identical_slot==-1)
                         {
                             int oldest_slot = get_oldest_slot(-1);
-                            printf("\n[SmartCache RNN No Match, Saving into slot %d...]\n",oldest_slot);
+                            if(!is_quiet)
+                            {
+                                printf("\n[SmartCache RNN No Match, Saving into slot %d...]\n",oldest_slot);
+                            }
                             gpttype_save_state_kv(oldest_slot);
                         }
                         else
                         {
-                            printf("\n[SmartCache RNN No Match, Already saved in slot %d]\n",identical_slot);
+                            if(!is_quiet)
+                            {
+                                printf("\n[SmartCache RNN No Match, Already saved in slot %d]\n",identical_slot);
+                            }
                             touch_slot(identical_slot);
                         }
                     }
@@ -6338,16 +6353,25 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
                             {
                                 if(identical_slot==-1)
                                 {
-                                    printf("\n[SmartCache Match of %.2f in slot %d. Saving into slot %d and switching...]\n",similaritybeat,i,oldest_slot);
+                                    if(!is_quiet)
+                                    {
+                                        printf("\n[SmartCache Match of %.2f in slot %d. Saving into slot %d and switching...]\n",similaritybeat,i,oldest_slot);
+                                    }
                                     gpttype_save_state_kv(oldest_slot);
                                 } else {
-                                    printf("\n[SmartCache Match of %.2f in slot %d. Already saved in slot %d, switching...]\n",similaritybeat,i,identical_slot);
+                                    if(!is_quiet)
+                                    {
+                                        printf("\n[SmartCache Match of %.2f in slot %d. Already saved in slot %d, switching...]\n",similaritybeat,i,identical_slot);
+                                    }
                                     touch_slot(identical_slot);
                                 }
                             }
                             else
                             {
-                                printf("\n[SmartCache Match of %.2f in slot %d. Switching...]\n",similaritybeat,i);
+                                if(!is_quiet)
+                                {
+                                    printf("\n[SmartCache Match of %.2f in slot %d. Switching...]\n",similaritybeat,i);
+                                }
                             }
                             gpttype_load_state_kv(i);
                             foundswap = true;
@@ -6362,12 +6386,18 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
                         if(identical_slot==-1)
                         {
                             int oldest_slot = get_oldest_slot(-1);
-                            printf("\n[SmartCache No Match, Saving into slot %d...]\n",oldest_slot);
+                            if(!is_quiet)
+                            {
+                                printf("\n[SmartCache No Match, Saving into slot %d...]\n",oldest_slot);
+                            }
                             gpttype_save_state_kv(oldest_slot);
                         }
                         else
                         {
-                            printf("\n[SmartCache No Match, Already saved in slot %d]\n",identical_slot);
+                            if(!is_quiet)
+                            {
+                                printf("\n[SmartCache No Match, Already saved in slot %d]\n",identical_slot);
+                            }
                             touch_slot(identical_slot);
                         }
                     }
@@ -6832,7 +6862,10 @@ generation_outputs gpttype_generate(const generation_inputs inputs)
         if(rnn_lifeboat_enabled && !rnn_lifeboat_taken && !startedsampling && n_past >= rnn_lifeboat_target && input_consumed < (int)embd_inp.size())
         {
             int lifeboat_slot = rnn_lifeboat_hard_reserved ? smartcache_quick_snapshot(rnn_lifeboat_slot_idx) : smartcache_quick_snapshot();
-            printf("\n[SmartCache RNN Lifeboat: Saved %zu-token checkpoint into slot %d%s]\n",current_context_tokens.size(),lifeboat_slot,(rnn_lifeboat_hard_reserved ? "" : " (soft)"));
+            if(!is_quiet)
+            {
+                printf("\n[SmartCache RNN Lifeboat: Saved %zu-token checkpoint into slot %d%s]\n",current_context_tokens.size(),lifeboat_slot,(rnn_lifeboat_hard_reserved ? "" : " (soft)"));
+            }
             rnn_lifeboat_taken = true;
         }
         embd.clear();
