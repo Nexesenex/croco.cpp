@@ -12,28 +12,33 @@ if [ ! -f "bin/micromamba" ]; then
 		 curl -Ls https://anaconda.org/conda-forge/micromamba/1.5.3/download/linux-aarch64/micromamba-1.5.3-0.tar.bz2 | tar -xvj bin/micromamba
 	else
 		 echo "CPU Architecture $ARCH is not supported by this script, please try compiling manually."
-		 exit
+		 exit 1
+	fi
+fi
+
+NVIDIA_GPU=0
+if command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi -L 2>/dev/null | grep -qE '^GPU [0-9]+:'; then
+	NVIDIA_GPU=1
+fi
+
+if [[ ! -f "conda/envs/linux/bin/python" || $1 == "rebuild" ]] && [ -z "$KCPP_CUDA" ]; then
+	if [ "$NVIDIA_GPU" = 1 ]; then
+		if nvidia-smi | grep -qE 'CUDA Version: (11|12\.0)'; then
+			KCPP_CUDA=11.4.0
+			ARCHES_CU11=true
+		else
+			KCPP_CUDA=12.1.0
+		fi
+	elif command -v rocmsmi >/dev/null 2>&1 || [ -d /opt/rocm ]; then
+		KCPP_CUDA=rocm
+	else
+		KCPP_CUDA=12.1.0
 	fi
 fi
 
 if [[ ! -f "conda/envs/linux/bin/python" && $KCPP_CUDA != "rocm" || $1 == "rebuild" && $KCPP_CUDA != "rocm" ]]; then
 	cp environment.yaml environment.tmp.yaml
-	if [ -n "$KCPP_CUDA" ]; then
-		sed -i -e "s/nvidia\/label\/cuda-12.1.0/nvidia\/label\/cuda-$KCPP_CUDA/g" environment.tmp.yaml
-	else
-		if [ -f "/usr/bin/nvidia-smi" ]; then
-			if nvidia-smi | grep -qE 'CUDA Version: (11|12.0)'; then
-				KCPP_CUDA=11.4.0
-				ARCHES_CU11=true
-			else
-				KCPP_CUDA=12.1.0
-			fi
-		elif command -v rocmsmi &>/dev/null || [ -d /opt/rocm ]; then
-			KCPP_CUDA=rocm
-		else
-			KCPP_CUDA=12.1.0
-		fi
-	fi
+	sed -i -e "s/nvidia\/label\/cuda-12.1.0/nvidia\/label\/cuda-$KCPP_CUDA/g" environment.tmp.yaml
 	bin/micromamba create --no-rc --no-shortcuts -r conda -p conda/envs/linux -f environment.tmp.yaml -y
 	bin/micromamba run -r conda -p conda/envs/linux make clean
 	echo $KCPP_CUDA > conda/envs/linux/cudaver
@@ -48,6 +53,10 @@ fi
 
 KCPP_CUDA=$(<conda/envs/linux/cudaver)
 KCPP_CUDAAPPEND=-cuda${KCPP_CUDA//.}$KCPP_APPEND
+
+if [[ "$KCPP_CUDA" == 11.* && -z "$ARCHES_CU11$ARCHES_CU12$ARCHES_CU13" ]]; then
+	ARCHES_CU11=1
+fi
 
 LLAMA_NOAVX1_FLAG=""
 LLAMA_NOAVX2_FLAG=""
@@ -68,9 +77,18 @@ if [ -n "$ARCHES_CU13" ]; then
 	ARCHES_FLAG="LLAMA_ARCHES_CU13=1"
 fi
 
+# CUDA's native architecture flag needs a visible GPU; old-CPU builds need the fallback libraries.
+if [[ "$KCPP_CUDA" != "rocm" && "$NVIDIA_GPU" = 0 ]] || [[ "$ARCH" = x64 && -n "$NOAVX1$NOAVX2" ]]; then
+	KCPP_PORTABLE=1
+fi
+
 if [ -n "$KCPP_PORTABLE" ]; then
 	LLAMA_PORTABLE_FLAG="LLAMA_PORTABLE=1"
-	PORTABLE_SO="--add-data ./koboldcpp_failsafe.so:. --add-data ./koboldcpp_noavx2.so:. --add-data ./koboldcpp_vulkan_noavx2.so:."
+	# The Makefile generates these fallback libraries only on x86.
+	if [ "$ARCH" = x64 ]; then
+		PORTABLE_SO="--add-data ./koboldcpp_failsafe.so:. --add-data ./koboldcpp_noavx2.so:. --add-data ./koboldcpp_vulkan_noavx2.so:."
+		VULKAN_FAILSAFE_SO="--add-data ./koboldcpp_vulkan_failsafe.so:."
+	fi
 fi
 
 if [ "$KCPP_CUDA" = "rocm" ]; then
@@ -97,19 +115,19 @@ elif [[ $1 == "dist" ]]; then
 		if [ ! -n "$ROCM_PATH" ]; then
 			ROCM_PATH=/opt/rocm
 		fi
-		if [ -n "$NOAVX1" ]; then
-			bin/micromamba run -r conda -p conda/envs/linux pyinstaller --noconfirm --onefile --collect-all customtkinter --collect-all jinja2 --collect-all psutil --add-data './dist/koboldcpp-launcher/koboldcpp-launcher:.' --add-data './koboldcpp_hipblas.so:.' $PORTABLE_SO --add-data './koboldcpp_vulkan_failsafe.so:.' --add-data './kcpp_adapters:./kcpp_adapters' --add-data './koboldcpp.py:.' --add-data './json_to_gbnf.py:.' --add-data './LICENSE.md:.' --add-data './MIT_LICENSE_GGML_SDCPP_LLAMACPP_ONLY.md:.' --add-data './embd_res:./embd_res' --add-data "$ROCM_PATH/lib/rocblas:." --add-data "$ROCM_PATH/lib/libamd_comgr.so:." --clean --console koboldcpp.py -n "koboldcpp-linux-$ARCH-rocm"
-		elif [ -n "$NOAVX2" ]; then
-			bin/micromamba run -r conda -p conda/envs/linux pyinstaller --noconfirm --onefile --collect-all customtkinter --collect-all jinja2 --collect-all psutil --add-data './dist/koboldcpp-launcher/koboldcpp-launcher:.' --add-data './koboldcpp_hipblas.so:.' $PORTABLE_SO --add-data './koboldcpp_vulkan_failsafe.so:.' --add-data './kcpp_adapters:./kcpp_adapters' --add-data './koboldcpp.py:.' --add-data './json_to_gbnf.py:.' --add-data './LICENSE.md:.' --add-data './MIT_LICENSE_GGML_SDCPP_LLAMACPP_ONLY.md:.' --add-data './embd_res:./embd_res' --add-data "$ROCM_PATH/lib/rocblas:." --add-data "$ROCM_PATH/lib/libamd_comgr.so:." --clean --console koboldcpp.py -n "koboldcpp-linux-$ARCH-rocm"
+		if [[ "$ARCH" = x64 && -n "$NOAVX1" ]]; then
+			bin/micromamba run -r conda -p conda/envs/linux pyinstaller --noconfirm --onefile --collect-all customtkinter --collect-all jinja2 --collect-all psutil --add-data './dist/koboldcpp-launcher/koboldcpp-launcher:.' --add-data './koboldcpp_hipblas.so:.' $PORTABLE_SO $VULKAN_FAILSAFE_SO --add-data './kcpp_adapters:./kcpp_adapters' --add-data './koboldcpp.py:.' --add-data './json_to_gbnf.py:.' --add-data './LICENSE.md:.' --add-data './MIT_LICENSE_GGML_SDCPP_LLAMACPP_ONLY.md:.' --add-data './embd_res:./embd_res' --add-data "$ROCM_PATH/lib/rocblas:." --add-data "$ROCM_PATH/lib/libamd_comgr.so:." --clean --console koboldcpp.py -n "koboldcpp-linux-$ARCH-rocm"
+		elif [[ "$ARCH" = x64 && -n "$NOAVX2" ]]; then
+			bin/micromamba run -r conda -p conda/envs/linux pyinstaller --noconfirm --onefile --collect-all customtkinter --collect-all jinja2 --collect-all psutil --add-data './dist/koboldcpp-launcher/koboldcpp-launcher:.' --add-data './koboldcpp_hipblas.so:.' $PORTABLE_SO $VULKAN_FAILSAFE_SO --add-data './kcpp_adapters:./kcpp_adapters' --add-data './koboldcpp.py:.' --add-data './json_to_gbnf.py:.' --add-data './LICENSE.md:.' --add-data './MIT_LICENSE_GGML_SDCPP_LLAMACPP_ONLY.md:.' --add-data './embd_res:./embd_res' --add-data "$ROCM_PATH/lib/rocblas:." --add-data "$ROCM_PATH/lib/libamd_comgr.so:." --clean --console koboldcpp.py -n "koboldcpp-linux-$ARCH-rocm"
 		else
 			bin/micromamba run -r conda -p conda/envs/linux pyinstaller --noconfirm --onefile --collect-all customtkinter --collect-all jinja2 --collect-all psutil --add-data './dist/koboldcpp-launcher/koboldcpp-launcher:.' --add-data './koboldcpp_default.so:.' --add-data './koboldcpp_hipblas.so:.' --add-data './koboldcpp_vulkan.so:.' $PORTABLE_SO --add-data './kcpp_adapters:./kcpp_adapters' --add-data './koboldcpp.py:.' --add-data './json_to_gbnf.py:.' --add-data './LICENSE.md:.' --add-data './MIT_LICENSE_GGML_SDCPP_LLAMACPP_ONLY.md:.' --add-data './embd_res:./embd_res' --add-data "$ROCM_PATH/lib/rocblas:." --add-data "$ROCM_PATH/lib/libamd_comgr.so:." --clean --console koboldcpp.py -n "koboldcpp-linux-$ARCH-rocm"
 		fi
 	else
 		bin/micromamba run -r conda -p conda/envs/linux pyinstaller --noconfirm --onedir --collect-all customtkinter --collect-all jinja2 --collect-all psutil --add-data './koboldcpp.py:.' --add-data './json_to_gbnf.py:.' --clean --console koboldcpp.py -n "koboldcpp-launcher"
-		if [ -n "$NOAVX1" ]; then
-			bin/micromamba run -r conda -p conda/envs/linux pyinstaller --noconfirm --onefile --collect-all customtkinter --collect-all jinja2 --collect-all psutil --add-data './dist/koboldcpp-launcher/koboldcpp-launcher:.' --add-data './koboldcpp_cublas.so:.' $PORTABLE_SO --add-data './koboldcpp_vulkan_failsafe.so:.' --add-data './kcpp_adapters:./kcpp_adapters' --add-data './koboldcpp.py:.' --add-data './json_to_gbnf.py:.' --add-data './LICENSE.md:.' --add-data './MIT_LICENSE_GGML_SDCPP_LLAMACPP_ONLY.md:.' --add-data './embd_res:./embd_res' --clean --console koboldcpp.py -n "koboldcpp-linux-$ARCH$KCPP_CUDAAPPEND"
-		elif [ -n "$NOAVX2" ]; then
-			bin/micromamba run -r conda -p conda/envs/linux pyinstaller --noconfirm --onefile --collect-all customtkinter --collect-all jinja2 --collect-all psutil --add-data './dist/koboldcpp-launcher/koboldcpp-launcher:.' --add-data './koboldcpp_cublas.so:.' $PORTABLE_SO --add-data './koboldcpp_vulkan_failsafe.so:.' --add-data './kcpp_adapters:./kcpp_adapters' --add-data './koboldcpp.py:.' --add-data './json_to_gbnf.py:.' --add-data './LICENSE.md:.' --add-data './MIT_LICENSE_GGML_SDCPP_LLAMACPP_ONLY.md:.' --add-data './embd_res:./embd_res' --clean --console koboldcpp.py -n "koboldcpp-linux-$ARCH$KCPP_CUDAAPPEND"
+		if [[ "$ARCH" = x64 && -n "$NOAVX1" ]]; then
+			bin/micromamba run -r conda -p conda/envs/linux pyinstaller --noconfirm --onefile --collect-all customtkinter --collect-all jinja2 --collect-all psutil --add-data './dist/koboldcpp-launcher/koboldcpp-launcher:.' --add-data './koboldcpp_cublas.so:.' $PORTABLE_SO $VULKAN_FAILSAFE_SO --add-data './kcpp_adapters:./kcpp_adapters' --add-data './koboldcpp.py:.' --add-data './json_to_gbnf.py:.' --add-data './LICENSE.md:.' --add-data './MIT_LICENSE_GGML_SDCPP_LLAMACPP_ONLY.md:.' --add-data './embd_res:./embd_res' --clean --console koboldcpp.py -n "koboldcpp-linux-$ARCH$KCPP_CUDAAPPEND"
+		elif [[ "$ARCH" = x64 && -n "$NOAVX2" ]]; then
+			bin/micromamba run -r conda -p conda/envs/linux pyinstaller --noconfirm --onefile --collect-all customtkinter --collect-all jinja2 --collect-all psutil --add-data './dist/koboldcpp-launcher/koboldcpp-launcher:.' --add-data './koboldcpp_cublas.so:.' $PORTABLE_SO $VULKAN_FAILSAFE_SO --add-data './kcpp_adapters:./kcpp_adapters' --add-data './koboldcpp.py:.' --add-data './json_to_gbnf.py:.' --add-data './LICENSE.md:.' --add-data './MIT_LICENSE_GGML_SDCPP_LLAMACPP_ONLY.md:.' --add-data './embd_res:./embd_res' --clean --console koboldcpp.py -n "koboldcpp-linux-$ARCH$KCPP_CUDAAPPEND"
 		else
 			bin/micromamba run -r conda -p conda/envs/linux pyinstaller --noconfirm --onefile --collect-all customtkinter --collect-all jinja2 --collect-all psutil --add-data './dist/koboldcpp-launcher/koboldcpp-launcher:.' --add-data './koboldcpp_default.so:.' --add-data './koboldcpp_cublas.so:.' --add-data './koboldcpp_vulkan.so:.' $PORTABLE_SO --add-data './kcpp_adapters:./kcpp_adapters' --add-data './koboldcpp.py:.' --add-data './json_to_gbnf.py:.' --add-data './LICENSE.md:.' --add-data './MIT_LICENSE_GGML_SDCPP_LLAMACPP_ONLY.md:.' --add-data './embd_res:./embd_res' --clean --console koboldcpp.py -n "koboldcpp-linux-$ARCH$KCPP_CUDAAPPEND"
 			bin/micromamba run -r conda -p conda/envs/linux pyinstaller --noconfirm --onefile --collect-all customtkinter --collect-all jinja2 --collect-all psutil --add-data './dist/koboldcpp-launcher/koboldcpp-launcher:.' --add-data './koboldcpp_default.so:.' --add-data './koboldcpp_vulkan.so:.' $PORTABLE_SO --add-data './kcpp_adapters:./kcpp_adapters' --add-data './koboldcpp.py:.' --add-data './json_to_gbnf.py:.' --add-data './LICENSE.md:.' --add-data './MIT_LICENSE_GGML_SDCPP_LLAMACPP_ONLY.md:.' --add-data './embd_res:./embd_res' --clean --console koboldcpp.py -n "koboldcpp-linux-$ARCH-nocuda$KCPP_APPEND"
